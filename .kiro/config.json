@@ -1,0 +1,16 @@
+{
+  "projectName": "Capability Hub AI",
+  "version": "1.0.0",
+  "agentRules": "./instructions.md",
+  "systemDoc": "../AGENTS.md",
+  "devServer": {
+    "command": "npm run dev",
+    "port": 3000,
+    "host": "0.0.0.0"
+  },
+  "buildCommand": "npm run build",
+  "lintCommand": "npm run lint",
+  "requiredEnv": [
+    "GEMINI_API_KEY"
+  ]
+}

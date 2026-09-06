@@ -1,0 +1,28 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Python backend
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Local database. Derived: the schema and seed are owned by server-db.ts and
+# recreated on boot. Also accumulates bcrypt password hashes as accounts are
+# claimed, which do not belong in version control.
+capability-hub.db
+capability-hub.db-journal
+capability-hub.db-wal
+capability-hub.db-shm
+
+# Captured session cookie from local curl testing - a live credential.
+cookie.txt
+
+# Port bundles: build artifacts, regenerated on demand.
+cybridge-changes-*.zip
+cybridge-python-backend.zip

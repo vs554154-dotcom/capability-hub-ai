@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -ohEr \"fetch\\\\\\(\\\\s*[\\\\`\\\\\"'][^\\\\`\\\\\"']+\" src)",
+      "Bash(echo \"exists?: $?\")",
+      "Bash(npm install *)",
+      "PowerShell(npm install --no-audit --no-fund)",
+      "PowerShell($paths = @\\(\"$env:ProgramFiles\\\\nodejs\\\\npm.cmd\", \"$env:APPDATA\\\\npm\\\\npm.cmd\", \"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\\\\npm.cmd\", \"$env:USERPROFILE\\\\.bun\\\\bin\\\\bun.exe\", \"$env:LOCALAPPDATA\\\\fnm_multishells\", \"$env:ProgramFiles\\\\nodejs\\\\node.exe\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { \"FOUND: $p\" } else { \"missing: $p\" } }; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\" -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)",
+      "Bash(awk '{ for\\(i=1;i<=length\\($0\\);i++\\){c=substr\\($0,i,1\\); if\\(c==\"{\"\\) n++; if\\(c==\"}\"\\) n--} } END { print \"brace balance:\", n, \"lines:\", NR }' src/index.css)"
+    ]
+  }
+}

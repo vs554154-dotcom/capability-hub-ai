@@ -1,0 +1,11 @@
+# CyBridge Python backend (local / on-prem).
+# The Node server (server.ts) remains the AI Studio deployment path; this is a
+# parallel implementation of the same API contract.
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+itsdangerous==2.2.0          # signed session cookies (Starlette SessionMiddleware)
+bcrypt==4.2.1                # password hashing, compatible with bcryptjs hashes
+python-dotenv==1.0.1
+google-genai==0.3.0          # Gemini, ported in a later stage
