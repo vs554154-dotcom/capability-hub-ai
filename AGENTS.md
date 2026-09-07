@@ -75,12 +75,14 @@ Consequences for anyone (human or agent) working here:
 - **Body**: `{ "jobDescription": "...", "questionTitle": "...", "questionText": "...", "keyRubrics": [...], "candidateAnswer": "..." }`
 - **Response**: `{ "success": true, "evaluation": { "overallScore": 85, "technicalScore": 88, "problemSolvingScore": 82, "communicationScore": 86, "strengths": [...], "missingConcepts": [...], "feedback": "...", "recommendedLearning": [...] } }`
 
-### `POST /api/agent/chat`
-- **Purpose**: General cognitive copilot interaction for SkillGap, Concierge, Coach, and Analytics agents.
-- **Body**: `{ "agentType": "skill_gap" | "concierge" | "coach" | "analytics", "userPrompt": "...", "currentUser": {...} }`
+### `POST /api/ai/orchestrator`
+- **Purpose**: General cognitive copilot interaction for SkillGap, Concierge, Coach, and Analytics agents. Falls back to deterministic text when `GEMINI_API_KEY` is absent or the model call fails.
+- **Body**: `{ "userId": "...", "prompt": "...", "agent": "skill_gap" | "concierge" | "coach" | "analytics", "skillId": "..." }`
+- **Response**: `{ "response": "..." }`
 
-### `GET /api/matrix/data`
-- **Purpose**: Returns employee skill/will scores, capability gaps, and Skill-vs-Will 2×2 quadrant distribution data.
+### `GET /api/manager/:id/team`
+- **Purpose**: Returns each direct report's skill/will/engagement scores, gap counts, risk status, and pending validations — the data that drives the Skill-vs-Will 2×2 quadrant view. Requires a manager/L&D/leadership session; a manager may only read their own team.
+- **Response**: `[{ "userId": "...", "userName": "...", "skillScore": 0, "willScore": 0, "engagementScore": 0, "gapCount": 0, "riskStatus": "Low" | "Medium" | "High", ... }]`
 
 ---
 
