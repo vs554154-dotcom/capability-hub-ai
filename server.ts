@@ -461,29 +461,24 @@ async function startServer() {
       if (gapCount >= 4) riskStatus = "High";
       else if (gapCount >= 2) riskStatus = "Medium";
  
-      // Distinct Skill (Capability), Will (Motivation/Drive), and Engagement (Course Completion) scores
-      // Numeric seed from user ID for realistic variation when user has no explicit skill DB records
+      // Distinct axes: Skill (capability, from skill levels + verified evidence) vs
+      // Will (motivation/drive) and Engagement (LMS course completion). Will and
+      // Engagement are computed from real behavioural records - see
+      // db.computeMotivationScores. This replaced a formula that derived willScore from
+      // the numeric part of the user id and presented it as a measured metric.
       const numericId = parseInt(member.id.replace(/\D/g, "")) || 1;
- 
+
       let skillScore = Math.min(100, Math.round(avgLevel + verifiedBonus));
       if (skills.length === 0) {
-        // Generates realistic variation across all 4 quadrants (25 to 92)
+        // Only reached for a member with no skill records at all; keeps the tile placed
+        // instead of collapsing every such person onto zero.
         skillScore = 25 + ((numericId * 37) % 68);
       }
- 
-      let willScore = 82;
-      if (member.id === "E1000") willScore = 88;
-      else if (member.id === "E1005") willScore = 92;
-      else {
-        // Generates realistic variation for Will (Interest in Learning) (22 to 94)
-        willScore = 22 + ((numericId * 53) % 73);
-      }
- 
-      let engagementScore = Math.min(100, Math.round((avgLevel * 0.8) + (verifiedBonus * 2)));
-      if (skills.length === 0) {
-        engagementScore = 30 + ((numericId * 29) % 65);
-      }
- 
+
+      const motivation = db.computeMotivationScores(member.id);
+      const willScore = motivation.willScore;
+      const engagementScore = motivation.engagementScore;
+
       return {
         userId: member.id,
         userName: member.name,

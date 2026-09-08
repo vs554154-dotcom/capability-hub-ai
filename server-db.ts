@@ -860,6 +860,122 @@ const INITIAL_LEARNING_PLANS: WeeklyLearningStep[] = [
   }
 ];
  
+// Per-employee learning behaviour, seeded so the Will (Interest in Learning) axis of
+// the Skill-vs-Will matrix is COMPUTED from real records rather than invented. Before
+// this, willScore was `22 + (numericId * 53) % 73` - a number derived from the user's
+// id and dressed up as a measured metric.
+//
+// Two design choices keep the axis honest and defensible:
+//   1. Will is deliberately INDEPENDENT of Skill. A highly skilled employee can be
+//      disengaged (E1005: strong skills, no learning activity -> Retain & Coach) and a
+//      less skilled one highly motivated (E1010: eager learner -> high Will). If Will
+//      simply tracked Skill the 2x2 would collapse to a diagonal.
+//   2. Seeded evidence is mostly `pending`. Evidence submission signals initiative
+//      (Will), but only *approved* evidence adds the skill bonus, so pending evidence
+//      raises Will without inflating Skill - the two axes stay genuinely separate.
+//
+// Each number here corresponds to real rows generated below, so the score reconciles
+// with what the employee's own dashboard shows (their learning plan and evidence).
+// E1000 already has 3 hand-authored plans + 1 approved evidence, so it only adds
+// initiative here; E1005 is intentionally left empty.
+const ENGAGEMENT_PROFILES: {
+  [userId: string]: { steps: number; completed: number; quiz: number; minutes: number; evidence: number; evidenceApproved: number };
+} = {
+  E1000: { steps: 0, completed: 0, quiz: 0,  minutes: 0,   evidence: 2, evidenceApproved: 0 },
+  E1001: { steps: 4, completed: 3, quiz: 84, minutes: 240, evidence: 2, evidenceApproved: 1 },
+  E1002: { steps: 3, completed: 1, quiz: 63, minutes: 55,  evidence: 0, evidenceApproved: 0 },
+  E1003: { steps: 4, completed: 2, quiz: 77, minutes: 150, evidence: 1, evidenceApproved: 0 },
+  E1004: { steps: 5, completed: 5, quiz: 91, minutes: 400, evidence: 3, evidenceApproved: 1 },
+  E1005: { steps: 0, completed: 0, quiz: 0,  minutes: 0,   evidence: 0, evidenceApproved: 0 },
+  E1006: { steps: 3, completed: 1, quiz: 60, minutes: 45,  evidence: 0, evidenceApproved: 0 },
+  E1007: { steps: 4, completed: 3, quiz: 82, minutes: 220, evidence: 2, evidenceApproved: 1 },
+  E1008: { steps: 2, completed: 0, quiz: 0,  minutes: 20,  evidence: 0, evidenceApproved: 0 },
+  E1009: { steps: 5, completed: 4, quiz: 88, minutes: 330, evidence: 2, evidenceApproved: 1 },
+  E1010: { steps: 5, completed: 5, quiz: 90, minutes: 410, evidence: 3, evidenceApproved: 0 },
+  E1011: { steps: 4, completed: 2, quiz: 74, minutes: 140, evidence: 1, evidenceApproved: 0 },
+  E1012: { steps: 3, completed: 1, quiz: 66, minutes: 60,  evidence: 0, evidenceApproved: 0 },
+  E1013: { steps: 5, completed: 5, quiz: 92, minutes: 380, evidence: 3, evidenceApproved: 1 },
+  E1014: { steps: 3, completed: 2, quiz: 79, minutes: 130, evidence: 1, evidenceApproved: 0 },
+  E1015: { steps: 4, completed: 2, quiz: 75, minutes: 150, evidence: 1, evidenceApproved: 0 },
+  E1016: { steps: 4, completed: 3, quiz: 85, minutes: 250, evidence: 2, evidenceApproved: 1 },
+  E1017: { steps: 2, completed: 0, quiz: 0,  minutes: 25,  evidence: 0, evidenceApproved: 0 },
+  E1018: { steps: 4, completed: 3, quiz: 81, minutes: 210, evidence: 1, evidenceApproved: 0 },
+  E1019: { steps: 5, completed: 4, quiz: 87, minutes: 300, evidence: 2, evidenceApproved: 1 },
+};
+
+const ENG_STEP_TITLES = [
+  "Foundations & Core Concepts", "Applied Practice Lab", "Advanced Patterns Workshop",
+  "Capstone Project Build", "Peer Review & Refinement",
+];
+const ENG_COURSES = [
+  { name: "Modern Engineering Foundations", provider: "Coursera" },
+  { name: "Hands-On Applied Practice", provider: "Udemy" },
+  { name: "Advanced Design Patterns", provider: "Pluralsight" },
+  { name: "Capstone Delivery Track", provider: "LinkedIn Learning" },
+  { name: "Professional Review Studio", provider: "edX" },
+];
+
+// Turns the compact profiles above into the actual learning_plans and evidences rows
+// the Will formula reads. IDs are prefixed `eng_` so they never collide with the
+// hand-authored seed rows; INSERT OR IGNORE makes re-seeding idempotent.
+function buildEngagementSeed(): { plans: WeeklyLearningStep[]; evidences: Evidence[] } {
+  const plans: WeeklyLearningStep[] = [];
+  const evidences: Evidence[] = [];
+  const jitter = [0, -2, 3, -1, 2];
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  for (const [uid, p] of Object.entries(ENGAGEMENT_PROFILES)) {
+    const skillId = INITIAL_USER_SKILLS[uid]?.[0]?.skillId || "sk_20";
+    const perStep = p.completed > 0 ? Math.round(p.minutes / p.completed) : 0;
+
+    for (let i = 0; i < p.steps; i++) {
+      const done = i < p.completed;
+      const status: "completed" | "in_progress" | "pending" =
+        done ? "completed" : i === p.completed ? "in_progress" : "pending";
+      plans.push({
+        id: `eng_plan_${uid}_${i + 1}`,
+        userId: uid,
+        weekNumber: i + 1,
+        title: ENG_STEP_TITLES[i % ENG_STEP_TITLES.length],
+        skillFocus: "Target Role Competencies",
+        courseName: ENG_COURSES[i % ENG_COURSES.length].name,
+        provider: ENG_COURSES[i % ENG_COURSES.length].provider,
+        milestone: "Complete the module assessment and applied exercise",
+        assessment: "Module Knowledge Check",
+        targetScore: "80%",
+        status,
+        progressPercent: done ? 100 : status === "in_progress" ? 50 : 0,
+        learningType: "in_depth",
+        estimatedDuration: "1 hour",
+        phaseLabel: `Phase ${i + 1}`,
+        targetDeadline: "2026-09-30",
+        deadlineType: "learner_set",
+        quizScore: done ? Math.max(0, Math.min(100, p.quiz + jitter[i % jitter.length])) : 0,
+        timeSpentMins: done ? perStep : status === "in_progress" ? Math.round(perStep * 0.4) : 0,
+        completedAt: done ? `2026-08-${pad(10 + i)}` : undefined,
+      });
+    }
+
+    for (let i = 0; i < p.evidence; i++) {
+      const approved = i < p.evidenceApproved;
+      evidences.push({
+        id: `eng_ev_${uid}_${i + 1}`,
+        userId: uid,
+        skillId,
+        title: `Applied ${["Workplace Task", "Project Contribution", "Skill Demonstration"][i % 3]}`,
+        description: "Self-submitted evidence of applying a target skill on real work.",
+        evidenceText: "Documented the task, the approach taken, and the outcome, with a link to the deliverable.",
+        status: approved ? "approved" : "pending",
+        submittedAt: `2026-08-${pad(5 + i)}T09:00:00Z`,
+        reviewedBy: approved ? "user_2" : undefined,
+        reviewComment: approved ? "Verified - clear evidence of applied capability." : undefined,
+        reviewedAt: approved ? `2026-08-${pad(6 + i)}T12:00:00Z` : undefined,
+      });
+    }
+  }
+  return { plans, evidences };
+}
+
 const INITIAL_REMINDERS: AgentReminder[] = [
   // {
   //   id: "rem_1",
@@ -1396,7 +1512,10 @@ function seedDatabase() {
       INSERT OR IGNORE INTO learning_plans (id, userId, weekNumber, title, skillFocus, courseName, provider, milestone, assessment, targetScore, status, progressPercent, learningType, estimatedDuration, phaseLabel, targetDeadline, deadlineType, quizScore, timeSpentMins, completedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    for (const p of INITIAL_LEARNING_PLANS) {
+    // Hand-authored plans first, then the generated engagement plans that make the
+    // Will axis measurable. Both go through the same INSERT OR IGNORE.
+    const engagement = buildEngagementSeed();
+    for (const p of [...INITIAL_LEARNING_PLANS, ...engagement.plans]) {
       insertPlan.run(
         p.id,
         p.userId,
@@ -1418,6 +1537,13 @@ function seedDatabase() {
         p.quizScore || 0,
         p.timeSpentMins || 0,
         p.completedAt || null
+      );
+    }
+    for (const ev of engagement.evidences) {
+      insertEvidence.run(
+        ev.id, ev.userId, ev.skillId, ev.title, ev.description, ev.evidenceText,
+        ev.documentUrl || null, ev.status, ev.submittedAt,
+        ev.reviewedBy || null, ev.reviewComment || null, ev.reviewedAt || null
       );
     }
  
@@ -1678,7 +1804,53 @@ class SqliteDatabaseWrapper {
       purpose: r.purpose || "career_growth"
     }));
   }
- 
+
+  // Skill measures capability; Will measures motivation/drive - they must stay
+  // independent for the 2x2 matrix to mean anything. Will is a transparent blend of
+  // behavioural signals already recorded elsewhere in the app:
+  //   40% learning engagement  - LMS follow-through: how much of a plan is completed,
+  //                              quiz performance on completed modules, and time invested
+  //   30% evidence initiative  - proactively submitting workplace evidence (approved OR
+  //                              pending - initiative counts regardless of the verdict)
+  //   20% goal progress        - how far skills have been driven toward their targets
+  //   10% goal commitment      - whether a target role has actively been chosen
+  // Engagement is the distinct LMS course-completion percentage. Both derive only from
+  // real rows, so they reconcile with the employee's own learning plan and evidence.
+  computeMotivationScores(userId: string): { willScore: number; engagementScore: number } {
+    const skills = this.getUserSkills(userId);
+    const plans = this.getLearningPlan(userId);
+    const evidences = this.getEvidences().filter(e => e.userId === userId);
+    const user = this.getUserById(userId);
+
+    const totalSteps = plans.length;
+    const completedSteps = plans.filter(p => p.status === "completed").length;
+    const completionRatio = totalSteps > 0 ? completedSteps / totalSteps : 0;
+
+    const completedWithQuiz = plans.filter(p => p.status === "completed" && (p.quizScore ?? 0) > 0);
+    const avgQuiz = completedWithQuiz.length > 0
+      ? completedWithQuiz.reduce((sum, p) => sum + (p.quizScore || 0), 0) / completedWithQuiz.length
+      : 0;
+
+    const minutes = plans.reduce((sum, p) => sum + (p.timeSpentMins || 0), 0);
+    const timeNorm = Math.min(1, minutes / 300); // ~5h of study reads as fully invested
+
+    const learning = 0.5 * completionRatio * 100 + 0.3 * avgQuiz + 0.2 * timeNorm * 100;
+    const evidenceInitiative = Math.min(100, evidences.length * 30);
+
+    const withTarget = skills.filter(s => s.targetLevel > 0);
+    const progress = withTarget.length > 0
+      ? (withTarget.reduce((sum, s) => sum + Math.min(1, s.currentLevel / s.targetLevel), 0) / withTarget.length) * 100
+      : 0;
+
+    const commitment = user?.targetRoleId ? 100 : 0;
+
+    const willScore = Math.round(Math.max(0, Math.min(100,
+      0.40 * learning + 0.30 * evidenceInitiative + 0.20 * progress + 0.10 * commitment)));
+    const engagementScore = Math.round(completionRatio * 100);
+
+    return { willScore, engagementScore };
+  }
+
   updateLearningPlanWeek(
     stepId: string, 
     status: "completed" | "in_progress" | "pending", 

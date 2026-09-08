@@ -386,7 +386,7 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
           <div className="h-2.5 w-2.5 rounded-full bg-[#A855F7] mt-1 shrink-0" />
           <div>
             <span className="font-bold text-[#A855F7] block font-mono text-[11px]">Will & Growth Engagement (X-Axis)</span>
-            <span className="text-[10px] text-[#94A3B8] leading-tight block mt-0.5">Developmental signal for coaching & planning (Not an automated gate).</span>
+            <span className="text-[10px] text-[#94A3B8] leading-tight block mt-0.5">Motivation from real activity: learning follow-through, evidence initiative & goal progress. A coaching signal, not an automated gate.</span>
           </div>
         </div>
 
