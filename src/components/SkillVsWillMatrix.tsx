@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { TeamMemberCapability } from "../types";
 import { Sparkles, Download, ShieldCheck, UserCheck, AlertTriangle, CheckCircle2, Presentation, HelpCircle } from "lucide-react";
 
@@ -125,37 +125,6 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
   const [presentationMode, setPresentationMode] = useState<boolean>(false);
   const [exportNotice, setExportNotice] = useState<string>("");
 
-  // Handle case where manager has no reportees mapped
-  if (teamMembers && teamMembers.length === 0) {
-    return (
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-[#2A384C] pb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 bg-[#4F8EF7]/10 text-[#4F8EF7] border border-[#4F8EF7]/40 rounded text-[10px] font-mono font-bold uppercase tracking-wider">
-                DEPLOYIQ Intelligence
-              </span>
-              <span className="text-xs text-[#94A3B8] font-mono">Skill-vs-Will 2×2 Quadrant Model</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#F0F4FF]">Skill-vs-Will Matrix (2×2 Quadrant Model)</h3>
-          </div>
-        </div>
-
-        <div className="p-8 bg-[#0F1724] border-2 border-dashed border-[#2A384C] rounded-xl text-center space-y-3">
-          <UserCheck className="h-12 w-12 text-[#94A3B8] mx-auto opacity-60" />
-          <h4 className="text-base font-bold text-[#F0F4FF] font-mono">No Direct Reportees Mapped</h4>
-          <p className="text-xs text-[#94A3B8] font-sans max-w-lg mx-auto leading-relaxed">
-            No reportees have been mapped to <strong className="text-[#F0F4FF] font-bold">{managerName || "this manager"}</strong>, and hence we cannot show the Skill vs Will graph.
-          </p>
-          <div className="pt-2 flex items-center justify-center gap-2 text-[11px] text-[#4F8EF7] font-mono">
-            <HelpCircle className="h-4 w-4 shrink-0" />
-            <span>Assign team members to this manager profile in the directory to enable capability & learning interest matrix analytics.</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Construct active cohort from teamMembers prop if available
   const activeCohort: MatrixEmployee[] = (teamMembers && teamMembers.length > 0)
     ? teamMembers.map((m, idx) => {
@@ -201,6 +170,149 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
   const filteredEmployees = selectedQuadrant === "All"
     ? activeCohort
     : activeCohort.filter(e => e.quadrant === selectedQuadrant);
+
+  // The bubble overlay is measured rather than assumed: collision has to be resolved
+  // in pixels, because a percentage step is a different distance horizontally than
+  // vertically unless the plot happens to be square.
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const [overlayBox, setOverlayBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  useLayoutEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const measure = () => setOverlayBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Bubbles are anchored at their true (skill, will) score, then relaxed apart just
+  // far enough to stop overlapping. The previous approach offset each bubble by a
+  // golden angle at a fixed 1.5% radius - about 7px in a 500px plot, against bubbles
+  // 34-52px wide - so two people with equal scores still sat almost exactly on top of
+  // each other. Displacement here is proportional to the actual overlap instead.
+  //
+  // This does move a bubble off its exact coordinate when the area is crowded. That
+  // trade is deliberate and bounded: the hover card and the table below remain the
+  // authoritative read of a person's scores.
+  const bubbleLayout = useMemo(() => {
+    const MIN_PCT = 8;
+    const MAX_PCT = 88;
+    const GAP_PX = 4;
+
+    const nodes = filteredEmployees.map((emp, idx) => ({
+      id: emp.id,
+      idx,
+      size: Math.min(52, Math.max(34, 32 + emp.experienceYears * 1.8)),
+      topPct: Math.min(MAX_PCT, Math.max(MIN_PCT, 100 - emp.skillScore)),
+      leftPct: Math.min(MAX_PCT, Math.max(MIN_PCT, 100 - emp.willScore)),
+    }));
+
+    const positions = new Map<string, { topPct: number; leftPct: number }>();
+
+    // Before the first measurement there is no pixel frame to separate within, so
+    // fall back to the raw anchors rather than guessing at a container size.
+    if (!overlayBox.w || !overlayBox.h) {
+      nodes.forEach(n => positions.set(n.id, { topPct: n.topPct, leftPct: n.leftPct }));
+      return positions;
+    }
+
+    const pts = nodes.map(n => ({
+      ...n,
+      x: (n.leftPct / 100) * overlayBox.w,
+      y: (n.topPct / 100) * overlayBox.h,
+    }));
+
+    const minX = (MIN_PCT / 100) * overlayBox.w;
+    const maxX = (MAX_PCT / 100) * overlayBox.w;
+    const minY = (MIN_PCT / 100) * overlayBox.h;
+    const maxY = (MAX_PCT / 100) * overlayBox.h;
+
+    for (let iter = 0; iter < 80; iter++) {
+      let moved = false;
+
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i];
+          const b = pts[j];
+          const needed = (a.size + b.size) / 2 + GAP_PX;
+
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          let dist = Math.hypot(dx, dy);
+
+          // Identical scores give a zero vector with no direction to separate along.
+          // Seed one from the index so the arrangement stays deterministic between
+          // renders - a random nudge would make bubbles twitch on every re-render.
+          if (dist < 0.001) {
+            const angle = (a.idx * 137.5 * Math.PI) / 180;
+            dx = Math.cos(angle);
+            dy = Math.sin(angle);
+            dist = 1;
+          }
+
+          if (dist < needed) {
+            const push = (needed - dist) / 2;
+            const ux = dx / dist;
+            const uy = dy / dist;
+            a.x -= ux * push;
+            a.y -= uy * push;
+            b.x += ux * push;
+            b.y += uy * push;
+            moved = true;
+          }
+        }
+      }
+
+      for (const p of pts) {
+        p.x = Math.min(maxX, Math.max(minX, p.x));
+        p.y = Math.min(maxY, Math.max(minY, p.y));
+      }
+
+      if (!moved) break;
+    }
+
+    pts.forEach(p => positions.set(p.id, {
+      topPct: (p.y / overlayBox.h) * 100,
+      leftPct: (p.x / overlayBox.w) * 100,
+    }));
+    return positions;
+  }, [filteredEmployees, overlayBox]);
+
+  // Handle case where manager has no reportees mapped.
+  // This early return sits below every hook on purpose: React requires the same
+  // hooks to run in the same order on every render, so returning above them would
+  // change the hook count whenever a manager's team is empty.
+  if (teamMembers && teamMembers.length === 0) {
+    return (
+      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#2A384C] pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 bg-[#4F8EF7]/10 text-[#4F8EF7] border border-[#4F8EF7]/40 rounded text-[10px] font-mono font-bold uppercase tracking-wider">
+                DEPLOYIQ Intelligence
+              </span>
+              <span className="text-xs text-[#94A3B8] font-mono">Skill-vs-Will 2×2 Quadrant Model</span>
+            </div>
+            <h3 className="text-xl font-bold text-[#F0F4FF]">Skill-vs-Will Matrix (2×2 Quadrant Model)</h3>
+          </div>
+        </div>
+
+        <div className="p-8 bg-[#0F1724] border-2 border-dashed border-[#2A384C] rounded-xl text-center space-y-3">
+          <UserCheck className="h-12 w-12 text-[#94A3B8] mx-auto opacity-60" />
+          <h4 className="text-base font-bold text-[#F0F4FF] font-mono">No Direct Reportees Mapped</h4>
+          <p className="text-xs text-[#94A3B8] font-sans max-w-lg mx-auto leading-relaxed">
+            No reportees have been mapped to <strong className="text-[#F0F4FF] font-bold">{managerName || "this manager"}</strong>, and hence we cannot show the Skill vs Will graph.
+          </p>
+          <div className="pt-2 flex items-center justify-center gap-2 text-[11px] text-[#4F8EF7] font-mono">
+            <HelpCircle className="h-4 w-4 shrink-0" />
+            <span>Assign team members to this manager profile in the directory to enable capability & learning interest matrix analytics.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getReadinessBadgeClass = (readiness: string) => {
     switch (readiness) {
@@ -437,17 +549,13 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
           </div>
 
           {/* ABSOLUTE OVERLAY FOR EMPLOYEE BUBBLE DOTS */}
-          <div className="absolute inset-0 pl-14 pb-8 pointer-events-none">
-            {filteredEmployees.map((emp, idx) => {
-              // Map skillScore (0-100) to top % (100 -> 8%, 0 -> 88%)
-              // Map willScore (0-100) to left % (100 -> 8%, 0 -> 88% - High Will on Left)
-              // Add slight position index offset to prevent exact overlapping dots
-              const offsetAngle = (idx * 137.5) * (Math.PI / 180);
-              const jitterX = Math.cos(offsetAngle) * 1.5;
-              const jitterY = Math.sin(offsetAngle) * 1.5;
-
-              const topPos = (100 - emp.skillScore) + jitterY;
-              const leftPos = (100 - emp.willScore) + jitterX;
+          <div ref={overlayRef} className="absolute inset-0 pl-14 pb-8 pointer-events-none">
+            {filteredEmployees.map((emp) => {
+              // skillScore -> top %, willScore -> left % (High Will on the left), both
+              // already anchored and de-overlapped by bubbleLayout above.
+              const placed = bubbleLayout.get(emp.id);
+              const topPos = placed ? placed.topPct : 100 - emp.skillScore;
+              const leftPos = placed ? placed.leftPct : 100 - emp.willScore;
 
               const bubbleSize = Math.min(52, Math.max(34, 32 + emp.experienceYears * 1.8));
               const isHovered = hoveredEmployee?.id === emp.id;
