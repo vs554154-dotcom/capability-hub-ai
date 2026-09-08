@@ -60,6 +60,30 @@ export default function App() {
   // Capability Metrics
   const [capabilityData, setCapabilityData] = useState<any>(null);
 
+  // Whether the signed-in employee has been shortlisted onto a project demand.
+  // Kept in its own effect keyed on the user id rather than folded into the bootstrap
+  // fetches, because it also has to clear on sign-out and re-run on account switch.
+  const [shortlist, setShortlist] = useState<{ isShortlisted: boolean; demand: any } | null>(null);
+
+  useEffect(() => {
+    const userId = currentUser?.id;
+    if (!userId) {
+      setShortlist(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/users/${userId}/shortlist`);
+        // A stale response from a previous user must not overwrite the current one.
+        if (!cancelled && res.ok) setShortlist(await res.json());
+      } catch (err) {
+        console.error("Shortlist lookup failed:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser?.id]);
+
   // Dynamic initial greeting generator based on active user
   const getInitialMessagesForUser = (user: User, rolesList: TargetRole[]): Message[] => {
     const firstName = user.name ? user.name.split(" ")[0] : "there";
@@ -620,6 +644,8 @@ export default function App() {
             onTargetRoleChange={handleTargetRoleChange}
             onSubmitEvidence={handleSubmitEvidence}
             onRefresh={refreshCurrentUser}
+            isShortlisted={!!shortlist?.isShortlisted}
+            shortlistDemand={shortlist?.demand ?? undefined}
           />
         )}
 

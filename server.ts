@@ -508,6 +508,18 @@ async function startServer() {
     const plan = db.getLearningPlan(req.params.id);
     res.json(plan);
   });
+
+  // Whether this employee has been shortlisted onto a project demand, and which one.
+  // Guarded like the other per-user reads: an employee sees only their own status, a
+  // manager only their reports'.
+  app.get("/api/users/:id/shortlist", requireAuth, requireSelfManagerOrElevated("id"), (req, res) => {
+    const shortlist = db.getActiveShortlist(req.params.id);
+    res.json({
+      isShortlisted: !!shortlist,
+      demand: shortlist?.demand ?? null,
+      shortlistedAt: shortlist?.shortlistedAt ?? null,
+    });
+  });
  
   // Get Resource Learning Progress across all resources (Manager & L&D Tracker)
   app.get("/api/learning-tracker/resources", requireAuth, (req, res) => {

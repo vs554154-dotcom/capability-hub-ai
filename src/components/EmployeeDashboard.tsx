@@ -3,6 +3,18 @@ import { User, Skill, TargetRole, LearningCourse, Evidence, WeeklyLearningStep }
 import { SkillRadarChart } from "./SkillRadarChart";
 import { Award, Briefcase, CheckCircle2, AlertCircle, Send, GraduationCap, Clock, ExternalLink, Calendar, CheckSquare, Sparkles, ChevronRight, Zap, BookOpen, Wrench, Edit3, Target, X, Check, FileText, Star, Users } from "lucide-react";
 
+// Demand dates are stored as full ISO timestamps, which render as
+// "2026-08-27T10:00:00Z" if passed straight through. Show a readable date, and fall
+// back to the raw string rather than "Invalid Date" if it is ever not parseable.
+const formatInterviewDate = (value?: string): string => {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+  });
+};
+
 interface EmployeeDashboardProps {
   currentUser: User;
   skills: Skill[];
@@ -205,14 +217,17 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <span>Shortlisted for:</span>
-              <span className="text-[#10B981]">{shortlistDemand?.projectName || "Enterprise AI Transformation Requisition"}</span>
+              {/* No invented fallbacks here. These previously defaulted to a named
+                  client and a fixed date, which would render fabricated details as
+                  though they were this employee's real assignment. */}
+              <span className="text-[#10B981]">{shortlistDemand?.projectName || "Project assignment"}</span>
             </h2>
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#94A3B8]">
-              <span>Client: <strong className="text-white">{shortlistDemand?.customerName || "Goldman Sachs & Co."}</strong></span>
+              <span>Client: <strong className="text-white">{shortlistDemand?.customerName || "—"}</strong></span>
               <span>•</span>
-              <span>Target Interview: <strong className="text-[#4F8EF7]">{shortlistDemand?.clientInterviewDate || "2026-08-15"}</strong></span>
+              <span>Target Interview: <strong className="text-[#4F8EF7]">{formatInterviewDate(shortlistDemand?.clientInterviewDate)}</strong></span>
               <span>•</span>
-              <span>Location: <strong className="text-white">{shortlistDemand?.location || "Hybrid / New York"}</strong></span>
+              <span>Location: <strong className="text-white">{shortlistDemand?.location || "—"}</strong></span>
             </div>
           </div>
           

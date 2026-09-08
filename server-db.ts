@@ -1830,6 +1830,28 @@ class SqliteDatabaseWrapper {
     });
   }
  
+  // An employee counts as shortlisted once a manager hands them off to a demand:
+  // that handoff is exactly what writes their skill baselines for it, so the most
+  // recent capture identifies their active opportunity. Deriving it this way avoids
+  // a second source of truth that could disagree with the handoff itself.
+  getActiveShortlist(userId: string): { demand: ProjectDemand; shortlistedAt: string } | null {
+    const row = this.db.prepare(`
+      SELECT demandId, MAX(capturedAt) AS capturedAt
+      FROM skill_baselines
+      WHERE userId = ?
+      GROUP BY demandId
+      ORDER BY capturedAt DESC
+      LIMIT 1
+    `).get(userId) as { demandId: string; capturedAt: string } | undefined;
+
+    if (!row) return null;
+    const demand = this.getProjectDemandById(row.demandId);
+    // A demand can be deleted after a handoff; treat the dangling baseline as no
+    // shortlist rather than surfacing a half-populated banner.
+    if (!demand) return null;
+    return { demand, shortlistedAt: row.capturedAt };
+  }
+
   getSkillGrowth(userId: string, demandId: string) {
     const baselineStmt = this.db.prepare("SELECT skillId, baselineLevel FROM skill_baselines WHERE userId = ? AND demandId = ?");
     const baselines = baselineStmt.all(userId, demandId) as { skillId: string; baselineLevel: number }[];
