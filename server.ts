@@ -9,6 +9,7 @@ import cors from "cors";
 import { db } from "./server-db.ts";
 import { UserRole } from "./src/types";
 import session from "express-session";
+import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
  
 declare module "express-session" {
@@ -102,6 +103,21 @@ async function startServer() {
   const cookieSecure = IS_HTTPS_DEPLOY || cookieSameSite === "none";
 
   app.set("trust proxy", 1);
+
+  // Rate-limit authentication to blunt brute-force password guessing and rapid
+  // password-claiming. Keyed by client IP (honouring `trust proxy` above). Both
+  // successful and failed attempts count, with a ceiling generous enough for
+  // interactive demo use but far below what an automated attack needs - tune via
+  // AUTH_RATE_LIMIT_MAX. The store is in-memory, so the count is per instance: fine for
+  // a single-instance deploy; use a shared store (e.g. Redis) if scaling horizontally.
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: Number(process.env.AUTH_RATE_LIMIT_MAX) || 30,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { error: "Too many login attempts from this location. Please wait a few minutes and try again." },
+  });
+
   app.use(session({
     name: "chub_sid",
     secret: SESSION_SECRET,
@@ -213,7 +229,7 @@ async function startServer() {
     console.warn("DEMO_MODE is enabled: password-free quick login and the in-app role switcher will work for ANY account. Do not enable this outside a trusted demo/pilot.");
   }
  
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     const { userId, email, password, pin, identifier } = req.body;
     const suppliedSecret: string | undefined = password || pin;
  
