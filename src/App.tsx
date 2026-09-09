@@ -544,8 +544,19 @@ export default function App() {
   // Tabs reachable without a session. Anything else falls back to the landing page,
   // so a stale tab can never render someone else's workspace.
   const PUBLIC_TABS = ["home", "login"];
+
+  // The workspace each role lands on after signing in.
+  const roleLandingTab = (role: UserRole) =>
+    role === UserRole.MANAGER ? "manager_dash"
+    : role === UserRole.LD ? "ld_dash"
+    : role === UserRole.LEADERSHIP ? "leadership_dash"
+    : "dashboard";
+
+  // Signed in, the landing/login pages are no longer meaningful destinations - they are
+  // the signed-out surface. Resolve them to the user's own workspace so a stale tab (or
+  // a browser restore) can't drop an authenticated person back onto the marketing page.
   const effectiveTab = isAuthenticated
-    ? activeTab
+    ? (PUBLIC_TABS.includes(activeTab) ? roleLandingTab(activeUser.role) : activeTab)
     : (PUBLIC_TABS.includes(activeTab) ? activeTab : "home");
 
   // Screens that belong to people who manage others. An employee session never

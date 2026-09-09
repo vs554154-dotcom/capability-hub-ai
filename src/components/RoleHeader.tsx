@@ -1,6 +1,6 @@
 import React from "react";
 import { User, UserRole } from "../types";
-import { Users, Shield, Sparkles, Building2, TrendingUp, LogOut, Palette, Home } from "lucide-react";
+import { Users, Shield, Sparkles, Building2, TrendingUp, LogOut, Palette } from "lucide-react";
 import { BrandMark } from "./BrandLogo";
 
 interface RoleHeaderProps {
@@ -172,21 +172,12 @@ export const RoleHeader: React.FC<RoleHeaderProps> = ({
 
         </div>
 
-        {/* Global Navigation Tabs */}
+        {/* Global Navigation Tabs.
+            No "Home Landing & Portal" tab here on purpose: that page is the signed-out
+            marketing/login surface. Once someone is authenticated the nav should offer
+            only the workspaces their role can actually use, plus Logout above - showing
+            a route back to the sales page is confusing and has no function post-login. */}
         <div className="flex space-x-2 border-t border-[#2A384C]/80 overflow-x-auto pt-2 pb-0.5">
-          <button
-            id="tab-btn-home"
-            onClick={() => onTabChange("home")}
-            className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-              activeTab === "home"
-                ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-            }`}
-          >
-            <Home className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-            Home Landing & Portal
-          </button>
-
           {/* DEMAND-TO-DEPLOYMENT AGENT — talent sourcing, so managers and above only */}
           {currentUser.role !== UserRole.EMPLOYEE && (
           <button
