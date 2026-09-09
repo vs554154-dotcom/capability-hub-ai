@@ -102,6 +102,26 @@ async def require_self_or_elevated_body(
     raise HTTPException(status_code=403, detail=NOT_OWN_ACTION)
 
 
+async def require_learning_step_owner(request: Request) -> dict[str, Any]:
+    """Target is a learning step, whose owner has to be looked up before it can be
+    authorized. The handler previously checked only that the caller was logged in, so
+    any authenticated employee could write any step by id. An unknown stepId falls
+    through to the handler, which rejects it - no data is exposed either way.
+    """
+    user = get_session_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail=NOT_AUTHENTICATED)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    step_id = body.get("stepId") if isinstance(body, dict) else None
+    owner_id = db.get_learning_step_owner_id(step_id) if step_id else None
+    if _may_access(user, owner_id):
+        return user
+    raise HTTPException(status_code=403, detail=NOT_OWN_ACTION)
+
+
 # Convenience aliases mirroring the role sets used across server.ts routes.
 require_manager_or_above = require_role(MANAGER, LD, LEADERSHIP)
 require_leadership = require_role(LEADERSHIP)

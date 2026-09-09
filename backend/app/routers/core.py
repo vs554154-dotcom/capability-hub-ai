@@ -27,9 +27,27 @@ router = APIRouter(prefix="/api", tags=["core"])
 
 # Intentionally public, matching server.ts: the login screen lists accounts before
 # any session exists. Directory fields only - passwordHash is never mapped.
+# Headline count for the signed-out landing page. Public on purpose, but it is only a
+# number - no names, emails or roles leave the server before a session exists.
+@router.get("/directory/summary")
+async def directory_summary() -> dict[str, Any]:
+    return {"totalProfiles": len(db.get_users())}
+
+
+# The staff directory. This was previously public, which served every employee's name,
+# email, title and department to any anonymous caller - a harvestable directory of the
+# whole organisation. The client only ever used the LENGTH of this list, so the count
+# moved to /directory/summary above and the directory itself requires a session.
 @router.get("/users")
-async def get_users() -> list[dict[str, Any]]:
+async def get_users(_: dict = Depends(require_auth)) -> list[dict[str, Any]]:
     return db.get_users()
+
+
+# Organisation-wide workforce metrics for the L&D dashboard tiles. Org-wide data, so
+# it needs an org-wide role - the same audience as the dashboards that render it.
+@router.get("/analytics/workforce")
+async def workforce_metrics(_: dict = Depends(require_manager_or_above)) -> dict[str, Any]:
+    return db.get_workforce_metrics()
 
 
 @router.get("/skills")
@@ -100,25 +118,23 @@ async def get_team(
         gap_count = len([s for s in skills if s["currentLevel"] < s["targetLevel"]])
         risk_status = "High" if gap_count >= 4 else "Medium" if gap_count >= 2 else "Low"
 
-        # Numeric seed from the user id produces stable, spread-out scores for
-        # employees with no skill rows, so the 2x2 matrix is populated.
+        # Distinct axes: Skill (capability, from skill levels + verified evidence) vs
+        # Will (motivation/drive) and Engagement (LMS course completion). Will and
+        # Engagement are computed from real behavioural records - see
+        # db.compute_motivation_scores. This replaced a formula that derived willScore
+        # from the numeric part of the user id and presented it as a measured metric.
         digits = "".join(c for c in member["id"] if c.isdigit())
         numeric_id = int(digits) if digits else 1
 
         skill_score = min(100, js_round(avg_level + verified_bonus))
         if not skills:
+            # Only reached for a member with no skill records at all; keeps the tile
+            # placed instead of collapsing every such person onto zero.
             skill_score = 25 + ((numeric_id * 37) % 68)
 
-        if member["id"] == "E1000":
-            will_score = 88
-        elif member["id"] == "E1005":
-            will_score = 92
-        else:
-            will_score = 22 + ((numeric_id * 53) % 73)
-
-        engagement_score = min(100, js_round((avg_level * 0.8) + (verified_bonus * 2)))
-        if not skills:
-            engagement_score = 30 + ((numeric_id * 29) % 65)
+        motivation = db.compute_motivation_scores(member["id"])
+        will_score = motivation["willScore"]
+        engagement_score = motivation["engagementScore"]
 
         result.append({
             "userId": member["id"],

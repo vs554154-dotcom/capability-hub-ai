@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request
 from .. import db, security
 from ..config import DEMO_MODE
 from ..deps import NOT_AUTHENTICATED, get_session_user
+from ..ratelimit import enforce_auth_rate_limit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -30,6 +31,10 @@ def _resolve_target(body: dict[str, Any]) -> dict[str, Any] | None:
 
 @router.post("/login")
 async def login(request: Request) -> dict[str, Any]:
+    # Throttle before any credential is examined, so a brute-forcer is refused even
+    # on the request where they would finally guess right.
+    enforce_auth_rate_limit(request)
+
     body = await request.json()
     supplied_secret = body.get("password") or body.get("pin")
 

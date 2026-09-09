@@ -1,59 +1,39 @@
-# CyBridge — Python backend ❄️ FROZEN
+# CyBridge — Python backend (FastAPI)
 
-> **This backend is frozen as of 2026-09-06 and is NOT maintained.**
+> **This is the live backend as of 2026-09-09.** Backend work lands here.
+> See the *Architecture Decision* section of `AGENTS.md`.
 >
-> The project settled on a single backend: **Node.js/Express (`server.ts`)**.
-> See the *Architecture Decision* section of `AGENTS.md` for the reasoning.
->
-> **Do not add features here. Do not mirror `server.ts` changes into this tree.**
-> It will drift behind Node, and that is the intended outcome.
->
-> The parity suites below are **not a CI gate**. They passed at the moment of
-> freezing; once `server.ts` moves ahead they will legitimately fail. Do not
-> "fix" this backend to make them pass again.
->
-> Kept rather than deleted because it is a complete, tested reference
-> implementation of all 38 endpoints — cheap to retain, expensive to rebuild —
-> and it is the starting point if the project ever leaves AI Studio. Reviving it
-> would also require moving schema ownership out of `server-db.ts`, which was
-> deliberately never done.
+> `server.ts` / `server-db.ts` is retained only as the Google AI Studio
+> deployment path — that applet host runs Node and cannot run Python. It is
+> frozen for feature work.
 
----
+A FastAPI implementation of the full API contract, serving the same React
+frontend. It is **self-sufficient**: it owns its schema, seeds itself, and serves
+the built SPA, so no Node process is involved at runtime.
 
-A FastAPI implementation of the same API contract served by `server.ts`, reached
-at full behavioural parity before being frozen.
+## Status — 42 / 42 endpoints
 
-`server.ts` is the production backend and the Google AI Studio deployment path,
-because that applet host runs Node.
-
-## Status — complete, 38 / 38 endpoints
-
-| Stage | Scope | State |
+| Area | Scope | State |
 |---|---|---|
-| 1 | Config, SQLite layer, sessions, bcrypt, 4 authorization guards | **Done** |
-| 2 | Evidence, validation, learning plans, reminders, target roles, CRS | **Done** |
-| 3 | Project demand: list/create/match/handoff/eligibility/resume | **Done** |
-| 4 | Gemini endpoints (orchestrator, JD assessment, interview eval, insights) | **Done** |
+| Foundation | Config, SQLite layer, sessions, bcrypt, 4 authorization guards | **Done** |
+| Capability | Evidence, validation, learning plans, reminders, target roles, CRS | **Done** |
+| Demand | Project demand: list/create/match/handoff/eligibility/resume | **Done** |
+| AI | Gemini endpoints (orchestrator, JD assessment, interview eval, insights) | **Done** |
+| Metrics | Skill-vs-Will motivation scores, workforce metrics, shortlist status | **Done** |
+| Hardening | Auth rate limiting, learning-step ownership, gated staff directory | **Done** |
 
-Every route in `server.ts` has a counterpart here, verified by
-`scripts/../coverage` comparison of both source files.
+**Verification:** `scripts/verify_authz_scenarios.py` reports **46/46** against
+this backend — the same suite the Node path passes.
 
 ## Where this folder must live
 
 `app/config.py` resolves the repo root as `Path(__file__).parents[2]`, so this
-folder has to sit at **`<repo>/backend/`** — alongside `server.ts`, `package.json`
-and `capability-hub.db`. It reads the repo-root `.env` and the repo-root SQLite
-file from there. Unpacking it anywhere else will fail at startup with a
-"database not found" error pointing at the wrong path.
+folder sits at **`<repo>/backend/`**, alongside `dist/` and the repo-root `.env`.
 
-Two prerequisites before first run:
-
-1. **`capability-hub.db` must exist.** The schema and seed are owned by
-   `server-db.ts`; run `npm run dev` once against the Node server to create it.
-   This backend never creates or seeds the database.
-2. **`.env` at the repo root**, same file `server.ts` uses. See `.env.example`.
-   `SESSION_SECRET` is worth setting; `DEMO_MODE` should stay `false` or unset,
-   because `true` makes the server accept a bare `userId` as proof of identity.
+One prerequisite before first run: a **`.env` at the repo root** (see
+`.env.example`). `SESSION_SECRET` is worth setting; `DEMO_MODE` should stay
+`false` or unset, because `true` makes the server accept a bare `userId` as proof
+of identity.
 
 ## Running it
 
@@ -98,16 +78,19 @@ not define (`/api/health`, say) falls through to Vite and would be forwarded to
 In production this app serves the built `dist/` itself, so it is a single process
 again and no proxy is involved. Note `dist/` only exists after `npm run build`.
 
-## The database is shared
+## This backend owns the database
 
-Both backends read and write the same `capability-hub.db`. There is no data
-migration and no duplicated seed data.
+`app/schema_sql.py` holds the DDL for all 12 tables — including the columns
+`server-db.ts` added by ALTER migration — and `seed/seed.json` holds 306 seed
+rows. On startup `db.py` creates any missing table and seeds any table that is
+still **empty**, so a deployment with live data is never overwritten on restart
+and a fresh deployment builds itself.
 
-The schema and seed remain **owned by `server-db.ts`**. This backend does not
-create or seed the database — if the file is missing it fails with an explicit
-message telling you to run `npm run dev` once. That keeps a single source of truth
-for the schema while both backends exist; folding the seed into Python is a
-later-stage decision, not an accident.
+This is what made Python deployable on its own. It previously refused to start
+unless the Node server had created the database first.
+
+Password hashes are deliberately absent from the seed: a claimed credential is
+local state, not seed data. The first sign-in to an account sets its password.
 
 `passwordHash` lives in a column on `users` and is written by `bcryptjs` at cost
 factor 10. Python's `bcrypt` reads and writes the identical format, so an account

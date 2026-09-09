@@ -14,6 +14,7 @@ from ..deps import (
     EMPLOYEE,
     require_auth,
     require_manager_or_above,
+    require_learning_step_owner,
     require_self_manager_or_elevated,
     require_self_or_elevated_body,
 )
@@ -190,19 +191,33 @@ async def get_learning_plan(
     return db.get_learning_plan(id)
 
 
+# Whether this employee has been shortlisted onto a project demand, and which one.
+# Guarded like the other per-user reads: an employee sees only their own status, a
+# manager only their reports'.
+@router.get("/users/{id}/shortlist")
+async def get_shortlist(
+    id: str, _: dict = Depends(require_self_manager_or_elevated("id"))
+) -> dict[str, Any]:
+    shortlist = db.get_active_shortlist(id)
+    return {
+        "isShortlisted": bool(shortlist),
+        "demand": shortlist["demand"] if shortlist else None,
+        "shortlistedAt": shortlist["shortlistedAt"] if shortlist else None,
+    }
+
+
 @router.get("/learning-tracker/resources")
 async def learning_tracker(_: dict = Depends(require_auth)) -> list[dict[str, Any]]:
     return db.get_resource_learning_progress()
 
 
+# The step's owner is resolved from the database (stepId -> userId) and run through
+# the same self/manager/elevated rule as every other per-user write, so a logged-in
+# employee can no longer update someone else's learning step.
 @router.post("/learning-plan/step")
 async def update_step(
-    request: Request, _: dict = Depends(require_auth)
+    request: Request, _: dict = Depends(require_learning_step_owner)
 ) -> list[dict[str, Any]]:
-    # KNOWN GAP, carried over verbatim from server.ts: this only checks that the
-    # caller is logged in, not that stepId belongs to them or one of their reports.
-    # Closing it needs stepId resolved to its owning userId first. Kept identical
-    # rather than silently diverging between the two backends.
     body = await request.json()
     if not body.get("stepId") or not body.get("status"):
         raise HTTPException(status_code=400, detail="stepId and status are required")

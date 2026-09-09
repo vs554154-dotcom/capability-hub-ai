@@ -15,9 +15,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 load_dotenv(REPO_ROOT / ".env")
 
-# The SQLite file is shared with the Node server. Both backends read and write the
-# same schema, so there is no data migration and no seed duplication.
-DB_PATH = Path(os.getenv("CAPABILITY_DB_PATH", REPO_ROOT / "capability-hub.db"))
+# This backend owns its schema and seed (see schema_sql.py and seed/seed.json) and
+# creates the database if it is absent. DATABASE_PATH is accepted as well as the older
+# CAPABILITY_DB_PATH so the same variable works across hosts and both backends.
+DB_PATH = Path(
+    os.getenv("DATABASE_PATH")
+    or os.getenv("CAPABILITY_DB_PATH")
+    or (REPO_ROOT / "capability-hub.db")
+)
+
+# Seed rows loaded into any table that is still empty on startup.
+SEED_PATH = Path(__file__).resolve().parent.parent / "seed" / "seed.json"
 
 # Signs the session cookie. server.ts uses the same variable and the same insecure
 # development fallback, and warns when it is unset.

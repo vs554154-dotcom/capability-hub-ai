@@ -15,8 +15,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
-from .config import DB_PATH
+from .config import DB_PATH, SEED_PATH
 from .numeric import js_round
+from .schema_sql import SCHEMA_STATEMENTS, SEED_TABLE_ORDER
 
 _BASE36 = string.digits + string.ascii_lowercase
 
@@ -42,23 +43,72 @@ def _random_id(prefix: str) -> str:
 
 
 class DatabaseMissingError(RuntimeError):
-    """Raised when the shared SQLite file has not been created yet."""
+    """Raised when the SQLite file cannot be created or seeded."""
+
+
+_initialised = False
+
+
+def _apply_schema_and_seed(conn: sqlite3.Connection) -> None:
+    """Create every table, then load seed data into any table that is still empty.
+
+    This backend owns its schema. It previously refused to start unless the Node
+    server had created the database first, which made it impossible to deploy on its
+    own. The DDL and the seed rows are checked in alongside this module.
+    """
+    for statement in SCHEMA_STATEMENTS:
+        conn.execute(statement)
+
+    if not SEED_PATH.exists():
+        conn.commit()
+        return
+
+    seed: dict[str, list[dict[str, Any]]] = json.loads(
+        SEED_PATH.read_text(encoding="utf-8")
+    )
+
+    for table in SEED_TABLE_ORDER:
+        rows = seed.get(table) or []
+        if not rows:
+            continue
+        # Only seed a table nobody has written to yet, so a running deployment's data
+        # is never overwritten on restart.
+        existing = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        if existing:
+            continue
+        columns = list(rows[0].keys())
+        placeholders = ", ".join("?" for _ in columns)
+        column_list = ", ".join(f'"{c}"' for c in columns)
+        conn.executemany(
+            f"INSERT OR IGNORE INTO {table} ({column_list}) VALUES ({placeholders})",
+            [tuple(row.get(c) for c in columns) for row in rows],
+        )
+    conn.commit()
 
 
 def _connect() -> sqlite3.Connection:
-    if not DB_PATH.exists():
-        raise DatabaseMissingError(
-            f"SQLite database not found at {DB_PATH}.\n"
-            "The schema and seed data are owned by the Node server (server-db.ts). "
-            "Run `npm run dev` once to create and seed capability-hub.db, then start "
-            "this backend again."
-        )
+    global _initialised
+    fresh = not DB_PATH.exists()
+    if fresh:
+        try:
+            DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:  # unwritable volume, read-only filesystem
+            raise DatabaseMissingError(
+                f"Cannot create the SQLite database at {DB_PATH}: {exc}. "
+                "Set CAPABILITY_DB_PATH to a writable location."
+            ) from exc
+
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    # Match better-sqlite3's durability/concurrency posture closely enough for
-    # two processes to share the file during local development.
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA foreign_keys = ON")
+
+    # Schema/seed only needs applying once per process; after that every connection
+    # opens against a database that is already built.
+    if not _initialised:
+        _apply_schema_and_seed(conn)
+        _initialised = True
+
     return conn
 
 
@@ -830,6 +880,141 @@ def capture_skill_baselines(user_id: str, demand_id: str) -> None:
             """,
             (user_id, skill["skillId"], demand_id, skill["currentLevel"], captured_at),
         )
+
+
+def get_learning_step_owner_id(step_id: str) -> str | None:
+    """Resolve a learning step to the user who owns it, so a route can authorize the
+    write against that owner rather than trusting whoever sent the id."""
+    if not step_id:
+        return None
+    row = query_one("SELECT userId FROM learning_plans WHERE id = ?", (step_id,))
+    return row["userId"] if row else None
+
+
+def get_active_shortlist(user_id: str) -> dict[str, Any] | None:
+    """An employee counts as shortlisted once a manager hands them to a demand: that
+    handoff is exactly what writes their skill baselines for it, so the most recent
+    capture identifies their active opportunity. Deriving it this way avoids a second
+    source of truth that could disagree with the handoff itself."""
+    row = query_one(
+        """
+        SELECT demandId, MAX(capturedAt) AS capturedAt
+        FROM skill_baselines
+        WHERE userId = ?
+        GROUP BY demandId
+        ORDER BY capturedAt DESC
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+    if not row:
+        return None
+    demand = get_project_demand_by_id(row["demandId"])
+    # A demand can be deleted after a handoff; treat the dangling baseline as no
+    # shortlist rather than surfacing a half-populated banner.
+    if not demand:
+        return None
+    return {"demand": demand, "shortlistedAt": row["capturedAt"]}
+
+
+def compute_motivation_scores(user_id: str) -> dict[str, int]:
+    """Skill measures capability; Will measures motivation/drive - they must stay
+    independent for the 2x2 matrix to mean anything. Will is a transparent blend of
+    behavioural signals already recorded elsewhere in the app:
+        40% learning engagement  - plan completion, quiz performance, time invested
+        30% evidence initiative  - submissions made, approved OR pending
+        20% goal progress        - how far skills are driven toward their targets
+        10% goal commitment      - whether a target role has actively been chosen
+    Engagement is the distinct LMS course-completion percentage. Both derive only from
+    real rows, so they reconcile with the employee's own learning plan and evidence.
+    """
+    skills = get_user_skills(user_id)
+    plans = get_learning_plan(user_id)
+    evidences = [e for e in get_evidences() if e["userId"] == user_id]
+    user = get_user_by_id(user_id)
+
+    total_steps = len(plans)
+    completed_steps = sum(1 for p in plans if p["status"] == "completed")
+    completion_ratio = completed_steps / total_steps if total_steps else 0.0
+
+    completed_with_quiz = [
+        p for p in plans if p["status"] == "completed" and (p.get("quizScore") or 0) > 0
+    ]
+    avg_quiz = (
+        sum(p.get("quizScore") or 0 for p in completed_with_quiz) / len(completed_with_quiz)
+        if completed_with_quiz else 0.0
+    )
+
+    minutes = sum(p.get("timeSpentMins") or 0 for p in plans)
+    time_norm = min(1.0, minutes / 300)  # ~5h of study reads as fully invested
+
+    learning = 0.5 * completion_ratio * 100 + 0.3 * avg_quiz + 0.2 * time_norm * 100
+    evidence_initiative = min(100, len(evidences) * 30)
+
+    with_target = [s for s in skills if s["targetLevel"] > 0]
+    progress = (
+        sum(min(1.0, s["currentLevel"] / s["targetLevel"]) for s in with_target)
+        / len(with_target) * 100
+        if with_target else 0.0
+    )
+
+    commitment = 100 if (user or {}).get("targetRoleId") else 0
+
+    will_score = js_round(max(0.0, min(100.0,
+        0.40 * learning + 0.30 * evidence_initiative + 0.20 * progress + 0.10 * commitment)))
+    return {"willScore": will_score, "engagementScore": js_round(completion_ratio * 100)}
+
+
+def get_workforce_metrics() -> dict[str, Any]:
+    """Organisation-wide metrics, computed from real rows.
+
+    The L&D dashboard previously displayed these as hard-coded literals (a 78.4%
+    readiness index, a "+12.2% vs last month" delta, "48 active enrollments" in a
+    20-person org). Anything genuinely derivable is derived here; anything that needs
+    history the system does not keep - month-over-month deltas - is not invented.
+    """
+    employees = [u for u in get_users() if u["role"] == "employee"]
+    evidences = get_evidences()
+    skills_by_id = {s["id"]: s["name"] for s in get_skills()}
+
+    readiness_total = 0
+    active_learners = 0
+    gap_counts: dict[str, int] = {}
+
+    for emp in employees:
+        user_skills = get_user_skills(emp["id"])
+        # Same readiness formula the manager team view uses, so org and team agree.
+        total_levels = sum(s["currentLevel"] for s in user_skills)
+        avg_level = (total_levels / (len(user_skills) * 5)) * 100 if user_skills else 0
+        approved = sum(
+            1 for e in evidences if e["userId"] == emp["id"] and e["status"] == "approved"
+        )
+        readiness_total += min(100, js_round(avg_level + approved * 5))
+
+        # "Actively upskilling" = at least one learning step under way or finished.
+        plans = get_learning_plan(emp["id"])
+        if any(p["status"] in ("in_progress", "completed") for p in plans):
+            active_learners += 1
+
+        for s in user_skills:
+            if s["targetLevel"] > 0 and s["currentLevel"] < s["targetLevel"]:
+                gap_counts[s["skillId"]] = gap_counts.get(s["skillId"], 0) + 1
+
+    top_skill_gap = None
+    if gap_counts:
+        skill_id, count = max(gap_counts.items(), key=lambda kv: kv[1])
+        top_skill_gap = {
+            "skillName": skills_by_id.get(skill_id, skill_id),
+            "employeesBelowTarget": count,
+        }
+
+    return {
+        "employeeCount": len(employees),
+        "readinessIndex": js_round(readiness_total / len(employees)) if employees else 0,
+        "activeLearners": active_learners,
+        "verifiedEvidence": sum(1 for e in evidences if e["status"] == "approved"),
+        "topSkillGap": top_skill_gap,
+    }
 
 
 def get_skill_growth(user_id: str, demand_id: str) -> list[dict[str, Any]]:

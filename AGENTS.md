@@ -27,39 +27,50 @@ While the **SkillGap-to-Growth Agent** focuses on identifying individual capabil
 - **AI Integration**: Google Gemini API (`@google/genai` SDK, model `gemini-3.6-flash`) proxying requests server-side.
 - **Port Requirement**: Binds to `0.0.0.0:3000`.
 
-### ARCHITECTURE DECISION — Node.js is the single backend
+### ARCHITECTURE DECISION — Python/FastAPI is the live backend
 
-**Decided 2026-09-06. Node.js/Express is the one and only backend. `backend/`
-(FastAPI/Python) is FROZEN reference material and must not be extended.**
+**Decided 2026-09-09, superseding the 2026-09-06 decision below. `backend/`
+(FastAPI) is the production backend. `server.ts` / `server-db.ts` (Node) is
+retained as the Google AI Studio deployment path only.**
 
-A complete Python port of all 38 endpoints exists under `backend/`. It reached
-full behavioural parity and is preserved deliberately — but it is **not
-maintained**, and no new work goes into it.
+Backend work goes into `backend/`. The Python service is now self-sufficient: it
+owns its schema (`backend/app/schema_sql.py`), seeds itself
+(`backend/seed/seed.json`), serves the built frontend from `dist/`, and runs
+standalone on any host.
 
 Rationale:
 
-- **Google AI Studio runs Node only.** `metadata.json` declares
-  `MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API`; a Python process cannot run in that
-  applet host. Choosing Python means leaving the deployment target.
-- **Node owns the data layer.** `server-db.ts` holds all 12 `CREATE TABLE`
-  statements and the seed. The Python layer has zero and cannot start until Node
-  has created the database — it is a consumer, not a peer.
-- **The port adds no capability.** It is a faithful reimplementation by design;
-  its own test suites assert *identical* behaviour.
-- **Duplication is expensive.** ~2,800 lines of Python mirror ~4,000 lines of
-  Node, plus ~1,100 lines of parity tooling whose only purpose is detecting
-  drift between them.
+- **Python was the requested stack.** The migration was commissioned; this
+  reverses the interim decision to stay on Node.
+- **The blocking constraint was removed.** Python previously could not start
+  without Node having created the database. It now owns schema and seed, so it
+  is a peer, not a consumer.
+- **The deployment constraint was removed.** Containerisation (`Dockerfile`,
+  `$PORT`, `/api/health`) means the app no longer depends on the Node-only AI
+  Studio applet host.
 
 Consequences for anyone (human or agent) working here:
 
-1. Implement backend changes in `server.ts` / `server-db.ts` **only**.
-2. Do **not** mirror changes into `backend/`. It will fall behind; that is
-   intended and correct.
-3. The parity suites in `backend/scripts/` are **not** a CI gate. Once Node moves
-   ahead they will legitimately fail. Do not "fix" `backend/` to make them pass.
-4. Revisit this decision only if all three become true: the project leaves AI
-   Studio, Python's ecosystem is genuinely required, and schema ownership is
-   deliberately migrated out of `server-db.ts`.
+1. Implement backend changes in `backend/app/` — routers, `db.py`, `deps.py`.
+2. `server.ts` / `server-db.ts` is **frozen** for feature work. Touch it only to
+   keep the AI Studio deployment alive, and never as the place a new capability
+   lands first.
+3. `backend/scripts/verify_authz_scenarios.py` runs against either backend and is
+   the gate that matters: **46/46 against Python**.
+4. **Known consequence:** AI Studio cannot run Python. Deploying the Python
+   backend means deploying to a container host (see `DEPLOY.md`). The Node path
+   remains only so the existing AI Studio applet keeps working.
+
+<details>
+<summary>Superseded: 2026-09-06 — Node.js as the single backend</summary>
+
+The earlier decision made Node the sole backend on the grounds that AI Studio
+runs Node only, that `server-db.ts` owned all 12 `CREATE TABLE` statements, and
+that duplication was expensive. The first two grounds no longer hold: the app is
+now container-deployable and Python owns its own schema. Recorded here so the
+reasoning is not lost.
+
+</details>
 
 ---
 
