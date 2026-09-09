@@ -456,7 +456,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
             </div>
 
             <p className="text-xs text-[#94A3B8] leading-relaxed">
-              Paste raw customer JD text or upload project specifications. Gemini 3.6 Flash will extract structured skill matrices, required years of experience, and tech stack.
+              Paste raw customer JD text or upload project specifications. The AI parser will extract structured skill matrices, required years of experience, and tech stack.
             </p>
 
             <textarea

@@ -1816,6 +1816,61 @@ class SqliteDatabaseWrapper {
     return row?.userId;
   }
 
+  // Organisation-wide workforce metrics, computed from real rows.
+  // The L&D dashboard previously displayed these as hard-coded literals (a 78.4%
+  // readiness index, a "+12.2% vs last month" delta, "48 active enrollments" in a
+  // 20-person org). Anything genuinely derivable is derived here; anything that needs
+  // history the system does not keep - month-over-month deltas - is not invented.
+  getWorkforceMetrics(): {
+    employeeCount: number;
+    readinessIndex: number;
+    activeLearners: number;
+    verifiedEvidence: number;
+    topSkillGap: { skillName: string; employeesBelowTarget: number } | null;
+  } {
+    const employees = this.getUsers().filter(u => u.role === UserRole.EMPLOYEE);
+    const evidences = this.getEvidences();
+    const skillsById = new Map(this.getSkills().map(s => [s.id, s.name]));
+
+    let readinessTotal = 0;
+    let activeLearners = 0;
+    const gapCounts = new Map<string, number>();
+
+    for (const emp of employees) {
+      const userSkills = this.getUserSkills(emp.id);
+      // Same readiness formula the manager team view uses, so org and team numbers agree.
+      const totalLevels = userSkills.reduce((sum, s) => sum + s.currentLevel, 0);
+      const avgLevel = userSkills.length > 0 ? (totalLevels / (userSkills.length * 5)) * 100 : 0;
+      const approved = evidences.filter(e => e.userId === emp.id && e.status === "approved").length;
+      readinessTotal += Math.min(100, Math.round(avgLevel + approved * 5));
+
+      // "Actively upskilling" = has at least one learning step under way or finished.
+      const plans = this.getLearningPlan(emp.id);
+      if (plans.some(p => p.status === "in_progress" || p.status === "completed")) activeLearners++;
+
+      for (const s of userSkills) {
+        if (s.targetLevel > 0 && s.currentLevel < s.targetLevel) {
+          gapCounts.set(s.skillId, (gapCounts.get(s.skillId) || 0) + 1);
+        }
+      }
+    }
+
+    let topSkillGap: { skillName: string; employeesBelowTarget: number } | null = null;
+    for (const [skillId, count] of gapCounts) {
+      if (!topSkillGap || count > topSkillGap.employeesBelowTarget) {
+        topSkillGap = { skillName: skillsById.get(skillId) || skillId, employeesBelowTarget: count };
+      }
+    }
+
+    return {
+      employeeCount: employees.length,
+      readinessIndex: employees.length > 0 ? Math.round(readinessTotal / employees.length) : 0,
+      activeLearners,
+      verifiedEvidence: evidences.filter(e => e.status === "approved").length,
+      topSkillGap,
+    };
+  }
+
   // Skill measures capability; Will measures motivation/drive - they must stay
   // independent for the 2x2 matrix to mean anything. Will is a transparent blend of
   // behavioural signals already recorded elsewhere in the app:

@@ -39,7 +39,7 @@ export const RoleHeader: React.FC<RoleHeaderProps> = ({
                   </h1>
                   <span className="text-[10px] font-mono font-bold bg-[#10B981]/15 text-[#10B981] px-2 py-0.5 rounded border border-[#10B981]/30 hidden sm:inline-flex items-center gap-1.5">
                     <span className="status-dot h-1.5 w-1.5 rounded-full bg-[#10B981] inline-block" />
-                    SQLite DB Connected
+                    Live Data
                   </span>
                 </div>
                 <p className="text-[10px] font-mono tracking-[0.12em] text-[#4F8EF7] uppercase font-semibold">
@@ -245,7 +245,7 @@ export const RoleHeader: React.FC<RoleHeaderProps> = ({
                 }`}
               >
                 <Shield className="h-3.5 w-3.5 shrink-0" />
-                Screen 3: Manager Capability Board
+                Manager Capability Board
               </button>
               <button
                 id="tab-btn-mgr-ai"
@@ -274,7 +274,7 @@ export const RoleHeader: React.FC<RoleHeaderProps> = ({
                 }`}
               >
                 <Building2 className="h-3.5 w-3.5 shrink-0" />
-                Screen 4: L&D Strategy & Insights
+                L&D Strategy & Insights
               </button>
               <button
                 id="tab-btn-ld-ai"

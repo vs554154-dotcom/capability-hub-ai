@@ -558,6 +558,12 @@ async function startServer() {
     });
   });
  
+  // Organisation-wide workforce metrics for the L&D dashboard tiles. Org-wide data, so
+  // it needs an org-wide role - same audience as the dashboards that render it.
+  app.get("/api/analytics/workforce", requireRole(UserRole.MANAGER, UserRole.LD, UserRole.LEADERSHIP), (req, res) => {
+    res.json(db.getWorkforceMetrics());
+  });
+
   // Get Resource Learning Progress across all resources (Manager & L&D Tracker)
   app.get("/api/learning-tracker/resources", requireAuth, (req, res) => {
     const list = db.getResourceLearningProgress();

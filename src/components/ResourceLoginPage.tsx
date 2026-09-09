@@ -232,7 +232,7 @@ export const ResourceLoginPage: React.FC<ResourceLoginPageProps> = ({
           <div className="flex flex-wrap items-center gap-4 text-[11px]">
             <span className="flex items-center gap-1.5 text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              SQLite DB: Connected
+              Live Data
             </span>
             <span className="flex items-center gap-1.5 text-emerald-400">
               <CheckCircle2 className="h-3 w-3 text-emerald-400" />

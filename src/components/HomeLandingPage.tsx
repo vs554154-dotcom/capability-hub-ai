@@ -123,7 +123,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
               9-Box Capability Distribution Grid
             </span>
             <span className="text-[10px] text-purple-700 font-mono bg-purple-50 px-2 py-0.5 rounded border border-purple-200 font-semibold">
-              SQLite Synced
+              Live Data
             </span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-[9px] font-mono text-center">
@@ -295,14 +295,14 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
           <BrandMark size={48} />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-[#F0F4FF] font-mono">SQLite Database Status: Active</h2>
+              <h2 className="text-sm font-bold text-[#F0F4FF] font-mono">Workforce Directory</h2>
               <span className="text-[10px] font-mono font-bold bg-[#10B981]/20 text-[#10B981] px-2 py-0.5 rounded border border-[#10B981]/30 inline-flex items-center gap-1.5">
                 <span className="status-dot h-1.5 w-1.5 rounded-full bg-[#10B981] inline-block" />
-                capability-hub.db Connected
+                Live Data
               </span>
             </div>
             <p className="text-xs text-[#94A3B8]">
-              {users.length} Enterprise Employee & Manager Profiles synced in local SQLite storage.
+              {users.length} employee and manager profiles loaded.
             </p>
           </div>
         </div>
@@ -489,7 +489,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-[#F0F4FF]">Resource Login Gateway</h3>
-                <p className="text-xs text-[#94A3B8] font-mono">SQLite Employee Authentication</p>
+                <p className="text-xs text-[#94A3B8] font-mono">Secure employee sign-in</p>
               </div>
             </div>
             <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded border border-[#10B981]/30">
@@ -543,12 +543,12 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
               className="w-full py-2.5 bg-[#4F8EF7] hover:bg-[#3B82F6] text-white font-mono font-bold text-xs rounded-lg transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 sheen"
             >
               <LogIn className={`h-4 w-4 ${isSubmitting ? "animate-spin-slow" : ""}`} />
-              <span>{isSubmitting ? "Authenticating SQLite..." : "Log In to Enterprise Portal"}</span>
+              <span>{isSubmitting ? "Signing in..." : "Log In to Enterprise Portal"}</span>
             </button>
           </form>
 
           <p className="text-[11px] text-[#64748B] text-center font-mono leading-relaxed">
-            Passwords are hashed into <code className="text-[#94A3B8]">capability-hub.db</code>. The first sign-in
+            Passwords are stored hashed, never in plain text. The first sign-in
             for an account sets its password; every later sign-in must match it.
           </p>
         </div>

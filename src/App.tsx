@@ -730,9 +730,9 @@ export default function App() {
             <p>© 2026 Capability Hub AI. All rights reserved.</p>
             <p className="flex items-center gap-1.5">
               <span className="status-dot h-2 w-2 rounded-full bg-[#10B981] inline-block" />
-              <span>SQLite Database: <code className="text-[#94A3B8]">capability-hub.db</code></span>
+              <span>All systems operational</span>
               <span className="mx-1">•</span>
-              <span>Gemini 3.5 Flash Engine</span>
+              <span>AI-powered by Google Gemini</span>
             </p>
           </div>
         </div>

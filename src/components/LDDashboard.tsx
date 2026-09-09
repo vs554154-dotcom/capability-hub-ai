@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Skill, LearningCourse, TargetRole } from "../types";
 import { Grid, FileText, Sparkles, TrendingUp, Cpu, RefreshCw, CheckCircle2 } from "lucide-react";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
@@ -22,6 +22,34 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
 }) => {
   const [selectedCampaign, setSelectedCampaign] = useState("selenium-java");
   const [campaignSuccess, setCampaignSuccess] = useState("");
+
+  // Real organisation metrics for the tiles below. These were previously hard-coded
+  // literals; they are now computed server-side from actual employee records.
+  const [metrics, setMetrics] = useState<{
+    employeeCount: number;
+    readinessIndex: number;
+    activeLearners: number;
+    verifiedEvidence: number;
+    topSkillGap: { skillName: string; employeesBelowTarget: number } | null;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/analytics/workforce");
+        if (!cancelled && res.ok) setMetrics(await res.json());
+      } catch (err) {
+        console.error("Workforce metrics unavailable:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Render a dash until the real number arrives, rather than a placeholder that could be
+  // mistaken for data.
+  const stat = (value: number | undefined | null, suffix = "") =>
+    metrics && value !== undefined && value !== null ? `${value}${suffix}` : "—";
 
   const HEATMAP_DEPARTMENTS = ["QA & Testing", "Cloud Infra", "Backend Eng", "Data Engineering"];
   
@@ -64,23 +92,25 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 stagger-children">
         <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg hover-lift sheen">
           <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Workforce Readiness Index</span>
-          <span className="text-3xl font-bold text-[#F0F4FF] block">78.4%</span>
-          <span className="text-xs text-[#10B981] font-mono mt-1 block">Overall Org Readiness</span>
+          <span className="text-3xl font-bold text-[#F0F4FF] block">{stat(metrics?.readinessIndex, "%")}</span>
+          <span className="text-xs text-[#10B981] font-mono mt-1 block">Average across {stat(metrics?.employeeCount)} employees</span>
         </div>
         <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Velocity Delta</span>
-          <span className="text-3xl font-bold text-[#10B981] block">+12.2%</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">Readiness vs Last Month</span>
+          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Verified Evidence</span>
+          <span className="text-3xl font-bold text-[#10B981] block">{stat(metrics?.verifiedEvidence)}</span>
+          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">Manager-approved submissions</span>
         </div>
         <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
           <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Highest Skill Deficit</span>
-          <span className="text-2xl font-bold text-[#F59E0B] block truncate">Selenium & Java</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">QA Division Focus</span>
+          <span className="text-2xl font-bold text-[#F59E0B] block truncate">{metrics?.topSkillGap ? metrics.topSkillGap.skillName : "—"}</span>
+          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">
+            {metrics?.topSkillGap ? `${metrics.topSkillGap.employeesBelowTarget} employees below target` : "No gaps recorded"}
+          </span>
         </div>
         <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Active Enrollments</span>
-          <span className="text-3xl font-bold text-[#4F8EF7] block">48</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">Employees Upskilling</span>
+          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Active Learners</span>
+          <span className="text-3xl font-bold text-[#4F8EF7] block">{stat(metrics?.activeLearners)}</span>
+          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">With a learning plan under way</span>
         </div>
       </div>
 

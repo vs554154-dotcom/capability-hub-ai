@@ -247,7 +247,9 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
           <div>
             <span className="text-[10px] font-mono text-[#94A3B8] font-bold uppercase tracking-wider block">Avg Readiness Score</span>
             <span className="text-3xl font-bold text-[#10B981] mt-1 block">{avgReadiness}%</span>
-            <span className="text-[10px] text-[#10B981] font-mono font-bold mt-1 block">+14% vs Last Month</span>
+            {/* No month-over-month delta here on purpose: the system keeps no historical
+                snapshots, so a trend figure would be fabricated. State the real basis. */}
+            <span className="text-[10px] text-[#94A3B8] font-mono font-bold mt-1 block">Across {totalLearners} direct report{totalLearners === 1 ? "" : "s"}</span>
           </div>
           <div className="p-3 bg-[#10B981]/10 border border-[#10B981]/30 text-[#10B981] rounded-lg">
             <Shield className="h-6 w-6" />
@@ -269,7 +271,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
       {/* DEPLOYIQ Skill vs Learning Interest (Will) Matrix */}
       <SkillVsWillMatrix teamMembers={teamMembers} managerName={currentUser.name} />
 
-      {/* Direct Reports Capability Table (Screen 3) */}
+      {/* Direct Reports Capability Table */}
       <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg space-y-6">
         <div className="flex items-center justify-between border-b border-[#2A384C] pb-4">
           <div>
