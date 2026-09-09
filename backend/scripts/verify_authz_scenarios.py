@@ -208,7 +208,17 @@ expect("anonymous -> AI orchestrator", none.call("POST", "/api/ai/orchestrator",
 expect("anonymous -> submit evidence", none.call("POST", "/api/evidence", {
     "userId": EMP_ID, "skillId": "sk_16", "title": "x",
     "description": "d", "evidenceText": "t"})[0], 401)
-expect("public directory stays public", none.call("GET", "/api/users")[0], 200)
+# The staff directory used to be public so the login screen could count profiles. It
+# served every employee's name, email, title and department to anonymous callers, and
+# the client only ever used the list's length - so the count moved to a dedicated
+# summary route and the directory itself became session-gated.
+expect("anonymous -> staff directory", none.call("GET", "/api/users")[0], 401)
+expect("public directory summary stays public", none.call("GET", "/api/directory/summary")[0], 200)
+_, summary = none.call("GET", "/api/directory/summary")
+# expect() treats its third argument as the set of ALLOWED values, so compare a joined
+# string rather than handing it a list (which would read as a list of alternatives).
+expect("summary exposes a count and nothing else",
+       ",".join(sorted(summary.keys())) if isinstance(summary, dict) else None, "totalProfiles")
 
 # --------------------------------------------------------------------------- #
 passed = sum(1 for _, ok, _ in results if ok)

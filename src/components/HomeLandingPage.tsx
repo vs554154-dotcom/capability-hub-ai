@@ -23,7 +23,8 @@ import {
 import { BrandMark } from "./BrandLogo";
 
 interface HomeLandingPageProps {
-  users: User[];
+  /** Headline count only. The directory is not sent to signed-out browsers. */
+  profileCount: number;
   currentUser: User | null;
   /** Called only after the server has accepted a credential and opened a session. */
   onAuthenticated: (user: User) => void;
@@ -31,7 +32,7 @@ interface HomeLandingPageProps {
 }
 
 export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
-  users,
+  profileCount,
   currentUser,
   onAuthenticated,
   onNavigateTab
@@ -302,7 +303,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#94A3B8]">
-              {users.length} employee and manager profiles loaded.
+              {profileCount} employee and manager profiles loaded.
             </p>
           </div>
         </div>
@@ -564,7 +565,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
               <h3 className="text-sm font-bold text-[#F0F4FF]">Role-Based Access Model</h3>
             </div>
             <span className="text-xs font-mono text-[#94A3B8]">
-              {users.length} Resources Provisioned
+              {profileCount} Resources Provisioned
             </span>
           </div>
 

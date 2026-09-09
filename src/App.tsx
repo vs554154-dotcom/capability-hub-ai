@@ -39,7 +39,9 @@ function AtmosphereLayer() {
 }
 
 export default function App() {
-  const [users, setUsers] = useState<User[]>([]);
+  // Headline profile count for the signed-out landing page. The directory itself is
+  // never fetched into the browser - see /api/directory/summary.
+  const [profileCount, setProfileCount] = useState<number>(0);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [roles, setRoles] = useState<TargetRole[]>([]);
@@ -142,8 +144,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Every /api route except /api/users and /api/analytics/eri is session-gated on the
-  // server (requireAuth / requireRole). If a login attempt is not honoured we must not
+  // Every /api route except the public probes (/api/health, /api/directory/summary) is
+  // session-gated on the server (requireAuth / requireRole). If a login attempt is not
+  // honoured we must not
   // render a "logged in" shell - the screens would silently fill with empty state while
   // every request 401s. This notice keeps the two halves in step.
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
@@ -163,10 +166,13 @@ export default function App() {
         setLoading(true);
         setError(null);
 
-        // Fetch users (public route - drives directory counts on the landing page)
-        const usersRes = await fetch("/api/users");
-        if (!usersRes.ok) throw new Error("Failed to load users");
-        setUsers(await usersRes.json());
+        // Only the headline count, not the directory itself. The landing page displays a
+        // number, so there is no reason to ship 27 people's names and emails to a browser
+        // that has not signed in.
+        const summaryRes = await fetch("/api/directory/summary");
+        if (!summaryRes.ok) throw new Error("Failed to load directory summary");
+        const summary = await summaryRes.json();
+        setProfileCount(summary.totalProfiles ?? 0);
 
         // No auto-login. The app opens signed out; a session is only ever created by
         // the user entering a credential. Restore an existing session if the browser
@@ -501,7 +507,7 @@ export default function App() {
     setActiveTab("home");
   };
 
-  if (loading && users.length === 0) {
+  if (loading && profileCount === 0) {
     return (
       <div className="app-shell min-h-screen flex flex-col items-center justify-center gap-3 p-6 text-center">
         <AtmosphereLayer />
@@ -631,7 +637,7 @@ export default function App() {
         <div key={effectiveTab} className="page-transition">
         {effectiveTab === "home" && (
           <HomeLandingPage
-            users={users}
+            profileCount={profileCount}
             currentUser={activeUser}
             onAuthenticated={handleAuthenticated}
             onNavigateTab={(tab) => setActiveTab(tab)}

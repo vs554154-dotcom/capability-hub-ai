@@ -209,11 +209,19 @@ async function startServer() {
     res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
   });
 
-  // Get active users (Elena, Marcus, Sarah, David)
-  // Intentionally left public (no requireAuth): the login screen needs to list demo
-  // accounts before any session exists. Only id/name/email/role/title/department/avatar
-  // are directory-style fields - nothing sensitive is exposed here.
-  app.get("/api/users", (req, res) => {
+  // Headline count for the signed-out landing page. Public on purpose, but it is only a
+  // number - no names, emails or roles leave the server before a session exists.
+  app.get("/api/directory/summary", (_req, res) => {
+    res.json({ totalProfiles: db.getUsers().length });
+  });
+
+  // The staff directory. This was previously public, which served every employee's name,
+  // email, title and department to any anonymous caller - a harvestable directory of the
+  // whole organisation. The justification was that the login screen needed it, but the
+  // client only ever used the LENGTH of this list, so nothing rendered a single field
+  // from it. The count now comes from /api/directory/summary above and the directory
+  // itself requires a session.
+  app.get("/api/users", requireAuth, (req, res) => {
     res.json(db.getUsers());
   });
  
