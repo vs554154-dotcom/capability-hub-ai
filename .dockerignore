@@ -1,0 +1,27 @@
+# Keep the build context small and secrets out of the image.
+node_modules
+dist
+.git
+.gitignore
+
+# Secrets and local state
+.env
+.env.*
+!.env.example
+capability-hub.db
+capability-hub.db-journal
+capability-hub.db-wal
+capability-hub.db-shm
+cookie.txt
+
+# Frozen Python backend - not part of the Node runtime
+backend
+
+# Build artifacts and tooling
+cybridge-changes-*.zip
+cybridge-python-backend.zip
+*.log
+**/__pycache__
+.claude
+.vscode
+assets/.aistudio

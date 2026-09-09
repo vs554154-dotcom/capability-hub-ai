@@ -29,7 +29,10 @@ dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Hosting platforms (Cloud Run, Render, Railway, Fly, Heroku, Replit, ...) tell the app
+  // which port to listen on via $PORT, and reject the deploy if it binds anything else.
+  // Fall back to 3000 for local development.
+  const PORT = Number(process.env.PORT) || 3000;
  
   // CORS Middleware - Open to all origins, headers, and methods for Bruno/API testing
   app.use(cors({
@@ -82,10 +85,26 @@ async function startServer() {
     process.env.NODE_ENV === "production" ||
     (process.env.APP_URL || "").startsWith("https://");
  
+  const SESSION_SECRET = process.env.SESSION_SECRET || "dev-insecure-secret-change-me";
+  if (SESSION_SECRET === "dev-insecure-secret-change-me" && IS_HTTPS_DEPLOY) {
+    console.warn(
+      "[SECURITY] SESSION_SECRET is not set - using the insecure built-in default on what " +
+      "looks like a production deploy. Anyone who knows that default can forge session " +
+      "cookies. Set SESSION_SECRET to a long random string in your platform's env/secrets."
+    );
+  }
+
+  // AI Studio embeds the running app in a cross-site IFRAME, which requires SameSite=None
+  // (and therefore Secure). A standalone deployment is not framed and is better served by
+  // the stricter Lax. Default to the iframe-safe behaviour on HTTPS, but let an operator
+  // override with COOKIE_SAMESITE=lax|strict|none when they aren't embedding.
+  const cookieSameSite = (process.env.COOKIE_SAMESITE || (IS_HTTPS_DEPLOY ? "none" : "lax")) as "lax" | "none" | "strict";
+  const cookieSecure = IS_HTTPS_DEPLOY || cookieSameSite === "none";
+
   app.set("trust proxy", 1);
   app.use(session({
     name: "chub_sid",
-    secret: process.env.SESSION_SECRET || "dev-insecure-secret-change-me",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -98,8 +117,8 @@ async function startServer() {
       // accept SameSite=None when Secure is also set (which requires HTTPS - Cloud Run
       // provides that). Locally over plain HTTP we fall back to Lax, since None+Secure
       // would itself be rejected on http://localhost.
-      secure: IS_HTTPS_DEPLOY,
-      sameSite: IS_HTTPS_DEPLOY ? "none" : "lax",
+      secure: cookieSecure,
+      sameSite: cookieSameSite,
       maxAge: 1000 * 60 * 60 * 8 // 8 hours
     }
   }));
@@ -166,7 +185,14 @@ async function startServer() {
   }
  
   // --- API ROUTES ---
- 
+
+  // Liveness/readiness probe. Hosting platforms and load balancers poll a cheap, public
+  // endpoint to decide whether the instance is healthy and should receive traffic. Kept
+  // above the SPA catch-all so it returns JSON, not index.html.
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
+  });
+
   // Get active users (Elena, Marcus, Sarah, David)
   // Intentionally left public (no requireAuth): the login screen needs to list demo
   // accounts before any session exists. Only id/name/email/role/title/department/avatar
@@ -522,11 +548,14 @@ async function startServer() {
     res.json(list);
   });
  
-  // Update Learning Plan Step Status & Quiz Score / Time Spent
-  app.post("/api/learning-plan/step", requireAuth, (req, res) => {
-    // KNOWN GAP: this only checks that the caller is logged in, not that stepId belongs to
-    // them or one of their reports - closing that fully requires resolving stepId to its
-    // owning userId in server-db.ts first. Flagged here rather than silently left as-is.
+  // Update Learning Plan Step Status & Quiz Score / Time Spent.
+  // The step's owner is resolved from the database (stepId -> userId) and run through the
+  // same self/manager/elevated guard as every other per-user write, so a logged-in
+  // employee can no longer update someone else's learning step. (This closed a prior gap
+  // where any authenticated caller could write any step by id.)
+  app.post("/api/learning-plan/step", requireAuth,
+    requireSelfOrElevatedBody(req => db.getLearningStepOwnerId(req.body.stepId)),
+    (req, res) => {
     const { stepId, status, progressPercent, quizScore, timeSpentMins } = req.body;
     if (!stepId || !status) {
       return res.status(400).json({ error: "stepId and status are required" });

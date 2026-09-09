@@ -2,8 +2,11 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import { User, UserRole, Skill, TargetRole, LearningCourse, Evidence, UserSkill, WeeklyLearningStep, AgentReminder, ProjectDemand, ResourceLearningProgress } from "./src/types";
 
-// Initialize SQLite database connection with corruption auto-recovery
-const dbPath = "capability-hub.db";
+// Initialize SQLite database connection with corruption auto-recovery.
+// DATABASE_PATH lets a host point the file at a mounted, persistent, writable volume -
+// important on platforms whose app directory is ephemeral or read-only. Defaults to the
+// working directory for local development.
+const dbPath = process.env.DATABASE_PATH || "capability-hub.db";
 let sqliteDbInstance: Database.Database;
 
 function initSqliteDatabase(): Database.Database {
@@ -1803,6 +1806,14 @@ class SqliteDatabaseWrapper {
       demandId: r.demandId || undefined,
       purpose: r.purpose || "career_growth"
     }));
+  }
+
+  // Resolves a learning step to the user who owns it, so a route can authorize the write
+  // against that owner. Returns undefined for an unknown stepId.
+  getLearningStepOwnerId(stepId: string): string | undefined {
+    if (!stepId) return undefined;
+    const row = this.db.prepare("SELECT userId FROM learning_plans WHERE id = ?").get(stepId) as { userId: string } | undefined;
+    return row?.userId;
   }
 
   // Skill measures capability; Will measures motivation/drive - they must stay
