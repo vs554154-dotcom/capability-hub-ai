@@ -1,12 +1,16 @@
-"""Authorization dependencies.
+"""Request dependencies: the JSON body, and the authorization guards.
 
-Direct ports of the four middlewares in server.ts. The status codes and error
-strings are reproduced exactly, because the React client branches on 401 to show
-"session expired" and the port is meant to be a drop-in for the same frontend.
+Authority always comes from the session cookie - never from a user id in the URL or
+the body. An id in the request names the *target* of an action; the guards decide
+whether the signed-in user may act on that target.
 
-Authority always comes from the session cookie - never from a userId in the URL
-or request body. That is the property that stops an employee opening a manager's
-cockpit, so it is asserted by the probes in scripts/verify_auth.py.
+The ownership rule (`may_access`) is the same everywhere:
+    * anyone may act on themselves;
+    * L&D and Leadership may act on anyone;
+    * a manager may act on their own direct reports, and no one else.
+
+Every guard is a plain `def`, so FastAPI runs it in the threadpool rather than on
+the event loop. Only `json_body` is async, because reading the request body is.
 """
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ from typing import Any, Callable
 
 from fastapi import Depends, HTTPException, Request
 
-from . import db
+from .repositories import learning, users
 
 EMPLOYEE = "employee"
 MANAGER = "manager"
@@ -27,16 +31,38 @@ NOT_OWN_DATA = "You can only access your own data or your direct reports' data."
 NOT_OWN_ACTION = "You can only act on your own data or your direct reports' data."
 
 
+async def json_body(request: Request) -> dict[str, Any]:
+    """The parsed JSON object body, or {} if the body is empty, malformed or not an
+    object. Read here, on the event loop, so handlers can stay synchronous. The
+    result is cached on the request, so guards that also need it parse it once."""
+    try:
+        body = await request.json()
+    except Exception:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
 def get_session_user(request: Request) -> dict[str, Any] | None:
-    """Resolve the signed-in user from the session cookie, or None."""
+    """The signed-in user, from the session cookie, or None."""
     user_id = request.session.get("userId")
-    if not user_id:
-        return None
-    return db.get_user_by_id(user_id)
+    return users.get_user_by_id(user_id) if user_id else None
+
+
+def may_access(actor: dict[str, Any], target_id: str | None) -> bool:
+    """May `actor` act on the user `target_id`? An absent target means the actor
+    themselves."""
+    if not target_id or actor["id"] == target_id:
+        return True
+    if actor["role"] in (LD, LEADERSHIP):
+        return True
+    if actor["role"] == MANAGER:
+        target = users.get_user_by_id(target_id)
+        return bool(target and target.get("managerId") == actor["id"])
+    return False
 
 
 def require_auth(request: Request) -> dict[str, Any]:
-    """Any authenticated session. No role or ownership check."""
+    """Any signed-in user. No role or ownership check."""
     user = get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail=NOT_AUTHENTICATED)
@@ -44,7 +70,7 @@ def require_auth(request: Request) -> dict[str, Any]:
 
 
 def require_role(*roles: str) -> Callable[[Request], dict[str, Any]]:
-    """Session user's role must be one of `roles`."""
+    """The signed-in user's role must be one of `roles`."""
     def dependency(request: Request) -> dict[str, Any]:
         user = get_session_user(request)
         if not user:
@@ -55,75 +81,44 @@ def require_role(*roles: str) -> Callable[[Request], dict[str, Any]]:
     return dependency
 
 
-def _may_access(actor: dict[str, Any], target_id: str | None) -> bool:
-    """Shared rule: self, or an org-wide viewer, or the target's direct manager."""
-    if not target_id or actor["id"] == target_id:
-        return True
-    if actor["role"] in (LD, LEADERSHIP):
-        return True
-    if actor["role"] == MANAGER:
-        target = db.get_user_by_id(target_id)
-        if target and target.get("managerId") == actor["id"]:
-            return True
-    return False
-
-
 def require_self_manager_or_elevated(param_name: str) -> Callable[..., dict[str, Any]]:
-    """Target id comes from a path parameter."""
+    """The target user id is the path parameter `param_name`."""
     def dependency(request: Request) -> dict[str, Any]:
         user = get_session_user(request)
         if not user:
             raise HTTPException(status_code=401, detail=NOT_AUTHENTICATED)
-        target_id = request.path_params.get(param_name)
-        if _may_access(user, target_id):
+        if may_access(user, request.path_params.get(param_name)):
             return user
         raise HTTPException(status_code=403, detail=NOT_OWN_DATA)
     return dependency
 
 
-async def require_self_or_elevated_body(
-    request: Request, field: str = "userId"
+def require_self_or_elevated_body(
+    request: Request, body: dict[str, Any] = Depends(json_body)
 ) -> dict[str, Any]:
-    """Target id comes from the JSON body (POST/PUT).
-
-    Note: unlike the path-param variant, an *absent* target id is permitted - it
-    falls through to the session user, exactly as server.ts does.
-    """
+    """The target user id is `userId` in the JSON body. An absent id means the
+    signed-in user themselves."""
     user = get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail=NOT_AUTHENTICATED)
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    target_id = body.get(field) if isinstance(body, dict) else None
-    if _may_access(user, target_id):
+    if may_access(user, body.get("userId")):
         return user
     raise HTTPException(status_code=403, detail=NOT_OWN_ACTION)
 
 
-async def require_learning_step_owner(request: Request) -> dict[str, Any]:
-    """Target is a learning step, whose owner has to be looked up before it can be
-    authorized. The handler previously checked only that the caller was logged in, so
-    any authenticated employee could write any step by id. An unknown stepId falls
-    through to the handler, which rejects it - no data is exposed either way.
-    """
+def require_learning_step_owner(
+    request: Request, body: dict[str, Any] = Depends(json_body)
+) -> dict[str, Any]:
+    """The target is the owner of the learning step `stepId`, looked up from the
+    database. An unknown step falls through to the handler, which rejects it."""
     user = get_session_user(request)
     if not user:
         raise HTTPException(status_code=401, detail=NOT_AUTHENTICATED)
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    step_id = body.get("stepId") if isinstance(body, dict) else None
-    owner_id = db.get_learning_step_owner_id(step_id) if step_id else None
-    if _may_access(user, owner_id):
+    step_id = body.get("stepId")
+    if may_access(user, learning.get_step_owner_id(step_id) if step_id else None):
         return user
     raise HTTPException(status_code=403, detail=NOT_OWN_ACTION)
 
 
-# Convenience aliases mirroring the role sets used across server.ts routes.
 require_manager_or_above = require_role(MANAGER, LD, LEADERSHIP)
 require_leadership = require_role(LEADERSHIP)
-
-CurrentUser = Depends(require_auth)
