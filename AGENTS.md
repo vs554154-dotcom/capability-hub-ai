@@ -52,7 +52,9 @@ Rationale:
 
 Consequences for anyone (human or agent) working here:
 
-1. Implement backend changes in `backend/app/` — routers, `db.py`, `deps.py`.
+1. Implement backend changes in `backend/app/`, respecting its layers — routers
+   (HTTP only) → `services/` (business rules, transactions) → `repositories/` (SQL
+   only). `ARCHITECTURE.md` defines what each layer may and may not do.
 2. `server.ts` / `server-db.ts` is **frozen** for feature work. Touch it only to
    keep the AI Studio deployment alive, and never as the place a new capability
    lands first.

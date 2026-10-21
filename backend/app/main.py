@@ -3,9 +3,12 @@
 One process serves both the JSON API under /api and the built React app from
 dist/, on a single origin. This module only wires the pieces together:
 
-    request -> SessionMiddleware -> CORSMiddleware -> router (routers/*)
+    request -> CORSMiddleware -> SessionMiddleware -> router (routers/*)
             -> guard (deps.py) -> service (services/*) -> repository (repositories/*)
             -> SQLite (database.py)
+
+(Starlette wraps middleware in reverse order of registration, so CORSMiddleware,
+added last below, is the outermost layer and sees the request first.)
 
 Route handlers are plain `def` functions, so FastAPI runs them in its threadpool.
 Database and Gemini calls are blocking; running them on the event loop would stall

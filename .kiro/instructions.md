@@ -7,7 +7,7 @@ Capability Hub AI (CyBridge) is a full-stack enterprise workforce intelligence p
 
 ## Core Architecture & Rules
 1. **Live backend is Python**:
-   - Backend work goes in `backend/app/` (routers, `db.py`, `deps.py`).
+   - Backend work goes in `backend/app/`: `routers/` (HTTP only), `services/` (business rules), `repositories/` (SQL only). See `ARCHITECTURE.md`.
    - The backend owns its schema (`backend/app/schema_sql.py`) and seed (`backend/seed/seed.json`), and serves the built frontend from `dist/`.
    - `server.ts` / `server-db.ts` (Node) is frozen — kept only so the Google AI Studio applet, which cannot run Python, keeps working.
 2. **Server-Side AI Proxy**:

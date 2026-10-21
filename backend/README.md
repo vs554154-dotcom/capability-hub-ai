@@ -82,7 +82,7 @@ again and no proxy is involved. Note `dist/` only exists after `npm run build`.
 
 `app/schema_sql.py` holds the DDL for all 12 tables — including the columns
 `server-db.ts` added by ALTER migration — and `seed/seed.json` holds 306 seed
-rows. On startup `db.py` creates any missing table and seeds any table that is
+rows. On startup `database.py` creates any missing table and seeds any table that is
 still **empty**, so a deployment with live data is never overwritten on restart
 and a fresh deployment builds itself.
 
@@ -147,7 +147,7 @@ exception handler in `main.py` rewrites the key. Without it the UI silently
 discards every server message and shows generic fallback text.
 
 **Omitted vs null.** `server-db.ts` maps absent optional columns to `undefined`,
-which `JSON.stringify` drops from the payload. `db._compact()` reproduces that by
+which `JSON.stringify` drops from the payload. `repositories/_common.compact()` reproduces that by
 omitting `None` values rather than emitting `null`, so both backends return
 byte-identical JSON — confirmed across all 27 users.
 
@@ -159,22 +159,26 @@ produced scores one point below the Node backend — same ranking, different num
 
 **Number formatting.** JavaScript has a single number type, so `Number(8)` serialises
 as `8`. Python would emit `8.0` for the same SQLite REAL column, a 2-byte difference
-in every user payload. `db._js_number()` collapses integral floats back to `int`.
+in every user payload. `repositories/_common.js_number()` collapses integral floats back to `int`.
 
 ## Layout
+
+The full design - layers, request lifecycle, transactions, authorization rule and
+route map - is in [`ARCHITECTURE.md`](../ARCHITECTURE.md) at the repo root.
 
 ```
 backend/
   app/
-    config.py            env contract, shared with server.ts
-    db.py                SQLite access + row mappers
-    security.py          bcrypt hashing
-    deps.py              the 4 authorization guards
-    main.py              app, session/CORS middleware, error shape, static serving
-    routers/
-      auth.py            /api/auth/*
-      core.py            users, skills, roles, courses, team
-  scripts/
-    verify_auth.py       authorization parity probes
-  requirements.txt
+    main.py              assembly: middleware, error handlers, routers, static serving
+    routers/             HTTP only: guard, validate input, call a service
+    deps.py              JSON body + authorization guards
+    services/            business rules and transaction boundaries
+    repositories/        SQL and row mapping, one module per aggregate
+    database.py          connections, transactions, schema + seed initialisation
+    schema_sql.py        DDL for all 12 tables
+    ai.py  security.py  ratelimit.py  config.py  errors.py  numeric.py
+  seed/seed.json         rows loaded into empty tables on first boot
+  tests/                 pytest suite - in-process, isolated database
+  scripts/               probes run against a live server
+  requirements.txt  requirements-dev.txt
 ```
