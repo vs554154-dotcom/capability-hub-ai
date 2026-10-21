@@ -50,14 +50,14 @@ def get_latest_post_assessment(
             """
             SELECT * FROM post_assessments
              WHERE employeeId = ? AND demandId = ?
-             ORDER BY createdAt DESC LIMIT 1
+             ORDER BY createdAt DESC, rowid DESC LIMIT 1
             """,
             (employee_id, demand_id),
         )
     else:
         row = query_one(
             "SELECT * FROM post_assessments WHERE employeeId = ? "
-            "ORDER BY createdAt DESC LIMIT 1",
+            "ORDER BY createdAt DESC, rowid DESC LIMIT 1",
             (employee_id,),
         )
     return dict(row) if row else None
@@ -106,7 +106,7 @@ def get_latest_handoff(user_id: str) -> dict[str, Any] | None:
           FROM skill_baselines
          WHERE userId = ?
          GROUP BY demandId
-         ORDER BY capturedAt DESC
+         ORDER BY capturedAt DESC, rowid DESC
          LIMIT 1
         """,
         (user_id,),

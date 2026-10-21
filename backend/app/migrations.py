@@ -89,12 +89,28 @@ def _baseline(conn: sqlite3.Connection) -> None:
         reference.close()
 
 
+def _sessions(conn: sqlite3.Connection) -> None:
+    """Session records kept in the database, so signing out ends a session."""
+    conn.execute(
+        """CREATE TABLE sessions (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            createdAt TEXT NOT NULL,
+            expiresAt TEXT NOT NULL,
+            revokedAt TEXT,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+        )"""
+    )
+    conn.execute("CREATE INDEX idx_sessions_user ON sessions(userId)")
+
+
 MIGRATIONS: list[Migration] = [
     Migration(
         1,
         "Baseline: create all 12 tables and add any column an older database lacks",
         _baseline,
     ),
+    Migration(2, "Sessions table: database-backed sign-in sessions", _sessions),
 ]
 
 LATEST_VERSION = max(m.version for m in MIGRATIONS)

@@ -13,9 +13,16 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .. import security
 from ..config import DEMO_MODE
-from ..deps import NOT_AUTHENTICATED, get_session_user, json_body
+from ..deps import (
+    NOT_AUTHENTICATED,
+    current_session_id,
+    end_session,
+    get_session_user,
+    json_body,
+    start_session,
+)
 from ..ratelimit import enforce_auth_rate_limit
-from ..repositories import users
+from ..repositories import sessions, users
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -48,14 +55,14 @@ def login(request: Request, body: dict[str, Any] = Depends(json_body)) -> dict[s
             raise HTTPException(status_code=400, detail="A password is required for this account.")
         if not security.verify_password(supplied_secret, existing_hash):
             raise HTTPException(status_code=401, detail="Incorrect password.")
-        request.session["userId"] = user["id"]
+        start_session(request, user["id"])
         return {"success": True, "message": f"Welcome back, {user['name']}!", "user": user}
 
     if supplied_secret:
         if len(supplied_secret) < 4:
             raise HTTPException(status_code=400, detail="Password must be at least 4 characters.")
         users.set_user_password(user["id"], security.hash_password(supplied_secret))
-        request.session["userId"] = user["id"]
+        start_session(request, user["id"])
         return {
             "success": True,
             "message": f"Password set for this account. Welcome, {user['name']}!",
@@ -64,7 +71,7 @@ def login(request: Request, body: dict[str, Any] = Depends(json_body)) -> dict[s
         }
 
     if DEMO_MODE:
-        request.session["userId"] = user["id"]
+        start_session(request, user["id"])
         return {
             "success": True,
             "message": "Resource authenticated successfully (demo mode - no password check)",
@@ -87,7 +94,7 @@ def me(request: Request) -> dict[str, Any]:
 
 @router.post("/logout")
 def logout(request: Request) -> dict[str, Any]:
-    request.session.clear()
+    end_session(request)
     return {"success": True}
 
 
@@ -111,4 +118,7 @@ def change_password(request: Request, body: dict[str, Any] = Depends(json_body))
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
 
     users.set_user_password(user["id"], security.hash_password(new_password))
+    # Anyone else signed in as this user - another device, or a copied cookie -
+    # is signed out. The session making the change stays signed in.
+    sessions.end_all_for_user(user["id"], keep=current_session_id(request))
     return {"success": True}

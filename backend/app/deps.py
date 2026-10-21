@@ -1,7 +1,8 @@
 """Request dependencies: the JSON body, and the authorization guards.
 
 Authority always comes from the session cookie - never from a user id in the URL or
-the body. An id in the request names the *target* of an action; the guards decide
+the body. The cookie holds only a random session id; the session itself lives in the
+database, so signing out or changing a password ends it on the server. An id in the request names the *target* of an action; the guards decide
 whether the signed-in user may act on that target.
 
 The ownership rule (`may_access`) is the same everywhere:
@@ -18,7 +19,8 @@ from typing import Any, Callable
 
 from fastapi import Depends, HTTPException, Request
 
-from .repositories import learning, users
+from .config import SESSION_MAX_AGE_SECONDS
+from .repositories import learning, sessions, users
 
 EMPLOYEE = "employee"
 MANAGER = "manager"
@@ -42,9 +44,36 @@ async def json_body(request: Request) -> dict[str, Any]:
     return body if isinstance(body, dict) else {}
 
 
+def start_session(request: Request, user_id: str) -> None:
+    """Sign `user_id` in: record a session and put only its id in the cookie."""
+    previous = request.session.get("sid")
+    if previous:
+        sessions.end(previous)
+    request.session.clear()
+    sessions.purge_finished()
+    request.session["sid"] = sessions.create(user_id, SESSION_MAX_AGE_SECONDS)
+
+
+def current_session_id(request: Request) -> str | None:
+    sid = request.session.get("sid")
+    return sid if isinstance(sid, str) else None
+
+
+def end_session(request: Request) -> None:
+    """Sign out: end the session record, so a copy of the cookie stops working too."""
+    sid = current_session_id(request)
+    if sid:
+        sessions.end(sid)
+    request.session.clear()
+
+
 def get_session_user(request: Request) -> dict[str, Any] | None:
-    """The signed-in user, from the session cookie, or None."""
-    user_id = request.session.get("userId")
+    """The signed-in user, or None. The cookie names a session; the session must
+    exist in the database, not be ended and not be expired."""
+    sid = current_session_id(request)
+    if not sid:
+        return None
+    user_id = sessions.active_user_id(sid)
     return users.get_user_by_id(user_id) if user_id else None
 
 

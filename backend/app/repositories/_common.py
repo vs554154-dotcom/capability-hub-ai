@@ -15,11 +15,15 @@ from typing import Any
 BASE36 = string.digits + string.ascii_lowercase
 
 
+def iso(moment: datetime) -> str:
+    """A UTC datetime with millisecond precision and a Z suffix, e.g.
+    2026-08-27T10:00:00.000Z - the format every timestamp column uses. Strings in
+    this format sort in time order, so SQL can compare them directly."""
+    return f"{moment.strftime('%Y-%m-%dT%H:%M:%S')}.{moment.microsecond // 1000:03d}Z"
+
+
 def now_iso() -> str:
-    """UTC timestamp with millisecond precision and a Z suffix, e.g.
-    2026-08-27T10:00:00.000Z - the format every timestamp column uses."""
-    now = datetime.now(timezone.utc)
-    return f"{now.strftime('%Y-%m-%dT%H:%M:%S')}.{now.microsecond // 1000:03d}Z"
+    return iso(datetime.now(timezone.utc))
 
 
 def now_date() -> str:

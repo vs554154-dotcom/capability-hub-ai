@@ -43,7 +43,7 @@ def _map(r: sqlite3.Row) -> dict[str, Any]:
 
 def get_learning_plan(user_id: str) -> list[dict[str, Any]]:
     return [_map(r) for r in query_all(
-        "SELECT * FROM learning_plans WHERE userId = ? ORDER BY weekNumber ASC",
+        "SELECT * FROM learning_plans WHERE userId = ? ORDER BY weekNumber ASC, rowid ASC",
         (user_id,),
     )]
 

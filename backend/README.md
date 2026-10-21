@@ -88,8 +88,11 @@ restart, and a fresh deployment builds itself.
 
 Migration 1 is the baseline in `app/schema_sql.py`: all 12 tables, including every
 column `server-db.ts` added by ALTER TABLE. It upgrades any older database in place,
-Node-built ones included. To change the schema, add a migration; never edit
-`schema_sql.py` (a test fails if it changes). See `ARCHITECTURE.md` for the rules.
+Node-built ones included. Migration 2 adds the `sessions` table: sign-ins are
+recorded there, and the cookie holds only a session id, so signing out or changing
+a password ends sessions on the server. To change the schema, add a migration; never
+edit `schema_sql.py` (a test fails if it changes). See `ARCHITECTURE.md` for the
+rules.
 
 This is what made Python deployable on its own. It previously refused to start
 unless the Node server had created the database first.
@@ -115,7 +118,7 @@ python backend/scripts/verify_writes.py                       # write side effec
 python backend/scripts/verify_target_role.py                  # role seeding
 ```
 
-**`verify_auth`** — 13 probes asserting that authority comes from the session
+**`verify_auth`** — 14 probes asserting that authority comes from the session
 cookie alone, never from an id in the URL or body: an employee is refused a
 manager's team, profile and capability; a manager is refused another manager's;
 a bare `userId` login is rejected.

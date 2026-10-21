@@ -79,7 +79,10 @@ def test_an_empty_database_is_built_to_the_latest_version(tmp_path, baseline_col
     conn = connect(tmp_path / "fresh.db")
     assert migrate(conn) == list(range(1, LATEST_VERSION + 1))
     assert migrations.current_version(conn) == LATEST_VERSION
-    assert columns(conn) == baseline_columns
+    built = columns(conn)
+    assert {t: c for t, c in built.items() if t in baseline_columns} == baseline_columns
+    # Later migrations only add tables on top of the baseline.
+    assert set(built) - set(baseline_columns) == {"sessions"}
 
 
 def _legacy_node_database(path: Path) -> sqlite3.Connection:
@@ -116,14 +119,16 @@ def _legacy_node_database(path: Path) -> sqlite3.Connection:
     return conn
 
 
-def test_an_old_node_database_is_upgraded_in_place(tmp_path, baseline_columns):
+def test_an_old_node_database_is_upgraded_in_place(tmp_path):
     conn = _legacy_node_database(tmp_path / "legacy.db")
     assert migrations.current_version(conn) == 0
 
-    assert migrate(conn) == [1]
+    assert migrate(conn) == list(range(1, LATEST_VERSION + 1))
 
     # Same schema as a database built fresh: every missing column and table added.
-    assert columns(conn) == baseline_columns
+    fresh = connect(tmp_path / "fresh.db")
+    migrate(fresh)
+    assert columns(conn) == columns(fresh)
 
     # Existing rows survive, and the added columns take their declared defaults.
     plan = conn.execute(

@@ -10,10 +10,10 @@ from ._common import now_iso, random_id
 def get_reminders(user_id: str | None = None) -> list[dict[str, Any]]:
     if user_id:
         rows = query_all(
-            "SELECT * FROM reminders WHERE userId = ? ORDER BY createdAt DESC", (user_id,)
+            "SELECT * FROM reminders WHERE userId = ? ORDER BY createdAt DESC, rowid DESC", (user_id,)
         )
     else:
-        rows = query_all("SELECT * FROM reminders ORDER BY createdAt DESC")
+        rows = query_all("SELECT * FROM reminders ORDER BY createdAt DESC, rowid DESC")
     return [dict(r) for r in rows]
 
 

@@ -89,7 +89,7 @@ backend/app/
 │   └── analytics.py     organisation-wide metrics
 ├── repositories/      data access — SQL and row mapping only, one per aggregate
 │   ├── users.py  catalog.py  user_skills.py  evidence.py  learning.py
-│   ├── demands.py  reminders.py  assessments.py
+│   ├── demands.py  reminders.py  assessments.py  sessions.py
 │   └── _common.py       clock, id generation, JSON-shape helpers
 ├── database.py        connections, transactions, startup (migrate, then seed)
 ├── migrations.py      versioned schema migrations
@@ -137,9 +137,10 @@ sequenceDiagram
 
     B->>C: POST /api/validation + cookie chub_sid
     C->>S: origin checked
-    S->>D: cookie verified → request.session = {"userId": "user_2"}
+    S->>D: cookie verified → request.session = {"sid": "…"}
     D->>D: json_body: parse JSON once (on the event loop)
-    D->>RP: require_role: load user_2, role in {manager, ld, leadership}?
+    D->>RP: session row live (not ended, not expired)? → user_2
+    D->>RP: require_role: role in {manager, ld, leadership}?
     D->>H: guard returns the session user
     Note over H: threadpool from here on
     H->>H: required fields present? verdict ∈ {approved, revision_requested}?
@@ -162,12 +163,13 @@ Step by step:
    app and API share one origin.
 2. **Session.** `SessionMiddleware` reads the `chub_sid` cookie, verifies its
    signature against `SESSION_SECRET`, and exposes the payload as `request.session`.
-   The only thing ever stored in it is `userId`.
+   The only thing stored in it is `sid`, a random session id.
 3. **Body.** `deps.json_body` parses the JSON body once and caches it on the request.
    An empty, malformed, or non-object body becomes `{}`, which the handler's field
    checks then reject with the same 400 as a missing field.
-4. **Guard.** The route's guard loads the session user and checks role or ownership
-   (section 7). A missing session is 401; insufficient rights are 403.
+4. **Guard.** The route's guard looks the session id up in the `sessions` table,
+   loads its user, and checks role or ownership (section 7). A missing, ended or
+   expired session is 401; insufficient rights are 403.
 5. **Handler.** Runs in FastAPI's threadpool (section 5). It validates what the
    guard cannot know about, such as a verdict value or a record's owner, then calls
    exactly one service.
@@ -265,6 +267,11 @@ To change the schema, **append a migration with the next version number**. Never
 a schema that existing ones never receive, because migration 1 never runs twice. A
 test fingerprints the file and fails if it changes.
 
+| Version | Change |
+|---|---|
+| 1 | Baseline: the 12 tables in `schema_sql.py`, and any column an older database lacks |
+| 2 | `sessions` table, for sessions the server can end (section 7) |
+
 ### Seed data
 
 `seed/seed.json` holds 306 rows. On startup, each table that is **still empty** is
@@ -298,6 +305,7 @@ erDiagram
     users ||--o{ post_assessments : "assessed in"
     users }o--|| target_roles : targets
     users }o--o| users : "managerId"
+    users ||--o{ sessions : "signed in as"
     target_roles ||--o{ target_role_skills : requires
     skills ||--o{ target_role_skills : "required by"
     skills ||--o{ user_skills : "levelled in"
@@ -318,6 +326,7 @@ erDiagram
 | `reminders` | Nudges and escalations shown to a person. |
 | `project_demands` | Open client requisitions: required skills, experience band, interview date. |
 | `skill_baselines` | Levels captured at the moment of handoff, the "before" that growth is measured against. |
+| `sessions` | Sign-in sessions: who, when it expires, and whether it was ended (section 7). Added by migration 2. |
 | `post_assessments` | Post-training GROW assessments and a manager's sign-off. |
 
 ---
@@ -326,11 +335,26 @@ erDiagram
 
 ### Sessions
 
-A session is a **signed cookie**, not a server-side record. Starlette's
-`SessionMiddleware` serialises `{"userId": ...}`, signs it with `SESSION_SECRET`,
-and sets it as `chub_sid` (HttpOnly, 8-hour lifetime). Verifying a request needs no
-storage, so sessions survive restarts and work across multiple instances that share
-the secret.
+A session is a **row in the `sessions` table**; the cookie only names it. Signing
+in inserts a row with a random 256-bit id (`secrets.token_urlsafe(32)`) and an
+expiry 8 hours out. Starlette's `SessionMiddleware` then serialises `{"sid": ...}`,
+signs it with `SESSION_SECRET`, and sets it as `chub_sid` (HttpOnly, 8-hour
+lifetime).
+
+On every request `deps.get_session_user` accepts the cookie only if its row exists,
+has not been ended, and has not expired. Because the server holds that state, it can
+end a session, and every copy of the cookie stops working with it:
+
+| Event | Sessions ended |
+|---|---|
+| Sign out | This one |
+| Sign in again from the same browser | The one that browser had |
+| Change password | Every other session of that user; the one making the change stays |
+
+A cookie signed in the earlier `{"userId": ...}` format still verifies, but names no
+session, so it signs no one in; those users sign in once more. Rows that ended or
+expired more than a day ago are deleted at each sign-in. Sessions live in the shared
+database, so they survive restarts and work across processes.
 
 The cookie's `SameSite` and `Secure` flags come from configuration:
 
@@ -351,7 +375,7 @@ flowchart TD
     R -- user --> H{"Password already set?"}
     H -- yes --> V{"bcrypt verify"}
     V -- wrong --> E401["401"]
-    V -- right --> OK["session.userId = user.id → 200"]
+    V -- right --> OK["new session row; cookie = its id → 200"]
     H -- "no, password supplied" --> CLAIM["Store bcrypt hash (first sign-in claims the account)"] --> OK
     H -- "no, no password" --> DM{"DEMO_MODE?"}
     DM -- yes --> OK
@@ -368,7 +392,8 @@ flowchart TD
 - **`DEMO_MODE`** accepts a bare user id with no password. It is a full
   authentication bypass and is off unless explicitly enabled.
 - `/api/auth/change-password` requires the current password whenever one is set, so
-  a hijacked session cannot lock the owner out.
+  a hijacked session cannot lock the owner out, and it ends the user's other
+  sessions, so changing the password also signs out whoever else holds one.
 
 ### The authorization rule
 
@@ -613,12 +638,9 @@ These are real and are not yet fixed:
    system does not collect, such as certifications and Level-1 assessments, so it
    cannot yet be computed honestly. The Leadership dashboard's quarterly trend line
    is likewise hard-coded in the frontend.
-2. **Sessions cannot be revoked server-side.** Logging out clears the browser's
-   cookie, but a copy of a signed cookie stays valid until it expires (8 hours).
-   Rotating `SESSION_SECRET` invalidates every session at once.
-3. **Single instance.** The SQLite file and the in-memory rate limiter are
+2. **Single instance.** The SQLite file and the in-memory rate limiter are
    per-process. Scaling horizontally needs a networked database and a shared rate
    limit store. On a host with an ephemeral filesystem, mount a volume for
    `DATABASE_PATH` or the data resets on redeploy.
-4. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
+3. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
    Changes to the API contract are not mirrored there.

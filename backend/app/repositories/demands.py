@@ -37,7 +37,7 @@ def _map(r: sqlite3.Row) -> dict[str, Any]:
 
 def get_project_demands() -> list[dict[str, Any]]:
     return [_map(r) for r in query_all(
-        "SELECT * FROM project_demands ORDER BY createdAt DESC"
+        "SELECT * FROM project_demands ORDER BY createdAt DESC, rowid DESC"
     )]
 
 
