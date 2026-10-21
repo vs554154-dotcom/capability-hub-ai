@@ -100,7 +100,10 @@ app.add_middleware(
 # every handler. FastAPI's default {"detail": ...} would be silently discarded.
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+    # Keep the exception's headers: a 429 carries Retry-After.
+    return JSONResponse(
+        status_code=exc.status_code, content={"error": exc.detail}, headers=exc.headers
+    )
 
 
 @app.exception_handler(DomainError)

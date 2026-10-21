@@ -104,6 +104,17 @@ def _sessions(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX idx_sessions_user ON sessions(userId)")
 
 
+def _rate_limits(conn: sqlite3.Connection) -> None:
+    """Sign-in attempt counters, shared by every process using the database."""
+    conn.execute(
+        """CREATE TABLE rate_limits (
+            key TEXT PRIMARY KEY,
+            windowStart REAL NOT NULL,
+            count INTEGER NOT NULL
+        )"""
+    )
+
+
 MIGRATIONS: list[Migration] = [
     Migration(
         1,
@@ -111,6 +122,7 @@ MIGRATIONS: list[Migration] = [
         _baseline,
     ),
     Migration(2, "Sessions table: database-backed sign-in sessions", _sessions),
+    Migration(3, "Rate-limit table: sign-in attempt counters shared across processes", _rate_limits),
 ]
 
 LATEST_VERSION = max(m.version for m in MIGRATIONS)

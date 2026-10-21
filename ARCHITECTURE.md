@@ -271,6 +271,7 @@ test fingerprints the file and fails if it changes.
 |---|---|
 | 1 | Baseline: the 12 tables in `schema_sql.py`, and any column an older database lacks |
 | 2 | `sessions` table, for sessions the server can end (section 7) |
+| 3 | `rate_limits` table, so sign-in throttling is shared by every worker (section 7) |
 
 ### Seed data
 
@@ -327,6 +328,7 @@ erDiagram
 | `project_demands` | Open client requisitions: required skills, experience band, interview date. |
 | `skill_baselines` | Levels captured at the moment of handoff, the "before" that growth is measured against. |
 | `sessions` | Sign-in sessions: who, when it expires, and whether it was ended (section 7). Added by migration 2. |
+| `rate_limits` | Sign-in attempts per client address in the current 15-minute window. Added by migration 3. |
 | `post_assessments` | Post-training GROW assessments and a manager's sign-off. |
 
 ---
@@ -383,7 +385,10 @@ flowchart TD
 ```
 
 - **The rate limit runs before any credential is examined**, so an attacker is
-  refused even on the attempt where they would have guessed right.
+  refused even on the attempt where they would have guessed right. Its counters
+  live in the `rate_limits` table, so every worker shares one count, and each
+  attempt is counted in a single write transaction, so concurrent attempts cannot
+  slip under the limit. A refusal is a 429 with `Retry-After`.
 - **Identifiers match exactly.** A name must match a person's full name; it is not a
   substring search. The first sign-in sets a password, so a loose match could claim
   the wrong person's account.
@@ -638,9 +643,11 @@ These are real and are not yet fixed:
    system does not collect, such as certifications and Level-1 assessments, so it
    cannot yet be computed honestly. The Leadership dashboard's quarterly trend line
    is likewise hard-coded in the frontend.
-2. **Single instance.** The SQLite file and the in-memory rate limiter are
-   per-process. Scaling horizontally needs a networked database and a shared rate
-   limit store. On a host with an ephemeral filesystem, mount a volume for
-   `DATABASE_PATH` or the data resets on redeploy.
+2. **One host.** All shared state (data, sessions and sign-in rate limits) is in
+   the SQLite file, so any number of workers or processes on one host share it;
+   two processes on one database were checked live to share sessions and rate
+   limits. Several *hosts* would need a networked database, because SQLite on a
+   network filesystem is not safe. On a host with an ephemeral filesystem, mount a
+   volume for `DATABASE_PATH` or the data resets on redeploy.
 3. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
    Changes to the API contract are not mirrored there.

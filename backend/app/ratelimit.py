@@ -1,22 +1,22 @@
 """Fixed-window rate limiting for authentication.
 
-Mirrors the express-rate-limit configuration on the Node login route: IP-keyed,
-30 attempts per 15-minute window by default, tunable via AUTH_RATE_LIMIT_MAX. Both
-successful and failed attempts count, so it caps rapid password-claiming as well as
-brute-force guessing.
+IP-keyed, 30 attempts per 15-minute window by default, tunable via
+AUTH_RATE_LIMIT_MAX. Both successful and failed attempts count, so it caps rapid
+password-claiming as well as brute-force guessing.
 
-Deliberately dependency-free: this is a counter with a window, and a small audited
-module is easier to reason about than another package in the deployment. The store is
-in-memory, so the count is per process - fine for a single-instance deployment; a
-shared store (Redis) is the change to make when scaling horizontally.
+The counters live in the `rate_limits` table, so every worker and process using the
+database shares one count: running two workers does not double the allowance. Each
+attempt is counted inside one write transaction, so concurrent attempts are
+serialised by SQLite and none can slip under the limit.
 """
 from __future__ import annotations
 
 import os
 import time
-from threading import Lock
 
 from fastapi import HTTPException, Request
+
+from .database import transaction
 
 WINDOW_SECONDS = 15 * 60
 MAX_ATTEMPTS = int(os.getenv("AUTH_RATE_LIMIT_MAX", "30"))
@@ -27,13 +27,10 @@ TOO_MANY = (
 )
 
 # Behind a proxy the peer address is the proxy, so the forwarded client is used when
-# present - matching `app.set("trust proxy", 1)` on the Node server. Only meaningful
-# when the app actually sits behind a trusted proxy; a direct-to-internet deployment
-# should set TRUST_PROXY=false so a client cannot spoof its own key.
+# present. Only meaningful when the app actually sits behind a trusted proxy; a
+# direct-to-internet deployment should set TRUST_PROXY=false so a client cannot
+# spoof its own key.
 TRUST_PROXY = os.getenv("TRUST_PROXY", "true").lower() != "false"
-
-_hits: dict[str, tuple[int, float]] = {}  # key -> (count, window_started_at)
-_lock = Lock()
 
 
 def client_key(request: Request) -> str:
@@ -44,11 +41,26 @@ def client_key(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def _prune(now: float) -> None:
-    """Drop windows that have expired, so the store cannot grow without bound."""
-    stale = [k for k, (_, started) in _hits.items() if now - started >= WINDOW_SECONDS]
-    for k in stale:
-        del _hits[k]
+def record_attempt(key: str, now: float | None = None) -> tuple[int, int]:
+    """Count one attempt for `key`. Returns the attempts in the current window,
+    including this one, and the seconds until that window ends.
+
+    Wall-clock time, because the windows are shared between processes.
+    """
+    now = time.time() if now is None else now
+    with transaction() as conn:
+        # Expired windows go first - this key's and everyone else's - so the table
+        # cannot grow without bound and a new window starts from an insert.
+        conn.execute("DELETE FROM rate_limits WHERE windowStart <= ?", (now - WINDOW_SECONDS,))
+        conn.execute(
+            "INSERT INTO rate_limits (key, windowStart, count) VALUES (?, ?, 1) "
+            "ON CONFLICT(key) DO UPDATE SET count = count + 1",
+            (key, now),
+        )
+        count, started = conn.execute(
+            "SELECT count, windowStart FROM rate_limits WHERE key = ?", (key,)
+        ).fetchone()
+    return count, max(1, int(WINDOW_SECONDS - (now - started)))
 
 
 def enforce_auth_rate_limit(request: Request) -> None:
@@ -57,21 +69,8 @@ def enforce_auth_rate_limit(request: Request) -> None:
     Called before any credential is examined, so an attacker is refused even on the
     request where they would finally guess correctly.
     """
-    now = time.monotonic()
-    key = client_key(request)
-
-    with _lock:
-        if len(_hits) > 2048:
-            _prune(now)
-        count, started = _hits.get(key, (0, now))
-        if now - started >= WINDOW_SECONDS:
-            count, started = 0, now
-        count += 1
-        _hits[key] = (count, started)
-        over_limit = count > MAX_ATTEMPTS
-        retry_after = max(1, int(WINDOW_SECONDS - (now - started)))
-
-    if over_limit:
+    count, retry_after = record_attempt(client_key(request))
+    if count > MAX_ATTEMPTS:
         raise HTTPException(
             status_code=429,
             detail=TOO_MANY,
@@ -81,5 +80,5 @@ def enforce_auth_rate_limit(request: Request) -> None:
 
 def reset() -> None:
     """Clear all counters. Used by tests, never in request handling."""
-    with _lock:
-        _hits.clear()
+    with transaction() as conn:
+        conn.execute("DELETE FROM rate_limits")

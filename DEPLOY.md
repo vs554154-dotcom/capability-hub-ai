@@ -34,7 +34,13 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 The server listens on `$PORT` (default 8000) at `0.0.0.0` and serves the SPA from `dist/`
 at the same origin. Health check: `GET /api/health`.
 
-The database is created and seeded automatically on first boot - no migration step.
+The database is created, migrated to the current schema and seeded automatically at
+startup - there is no separate migration step.
+
+**More than one worker.** Add `--workers N` to the uvicorn command to use more CPU
+cores. Sessions and sign-in rate limits live in the database, so all workers share
+them. Keep every worker on one host, against one database file: SQLite is not safe
+over a network filesystem, so several hosts would need a networked database.
 
 ## Docker (works on any container platform)
 
