@@ -14,7 +14,9 @@ router = APIRouter(prefix="/api", tags=["demand"])
 
 
 @router.get("/analytics/eri")
-def enterprise_readiness_index() -> dict[str, Any]:
+def enterprise_readiness_index(_: dict = Depends(require_manager_or_above)) -> dict[str, Any]:
+    # Board-level metrics for the Leadership dashboard; no reason to serve them to a
+    # signed-out visitor, which this route previously did.
     return analytics.enterprise_readiness_index()
 
 
@@ -36,8 +38,11 @@ def create_demand(
 
 @router.post("/project-demand/match")
 def match_candidates(
-    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_auth)
+    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_manager_or_above)
 ) -> dict[str, Any]:
+    # Talent sourcing spans the whole organisation, so a manager sees every
+    # candidate - but each match profile carries an employee's skills, experience and
+    # readiness, so employees (who previously could) cannot run it.
     return talent.match_candidates(talent.resolve_demand(body))
 
 
@@ -55,8 +60,10 @@ def parse_jd(
 def handoff_skillgap(
     body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_manager_or_above)
 ) -> dict[str, Any]:
+    if not body.get("employeeId"):
+        raise HTTPException(status_code=400, detail="employeeId is required.")
     return talent.handoff(
-        body.get("employeeId") or "E1000",
+        body["employeeId"],
         body.get("demandId"),
         body.get("missingSkills") or [],
         body.get("clientInterviewDate"),
@@ -76,7 +83,9 @@ def resume_eligibility(
 def generate_client_resume(
     body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_manager_or_above)
 ) -> Any:
-    employee = users.get_user_by_id(body.get("employeeId") or "E1000")
+    if not body.get("employeeId"):
+        raise HTTPException(status_code=400, detail="employeeId is required.")
+    employee = users.get_user_by_id(body["employeeId"])
     if not employee:
         raise HTTPException(status_code=404, detail="Employee profile not found.")
 

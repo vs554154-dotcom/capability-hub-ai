@@ -44,16 +44,18 @@ def get_user_by_id(user_id: str) -> dict[str, Any] | None:
 
 
 def find_user_by_identifier(identifier: str) -> dict[str, Any] | None:
-    """Resolve a sign-in identifier to a user: id, email, or a loose name match."""
+    """Resolve a sign-in identifier to exactly one user: their id, email or full
+    name, case-insensitively.
+
+    Name matching used to be a substring test, so "neha" signed in as Sneha - whose
+    row happened to come first. Because the first sign-in to an account sets its
+    password, a loose match could claim the wrong person's account.
+    """
     target = (identifier or "").strip().lower()
     if not target:
         return None
     for row in query_all("SELECT * FROM users"):
-        if (
-            row["id"].lower() == target
-            or row["email"].lower() == target
-            or target in row["name"].lower()
-        ):
+        if target in (row["id"].lower(), row["email"].lower(), row["name"].strip().lower()):
             return map_user(row)
     return None
 

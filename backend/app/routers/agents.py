@@ -2,6 +2,9 @@
 
 Each answers with generated text when Gemini is reachable and a deterministic
 fallback when it is not, so these endpoints always return 200 on valid input.
+
+Every prompt is grounded in a person's skills and evidence, so whose data goes into
+it is an authorization decision: the same rule as reading that person's record.
 """
 from __future__ import annotations
 
@@ -9,35 +12,56 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..deps import json_body, require_auth, require_manager_or_above, require_self_or_elevated_body
-from ..repositories import users
+from ..deps import (
+    ensure_may_access,
+    json_body,
+    require_auth,
+    require_manager_or_above,
+    require_self_or_elevated_body,
+)
+from ..repositories import assessments, users
 from ..services import copilot
 
 router = APIRouter(prefix="/api", tags=["agents"])
 
 
+def _employee_id(body: dict[str, Any]) -> str:
+    employee_id = body.get("employeeId")
+    if not employee_id:
+        raise HTTPException(status_code=400, detail="employeeId is required.")
+    return employee_id
+
+
 @router.post("/ai/orchestrator")
-def orchestrator(body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_auth)) -> dict[str, Any]:
+def orchestrator(
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
+) -> dict[str, Any]:
     prompt = body.get("prompt")
     if not prompt:
         raise HTTPException(status_code=400, detail="A prompt is required for AI interactions.")
-    return {"response": copilot.orchestrate(body.get("userId") or "E1000", prompt, body.get("agent"))}
+    # The subject whose skills and evidence ground the answer. Defaults to the caller;
+    # naming someone else needs the same right as reading their record.
+    subject_id = body.get("userId") or session_user["id"]
+    ensure_may_access(session_user, subject_id)
+    return {"response": copilot.orchestrate(subject_id, prompt, body.get("agent"))}
 
 
 @router.post("/manager/insight")
 def manager_insight(
-    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_manager_or_above)
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_manager_or_above)
 ) -> dict[str, Any]:
-    return {"insight": copilot.manager_insight(body.get("employeeId") or "E1000")}
+    employee_id = _employee_id(body)
+    ensure_may_access(session_user, employee_id)
+    return {"insight": copilot.manager_insight(employee_id)}
 
 
 @router.post("/manager/post-assessment")
 def post_assessment(
     body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_manager_or_above)
 ) -> dict[str, Any]:
-    result = copilot.post_assessment(
-        body.get("employeeId") or "E1000", body.get("demandId"), session_user["id"]
-    )
+    employee_id = _employee_id(body)
+    ensure_may_access(session_user, employee_id)
+    result = copilot.post_assessment(employee_id, body.get("demandId"), session_user["id"])
     return {"success": True, **result}
 
 
@@ -50,6 +74,12 @@ def signoff_post_assessment(
     decision = body.get("decision")
     if decision not in ("cleared", "not_ready"):
         raise HTTPException(status_code=400, detail="decision must be 'cleared' or 'not_ready'.")
+    # Sign-off is what unlocks the client resume, so only someone who may act on the
+    # assessed employee can give it.
+    existing = assessments.get_post_assessment(id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    ensure_may_access(session_user, existing["employeeId"])
     return {"success": True, "assessment": copilot.sign_off_assessment(id, session_user["id"], decision)}
 
 

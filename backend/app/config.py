@@ -48,6 +48,16 @@ IS_HTTPS_DEPLOY = (
     or (os.getenv("APP_URL") or "").startswith("https://")
 )
 
+# Session cookie SameSite policy. Embedding the app in a cross-site iframe (as AI
+# Studio does) needs "none"; a standalone deployment is better served by the
+# stricter "lax". Defaults to "none" on HTTPS, "lax" otherwise; COOKIE_SAMESITE
+# overrides. Browsers reject SameSite=None without Secure, so "none" forces Secure.
+_samesite = (os.getenv("COOKIE_SAMESITE") or "").strip().lower()
+COOKIE_SAMESITE = _samesite if _samesite in ("lax", "strict", "none") else (
+    "none" if IS_HTTPS_DEPLOY else "lax"
+)
+COOKIE_SECURE = IS_HTTPS_DEPLOY or COOKIE_SAMESITE == "none"
+
 PORT = int(os.getenv("PORT", "8000"))
 
 # Vite dev server origin, allowed through CORS with credentials so the React app can

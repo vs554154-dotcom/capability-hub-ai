@@ -48,10 +48,14 @@ def assign_track(
         return learning.get_learning_plan(user_id)
 
 
-def resource_learning_progress() -> list[dict[str, Any]]:
-    """Per-employee learning roll-up for the manager and L&D tracker."""
+def resource_learning_progress(visible: set[str] | None = None) -> list[dict[str, Any]]:
+    """Per-employee learning roll-up for the manager and L&D tracker, limited to the
+    user ids in `visible` (None means everyone)."""
     with transaction():
-        employees = [u for u in users.get_users() if u["role"] == "employee"]
+        employees = [
+            u for u in users.get_users()
+            if u["role"] == "employee" and (visible is None or u["id"] in visible)
+        ]
         target_roles = catalog.get_target_roles()
         result = []
 

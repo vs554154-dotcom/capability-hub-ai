@@ -25,11 +25,12 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import (
+    COOKIE_SAMESITE,
+    COOKIE_SECURE,
     DEMO_MODE,
     DEV_ORIGINS,
     DIST_DIR,
     GEMINI_API_KEY,
-    IS_HTTPS_DEPLOY,
     SESSION_COOKIE_NAME,
     SESSION_MAX_AGE_SECONDS,
     SESSION_SECRET,
@@ -77,8 +78,8 @@ app.add_middleware(
     secret_key=SESSION_SECRET,
     session_cookie=SESSION_COOKIE_NAME,
     max_age=SESSION_MAX_AGE_SECONDS,
-    same_site="none" if IS_HTTPS_DEPLOY else "lax",
-    https_only=IS_HTTPS_DEPLOY,
+    same_site=COOKIE_SAMESITE,
+    https_only=COOKIE_SECURE,
 )
 
 # Credentialed CORS for a separately-served dev frontend. allow_origins cannot be

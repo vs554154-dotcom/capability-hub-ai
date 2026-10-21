@@ -72,7 +72,9 @@ def orchestrate(subject_id: str, prompt: str, agent: str | None) -> str:
     evidence and the course catalogue."""
     with transaction():
         user = users.get_user_by_id(subject_id)
-        user_id = user["id"] if user else "E1000"
+        # An unknown subject grounds the answer in nothing. (It used to fall back to
+        # E1000, putting one real employee's records into anyone's prompt.)
+        user_id = user["id"] if user else subject_id
         role = next(
             (r for r in catalog.get_target_roles() if user and r["id"] == user.get("targetRoleId")),
             None,

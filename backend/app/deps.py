@@ -61,6 +61,26 @@ def may_access(actor: dict[str, Any], target_id: str | None) -> bool:
     return False
 
 
+def ensure_may_access(actor: dict[str, Any], target_id: str | None, message: str = NOT_OWN_ACTION) -> None:
+    """Raise 403 unless `actor` may act on the user `target_id`. For handlers whose
+    target is only known after reading the body or loading a record."""
+    if not may_access(actor, target_id):
+        raise HTTPException(status_code=403, detail=message)
+
+
+def visible_user_ids(actor: dict[str, Any]) -> set[str] | None:
+    """Whose records `actor` may see in a list: themselves, plus their direct reports
+    for a manager. None means everyone (L&D and Leadership). The list form of
+    `may_access`, so a list endpoint can never show more than the single-record
+    endpoints would."""
+    if actor["role"] in (LD, LEADERSHIP):
+        return None
+    ids = {actor["id"]}
+    if actor["role"] == MANAGER:
+        ids |= {u["id"] for u in users.get_direct_reports(actor["id"])}
+    return ids
+
+
 def require_auth(request: Request) -> dict[str, Any]:
     """Any signed-in user. No role or ownership check."""
     user = get_session_user(request)
