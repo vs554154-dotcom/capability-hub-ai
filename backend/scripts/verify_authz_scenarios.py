@@ -151,6 +151,8 @@ expect("employee -> parse JD", emp.call("POST", "/api/project-demand/parse-jd",
 expect("employee -> download source zip", emp.call("GET", "/api/download-app-zip")[0], 403)
 expect("employee -> readiness index", emp.call("GET", "/api/analytics/eri")[0], 403)
 expect("employee -> leadership overview", emp.call("GET", "/api/analytics/leadership")[0], 403)
+expect("employee -> launch an L&D campaign", emp.call("POST", "/api/analytics/campaign",
+                                                     {"skillId": "sk_20"})[0], 403)
 
 # --------------------------------------------------------------------------- #
 print("\nSCENARIO 4 - manager attempting unauthorized employee impersonation")
@@ -209,10 +211,12 @@ for path in ["/api/skills", "/api/roles", "/api/courses",
              "/api/users/" + EMP_ID, "/api/users/" + EMP_ID + "/capability",
              "/api/evidence", "/api/reminders", "/api/project-demand/list",
              "/api/learning-tracker/resources", "/api/analytics/eri",
-             "/api/analytics/leadership"]:
+             "/api/analytics/leadership", "/api/analytics/ld"]:
     expect("anonymous -> " + path, none.call("GET", path)[0], 401)
 expect("anonymous -> manager team", none.call("GET", "/api/manager/" + MGR_ID + "/team")[0],
        [401, 403])
+expect("anonymous -> launch an L&D campaign", none.call("POST", "/api/analytics/campaign",
+                                                          {"skillId": "sk_20"})[0], 401)
 expect("anonymous -> AI orchestrator", none.call("POST", "/api/ai/orchestrator",
                                                  {"prompt": "hi"})[0], 401)
 expect("anonymous -> submit evidence", none.call("POST", "/api/evidence", {

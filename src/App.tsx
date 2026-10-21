@@ -686,7 +686,6 @@ export default function App() {
 
         {effectiveTab === "ld_dash" && canManage && (
           <LDDashboard
-            skills={skills}
             courses={courses}
             roles={roles}
             analyticsReport={analyticsReport}

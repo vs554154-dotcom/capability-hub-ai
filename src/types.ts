@@ -202,7 +202,7 @@ export interface AgentReminder {
   id: string;
   userId: string;
   targetRole: string;
-  type: "weekly_reminder" | "checkpoint" | "escalation" | "manager_notice";
+  type: "weekly_reminder" | "checkpoint" | "escalation" | "manager_notice" | "campaign";
   title: string;
   message: string;
   status: "scheduled" | "sent" | "actioned";

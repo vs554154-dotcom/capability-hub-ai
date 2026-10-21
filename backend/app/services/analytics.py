@@ -8,8 +8,11 @@ from __future__ import annotations
 from typing import Any
 
 from ..database import transaction
+from ..errors import NotFound
 from ..numeric import js_round
-from ..repositories import assessments, catalog, demands, evidence, learning, metrics, user_skills, users
+from ..repositories import (
+    assessments, catalog, demands, evidence, learning, metrics, reminders, user_skills, users,
+)
 from ..repositories._common import now_date
 from .capability import capability_report, compute_motivation_scores, skill_score
 from .talent import VERIFIED_LEVEL, find_skill
@@ -204,6 +207,29 @@ def enterprise_readiness_index() -> dict[str, Any]:
 # Leadership overview
 # --------------------------------------------------------------------------- #
 
+def _skill_gaps(people: list[dict[str, Any]], names: dict[str, str]) -> list[dict[str, Any]]:
+    """Every skill people are working toward that someone is still below target on,
+    largest group first."""
+    targeted: dict[str, list[bool]] = {}
+    for p in people:
+        for s in p["levels"]:
+            if s["targetLevel"] > 0:
+                targeted.setdefault(s["skillId"], []).append(s["currentLevel"] < s["targetLevel"])
+    return sorted(
+        (
+            {
+                "skillId": skill_id,
+                "skillName": names.get(skill_id, skill_id),
+                "employeesTargeting": len(flags),
+                "belowTarget": sum(flags),
+                "gapShare": _pct(sum(flags), len(flags)),
+            }
+            for skill_id, flags in targeted.items() if any(flags)
+        ),
+        key=lambda r: (-r["belowTarget"], -r["gapShare"], r["skillName"]),
+    )
+
+
 def _strategy(ready: int, developing: int, demand: int) -> str:
     shortfall = demand - ready
     if shortfall <= 0:
@@ -225,24 +251,8 @@ def leadership_overview() -> dict[str, Any]:
         post_counts = assessments.post_assessment_status_counts()
     names = {s["id"]: s["name"] for s in skills}
 
-    # Risk: for each skill people are working toward, the share still below target.
-    targeted: dict[str, list[bool]] = {}
-    for p in people:
-        for s in p["levels"]:
-            if s["targetLevel"] > 0:
-                targeted.setdefault(s["skillId"], []).append(s["currentLevel"] < s["targetLevel"])
-    risk = sorted(
-        (
-            {
-                "skillName": names.get(skill_id, skill_id),
-                "employeesTargeting": len(flags),
-                "belowTarget": sum(flags),
-                "gapShare": _pct(sum(flags), len(flags)),
-            }
-            for skill_id, flags in targeted.items() if any(flags)
-        ),
-        key=lambda r: (-r["belowTarget"], -r["gapShare"], r["skillName"]),
-    )[:5]
+    # Risk: the skills with the most people still below target.
+    risk = _skill_gaps(people, names)[:5]
 
     # Supply against open demand, per skill. Ready means held at the level the
     # matching engine treats as verified; developing means targeted at that level
@@ -339,6 +349,90 @@ def leadership_overview() -> dict[str, Any]:
         },
         "directives": directives,
     }
+
+
+# --------------------------------------------------------------------------- #
+# L&D: readiness by department, gap cohorts, campaigns
+# --------------------------------------------------------------------------- #
+
+def ld_overview(heatmap_rows: int = 12) -> dict[str, Any]:
+    """For the skills most employees work toward, how far each department has got;
+    and every skill cohort still below target, for campaigns."""
+    with transaction():
+        employees = [u for u in users.get_users() if u["role"] == "employee"]
+        names = {s["id"]: s["name"] for s in catalog.get_skills()}
+        levels = {e["id"]: user_skills.get_user_skills(e["id"]) for e in employees}
+
+    department_of = {e["id"]: e["department"] for e in employees}
+    headcount: dict[str, int] = {}
+    for dept in department_of.values():
+        headcount[dept] = headcount.get(dept, 0) + 1
+    departments = sorted(headcount, key=lambda d: (-headcount[d], d))
+
+    # skill -> department -> each targeting employee's progress (current / target, capped at 1)
+    progress: dict[str, dict[str, list[float]]] = {}
+    for user_id, rows in levels.items():
+        for s in rows:
+            if s["targetLevel"] > 0:
+                progress.setdefault(s["skillId"], {}).setdefault(department_of[user_id], []).append(
+                    min(1.0, s["currentLevel"] / s["targetLevel"])
+                )
+    ranked = sorted(
+        progress,
+        key=lambda k: (-sum(len(v) for v in progress[k].values()), names.get(k, k)),
+    )[:heatmap_rows]
+
+    heatmap = [
+        {
+            "skillId": skill_id,
+            "skillName": names.get(skill_id, skill_id),
+            "employees": sum(len(v) for v in progress[skill_id].values()),
+            "cells": [
+                {
+                    "department": dept,
+                    "employees": len(progress[skill_id].get(dept, [])),
+                    "targetReached": _pct(sum(progress[skill_id][dept]), len(progress[skill_id][dept]))
+                    if progress[skill_id].get(dept) else None,
+                }
+                for dept in departments
+            ],
+        }
+        for skill_id in ranked
+    ]
+    people = [{"levels": rows} for rows in levels.values()]
+    return {
+        "success": True,
+        "departments": [{"name": d, "employees": headcount[d]} for d in departments],
+        "heatmap": heatmap,
+        "cohorts": _skill_gaps(people, names),
+    }
+
+
+def launch_campaign(skill_id: str, launched_by: dict[str, Any]) -> dict[str, Any]:
+    """Send every employee who is below target on `skill_id` a reminder to work on
+    it. Returns who was reminded."""
+    with transaction():
+        skill = next((s for s in catalog.get_skills() if s["id"] == skill_id), None)
+        if not skill:
+            raise NotFound("Skill not found")
+        reminded = []
+        for emp in users.get_users():
+            if emp["role"] != "employee":
+                continue
+            held = next(
+                (s for s in user_skills.get_user_skills(emp["id"]) if s["skillId"] == skill_id), None
+            )
+            if not held or held["currentLevel"] >= held["targetLevel"]:
+                continue
+            reminders.create_reminder(
+                emp["id"], "Employee", "campaign",
+                f"Upskilling campaign: {skill['name']}",
+                f"{launched_by['name']} has started a campaign on {skill['name']}. You are at "
+                f"level {held['currentLevel']} of your target {held['targetLevel']}. Open your "
+                "learning plan and submit evidence as you progress.",
+            )
+            reminded.append(emp["id"])
+    return {"success": True, "skillName": skill["name"], "reminded": len(reminded), "employeeIds": reminded}
 
 
 def org_context() -> str:

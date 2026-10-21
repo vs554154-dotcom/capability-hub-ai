@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { User, Skill, TargetRole, LearningCourse, Evidence, WeeklyLearningStep } from "../types";
 import { SkillRadarChart } from "./SkillRadarChart";
 import { PageHeader } from "./ui/Page";
+import { Inbox } from "./Inbox";
 import { Award, Briefcase, CheckCircle2, AlertCircle, Send, GraduationCap, Clock, ExternalLink, Calendar, CheckSquare, Sparkles, ChevronRight, Zap, BookOpen, Wrench, Edit3, Target, X, Check, FileText, Star, Users } from "lucide-react";
 
 // Demand dates are stored as full ISO timestamps, which render as
@@ -223,6 +224,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           <><strong>Submit evidence</strong> of real work; each approval raises that skill a level.</>,
         ]}
       />
+
+      <Inbox />
 
       {/* SHORTLIST STATUS BANNER */}
       {isShortlisted ? (

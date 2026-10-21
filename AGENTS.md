@@ -55,7 +55,7 @@ Consequences for anyone (human or agent) working here:
 2. Node is a build tool only: it builds the frontend into `dist/`. Nothing in the
    runtime image is Node.
 3. `backend/scripts/verify_authz_scenarios.py` against a running server is the gate
-   that matters: **54/54**.
+   that matters: **57/57**.
 4. Databases created by the old Node server still upgrade in place: migration 1
    reconciles any older schema (see `ARCHITECTURE.md`, section 6).
 
@@ -121,7 +121,7 @@ not lost.
 - **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `dist/`)
 - **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT` (add `--workers N` for more cores; sessions and rate limits are shared through the database)
 - **Test suite** (no server needed): `backend/.venv/Scripts/python -m pytest backend/tests` — install with `pip install -r backend/requirements-dev.txt`
-- **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **54/54**
+- **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **57/57**
 
 **Frontend** (Node is used only to build it):
 

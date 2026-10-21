@@ -44,6 +44,7 @@ export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   ],
   [UserRole.LEADERSHIP]: [
     { id: "leadership_dash", label: "Readiness", icon: TrendingUp, hint: "The Enterprise Readiness Index, risk, and supply against demand" },
+    { id: "ld_dash", label: "L&D insights", icon: GraduationCap, hint: "Readiness by department, upskilling campaigns and learning tracks" },
     { id: "project_demand", label: "Demand to deploy", icon: Target, hint: "Capture client demand, match people, hand off skill gaps" },
     { id: "ai_hub", label: "Strategy AI", icon: Compass, hint: "The Capability Analytics copilot for board briefings" },
   ],

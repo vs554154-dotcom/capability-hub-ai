@@ -60,16 +60,16 @@ Hashes are bcrypt at cost factor 10; those written by the former Node server's
 
 ```bash
 backend/.venv/Scripts/python -m pytest backend/tests                       # no server needed
-python backend/scripts/verify_authz_scenarios.py http://localhost:8000      # the gate: 54/54
+python backend/scripts/verify_authz_scenarios.py http://localhost:8000      # the gate: 57/57
 python backend/scripts/verify_auth.py http://localhost:8000                 # 14 probes
 python backend/scripts/verify_ai.py http://localhost:8000                   # AI endpoints
 ```
 
-**`pytest`** — 84 tests, in-process against an isolated database: object-level
+**`pytest`** — 90 tests, in-process against an isolated database: object-level
 authorization, path traversal, migrations, sessions, rate limits, the readiness
 index, and Gemini through the real SDK against a local stand-in.
 
-**`verify_authz_scenarios`** — 54 checks across six scenarios, run against a live
+**`verify_authz_scenarios`** — 57 checks across six scenarios, run against a live
 server: employee, manager and leadership features, an employee reaching for manager
 data, a manager reaching into another team, user-id manipulation, and anonymous
 access. The gate for any backend change.

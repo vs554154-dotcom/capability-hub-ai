@@ -169,3 +169,76 @@ def test_a_report_with_no_skill_records_scores_from_evidence_only(monkeypatch):
     )[0]
     row = next(r for r in capability.team_rollup("user_2") if r["userId"] == "E1000")
     assert row["skillScore"] == min(100, approved * 5)
+
+
+# --------------------------------------------------------------------------- #
+# L&D: readiness by department, gap cohorts, campaigns
+# --------------------------------------------------------------------------- #
+
+def test_heatmap_cells_are_computed_from_the_records(ld):
+    data = ld.get("/api/analytics/ld").json()
+    assert data["heatmap"], "the seed has targeted skills"
+    for row in data["heatmap"][:3]:
+        for cell in row["cells"]:
+            rows = query_all(
+                f"SELECT us.currentLevel, us.targetLevel {EMPLOYEE_SKILLS} "
+                "AND u.department = ? AND us.skillId = ? AND us.targetLevel > 0",
+                (cell["department"], row["skillId"]),
+            )
+            assert cell["employees"] == len(rows)
+            expected = (
+                js_round(sum(min(1, c / t) for c, t in rows) / len(rows) * 100) if rows else None
+            )
+            assert cell["targetReached"] == expected
+    counts = [r["employees"] for r in data["heatmap"]]
+    assert counts == sorted(counts, reverse=True)
+
+
+def test_cohorts_count_the_employees_below_target(ld):
+    for cohort in ld.get("/api/analytics/ld").json()["cohorts"][:5]:
+        below = query_one(
+            f"SELECT COUNT(*) {EMPLOYEE_SKILLS} AND us.skillId = ? AND us.currentLevel < us.targetLevel",
+            (cohort["skillId"],),
+        )[0]
+        assert cohort["belowTarget"] == below
+
+
+def test_a_campaign_reminds_exactly_the_employees_below_target(ld):
+    cohort = ld.get("/api/analytics/ld").json()["cohorts"][0]
+    expected = {
+        r["userId"] for r in query_all(
+            f"SELECT us.userId {EMPLOYEE_SKILLS} AND us.skillId = ? AND us.currentLevel < us.targetLevel",
+            (cohort["skillId"],),
+        )
+    }
+    before = query_one("SELECT COUNT(*) FROM reminders WHERE type = 'campaign'")[0]
+
+    response = ld.post("/api/analytics/campaign", json={"skillId": cohort["skillId"]})
+
+    assert response.status_code == 200
+    assert set(response.json()["employeeIds"]) == expected
+    assert response.json()["reminded"] == len(expected)
+    assert query_one("SELECT COUNT(*) FROM reminders WHERE type = 'campaign'")[0] == before + len(expected)
+
+
+def test_the_reminded_employee_sees_the_campaign(ld, employee):
+    skill_id = query_one(
+        "SELECT skillId FROM user_skills WHERE userId = 'E1000' AND currentLevel < targetLevel"
+    )["skillId"]
+    name = ld.post("/api/analytics/campaign", json={"skillId": skill_id}).json()["skillName"]
+
+    inbox = employee.get("/api/reminders").json()
+    assert any(r["type"] == "campaign" and name in r["title"] for r in inbox)
+    assert {r["userId"] for r in inbox} == {"E1000"}
+
+
+def test_campaigns_are_for_ld_and_leadership_only(manager, employee, anon):
+    body = {"skillId": "sk_20"}
+    assert manager.post("/api/analytics/campaign", json=body).status_code == 403
+    assert employee.post("/api/analytics/campaign", json=body).status_code == 403
+    assert anon.post("/api/analytics/campaign", json=body).status_code == 401
+
+
+def test_a_campaign_needs_a_known_skill(ld):
+    assert ld.post("/api/analytics/campaign", json={}).status_code == 400
+    assert ld.post("/api/analytics/campaign", json={"skillId": "no_such_skill"}).status_code == 404

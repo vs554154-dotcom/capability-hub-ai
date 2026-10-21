@@ -15,7 +15,7 @@ Capability Hub AI (CyBridge) is a full-stack enterprise workforce intelligence p
    - Never expose `GEMINI_API_KEY` to the client/browser code.
 3. **Authorization**:
    - Identity comes from the session cookie only. A user id in a URL or body names a target, never the caller.
-   - `backend/scripts/verify_authz_scenarios.py` must stay at 54/54.
+   - `backend/scripts/verify_authz_scenarios.py` must stay at 57/57.
 4. **Port & Host**:
    - Binds `0.0.0.0:$PORT` — default `8000`.
 5. **Camera & Microphone Permissions**:

@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from ..deps import json_body, require_auth, require_manager_or_above
+from ..deps import LD, LEADERSHIP, json_body, require_auth, require_manager_or_above, require_role
 from ..repositories import demands, users
 from ..services import analytics, talent
 
@@ -23,6 +23,23 @@ def enterprise_readiness_index(_: dict = Depends(require_manager_or_above)) -> d
 @router.get("/analytics/leadership")
 def leadership_overview(_: dict = Depends(require_manager_or_above)) -> dict[str, Any]:
     return analytics.leadership_overview()
+
+
+@router.get("/analytics/ld")
+def ld_overview(_: dict = Depends(require_manager_or_above)) -> dict[str, Any]:
+    return analytics.ld_overview()
+
+
+@router.post("/analytics/campaign")
+def launch_campaign(
+    body: dict[str, Any] = Depends(json_body),
+    session_user: dict = Depends(require_role(LD, LEADERSHIP)),
+) -> dict[str, Any]:
+    # Reminds employees across the whole organisation, so it is limited to the roles
+    # that own organisation-wide learning: L&D and leadership, not line managers.
+    if not body.get("skillId"):
+        raise HTTPException(status_code=400, detail="skillId is required.")
+    return analytics.launch_campaign(body["skillId"], session_user)
 
 
 @router.get("/project-demand/list")

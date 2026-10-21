@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Skill, LearningCourse, TargetRole } from "../types";
-import { Grid, FileText, Sparkles, TrendingUp, Cpu, RefreshCw, CheckCircle2 } from "lucide-react";
+import { LearningCourse, TargetRole } from "../types";
+import {
+  AlertTriangle, BellRing, BookOpen, CheckCircle2, Cpu, FileText, GraduationCap, Grid3x3, Info,
+  RefreshCw, Sparkles,
+} from "lucide-react";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
+import { PageHeader, SectionCard, StatTile, Tag } from "./ui/Page";
 
 interface LDDashboardProps {
-  skills: Skill[];
   courses: LearningCourse[];
   roles?: TargetRole[];
   analyticsReport: string;
@@ -12,265 +15,286 @@ interface LDDashboardProps {
   onGenerateAnalytics: () => void;
 }
 
+interface WorkforceMetrics {
+  employeeCount: number;
+  readinessIndex: number;
+  activeLearners: number;
+  verifiedEvidence: number;
+  topSkillGap: { skillName: string; employeesBelowTarget: number } | null;
+}
+
+interface Cohort {
+  skillId: string;
+  skillName: string;
+  employeesTargeting: number;
+  belowTarget: number;
+  gapShare: number;
+}
+
+interface LDOverview {
+  departments: { name: string; employees: number }[];
+  heatmap: {
+    skillId: string;
+    skillName: string;
+    employees: number;
+    cells: { department: string; employees: number; targetReached: number | null }[];
+  }[];
+  cohorts: Cohort[];
+}
+
+/** One hue, stronger where more of the target has been reached. */
+const cellStyle = (value: number | null): React.CSSProperties =>
+  value === null
+    ? { background: "var(--surface-2)", color: "var(--text-mute)" }
+    : { background: `rgb(var(--accent-rgb) / ${(0.06 + (value / 100) * 0.4).toFixed(3)})`, color: "var(--text)" };
+
 export const LDDashboard: React.FC<LDDashboardProps> = ({
-  skills,
   courses,
   roles = [],
   analyticsReport,
   isAnalyticsLoading,
   onGenerateAnalytics,
 }) => {
-  const [selectedCampaign, setSelectedCampaign] = useState("selenium-java");
-  const [campaignSuccess, setCampaignSuccess] = useState("");
-
-  // Real organisation metrics for the tiles below. These were previously hard-coded
-  // literals; they are now computed server-side from actual employee records.
-  const [metrics, setMetrics] = useState<{
-    employeeCount: number;
-    readinessIndex: number;
-    activeLearners: number;
-    verifiedEvidence: number;
-    topSkillGap: { skillName: string; employeesBelowTarget: number } | null;
-  } | null>(null);
+  const [metrics, setMetrics] = useState<WorkforceMetrics | null>(null);
+  const [overview, setOverview] = useState<LDOverview | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [cohortId, setCohortId] = useState("");
+  const [campaignState, setCampaignState] = useState<
+    { kind: "idle" } | { kind: "sending" } | { kind: "done"; text: string } | { kind: "error"; text: string }
+  >({ kind: "idle" });
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/analytics/workforce");
-        if (!cancelled && res.ok) setMetrics(await res.json());
-      } catch (err) {
-        console.error("Workforce metrics unavailable:", err);
-      }
-    })();
+    Promise.all([fetch("/api/analytics/workforce"), fetch("/api/analytics/ld")])
+      .then(async ([m, o]) => {
+        if (!m.ok || !o.ok) throw new Error(`analytics answered ${m.status} / ${o.status}`);
+        const [mj, oj] = await Promise.all([m.json(), o.json()]);
+        if (cancelled) return;
+        setMetrics(mj);
+        setOverview(oj);
+        if (oj.cohorts.length) setCohortId(oj.cohorts[0].skillId);
+      })
+      .catch(err => !cancelled && setLoadError(err.message));
     return () => { cancelled = true; };
   }, []);
 
-  // Render a dash until the real number arrives, rather than a placeholder that could be
-  // mistaken for data.
+  const cohort = overview?.cohorts.find(c => c.skillId === cohortId);
+
+  const launchCampaign = async () => {
+    if (!cohort) return;
+    setCampaignState({ kind: "sending" });
+    try {
+      const res = await fetch("/api/analytics/campaign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skillId: cohort.skillId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `The server answered ${res.status}`);
+      setCampaignState({
+        kind: "done",
+        text: `Reminded ${data.reminded} employee${data.reminded === 1 ? "" : "s"} about ${data.skillName}.`,
+      });
+    } catch (err: any) {
+      setCampaignState({ kind: "error", text: err.message });
+    }
+  };
+
   const stat = (value: number | undefined | null, suffix = "") =>
-    metrics && value !== undefined && value !== null ? `${value}${suffix}` : "—";
-
-  const HEATMAP_DEPARTMENTS = ["QA & Testing", "Cloud Infra", "Backend Eng", "Data Engineering"];
-  
-  const skillReadinessMap: { [skillId: string]: number[] } = {
-    sk_1: [30, 85, 70, 40], // Selenium WebDriver
-    sk_2: [40, 90, 85, 60], // Java & OOP
-    sk_3: [25, 75, 80, 50], // API Automation (REST Assured)
-    sk_4: [60, 95, 90, 80], // Git & GitHub Flow
-    sk_5: [35, 90, 75, 55], // CI/CD Test Pipelines
-    sk_6: [20, 80, 70, 30], // TestNG & JUnit Frameworks
-  };
-
-  const getHeatmapColor = (score: number) => {
-    if (score >= 80) return "bg-[#10B981]/20 border border-[#10B981]/40 text-[#10B981]";
-    if (score >= 50) return "bg-[#4F8EF7]/20 border border-[#4F8EF7]/40 text-[#4F8EF7]";
-    if (score >= 30) return "bg-[#F59E0B]/20 border border-[#F59E0B]/40 text-[#F59E0B]";
-    return "bg-rose-500/20 border border-rose-500/40 text-rose-400";
-  };
-
-  const handleLaunchCampaign = () => {
-    const focusLabel = selectedCampaign === "selenium-java" ? "Selenium & Java Automation Cohort" : "API Automation Cohort";
-    setCampaignSuccess(`Strategic upskilling campaign [${focusLabel}] launched! Auto-enrollment dispatches and training notifications sent to QA Division.`);
-    setTimeout(() => {
-      setCampaignSuccess("");
-    }, 6000);
-  };
+    metrics && value !== undefined && value !== null ? `${value}${suffix}` : "–";
 
   return (
-    <div className="space-y-8 animate-fade-in py-6">
-      
-      {/* Toast alert */}
-      {campaignSuccess && (
-        <div className="p-4 bg-[#10B981]/10 border border-[#10B981]/40 text-[#10B981] font-mono text-xs rounded-md flex items-center gap-3 animate-fade-in">
-          <CheckCircle2 className="h-4 w-4 text-[#10B981] shrink-0" />
-          <span>{campaignSuccess}</span>
-        </div>
+    <div className="space-y-6 py-6">
+      <PageHeader
+        eyebrow="L&D workspace · Insights"
+        icon={GraduationCap}
+        title="Workforce learning and readiness"
+        lede={
+          <>
+            Where skills stand across the organisation, which groups are furthest from their
+            targets, and the levers L&D pulls: campaigns that remind the people below target, and
+            learning tracks sized to each person's deadline.
+          </>
+        }
+        steps={[
+          <><strong>Read the totals</strong> for the whole workforce.</>,
+          <><strong>Scan the heatmap</strong> for departments lagging on a skill.</>,
+          <><strong>Launch a campaign</strong> to remind everyone below target.</>,
+          <><strong>Assign tracks</strong> to individuals at the bottom of the page.</>,
+        ]}
+      />
+
+      {loadError && (
+        <SectionCard title="Analytics unavailable" icon={AlertTriangle}>
+          <p className="text-sm" style={{ color: "var(--text-dim)" }}>
+            The workforce figures could not be loaded ({loadError}). Refresh the page to try again.
+          </p>
+        </SectionCard>
       )}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 stagger-children">
-        <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg hover-lift sheen">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Workforce Readiness Index</span>
-          <span className="text-3xl font-bold text-[#F0F4FF] block">{stat(metrics?.readinessIndex, "%")}</span>
-          <span className="text-xs text-[#10B981] font-mono mt-1 block">Average across {stat(metrics?.employeeCount)} employees</span>
-        </div>
-        <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Verified Evidence</span>
-          <span className="text-3xl font-bold text-[#10B981] block">{stat(metrics?.verifiedEvidence)}</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">Manager-approved submissions</span>
-        </div>
-        <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Highest Skill Deficit</span>
-          <span className="text-2xl font-bold text-[#F59E0B] block truncate">{metrics?.topSkillGap ? metrics.topSkillGap.skillName : "—"}</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">
-            {metrics?.topSkillGap ? `${metrics.topSkillGap.employeesBelowTarget} employees below target` : "No gaps recorded"}
-          </span>
-        </div>
-        <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-5 shadow-lg">
-          <span className="text-[10px] font-mono text-[#94A3B8] font-bold tracking-wider uppercase block mb-1">Active Learners</span>
-          <span className="text-3xl font-bold text-[#4F8EF7] block">{stat(metrics?.activeLearners)}</span>
-          <span className="text-xs text-[#94A3B8] font-mono mt-1 block">With a learning plan under way</span>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+        <StatTile label="Average Skill score" value={stat(metrics?.readinessIndex, "%")}
+                  hint={`Across ${stat(metrics?.employeeCount)} employees`} />
+        <StatTile label="Verified evidence" value={stat(metrics?.verifiedEvidence)} hint="Manager-approved submissions" />
+        <StatTile label="Active learners" value={stat(metrics?.activeLearners)} hint="With a learning step under way or done" />
+        <StatTile
+          label="Largest skill gap"
+          value={<span className="text-[20px] leading-tight block">{metrics?.topSkillGap?.skillName ?? "–"}</span>}
+          hint={metrics?.topSkillGap ? `${metrics.topSkillGap.employeesBelowTarget} employees below target` : "No gaps recorded"}
+        />
       </div>
 
-      {/* Grid: Heatmap + Cohort Campaign */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Heatmap Grid (Left 2 columns) */}
-        <div className="lg:col-span-2 bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6 border-b border-[#2A384C] pb-4">
-            <div>
-              <h3 className="text-base font-bold text-[#F0F4FF]">Enterprise Skill Capability Heatmap</h3>
-              <p className="text-xs text-[#94A3B8] mt-0.5">Heat levels display average capability levels across organizational divisions.</p>
-            </div>
-            <Grid className="h-5 w-5 text-[#4F8EF7]" />
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[#2A384C] bg-[#0F1724]">
-                  <th className="py-3 px-4 font-mono text-[10px] uppercase text-[#94A3B8] min-w-[200px]">Strategic Competency</th>
-                  {HEATMAP_DEPARTMENTS.map(d => (
-                    <th key={d} className="py-3 px-4 font-mono text-[10px] uppercase text-[#94A3B8] text-center">{d}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#2A384C]">
-                {skills.map((sk) => {
-                  const scores = skillReadinessMap[sk.id] || [40, 70, 60, 50];
-                  return (
-                    <tr key={sk.id} className="hover:bg-[#0F1724]/60">
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-[#F0F4FF] block">{sk.name}</span>
-                        <span className="text-[9px] font-mono uppercase text-[#94A3B8] mt-0.5 block">{sk.category}</span>
-                      </td>
-                      {scores.map((score, idx) => (
-                        <td key={idx} className="py-2.5 px-2">
-                          <div className={`p-2 rounded text-center text-[11px] font-mono font-bold ${getHeatmapColor(score)}`}>
-                            {score}%
-                          </div>
-                        </td>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <SectionCard
+          className="xl:col-span-2"
+          title="Skill readiness by department"
+          subtitle="Share of the target level reached, averaged over the employees in each department working toward the skill. The skills most people work toward are listed first."
+          icon={Grid3x3}
+        >
+          {!overview ? (
+            <div className="skeleton h-64" />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="data-table min-w-[620px]">
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      {overview.departments.map(d => (
+                        <th key={d.name} className="num" title={`${d.employees} employees`}>{d.name}</th>
                       ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Campaign cohort setup & trends (Right 1 column) */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-            <h3 className="text-xs font-mono font-bold text-[#4F8EF7] uppercase tracking-wider mb-4">Launch Strategic Upskilling Campaign</h3>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="campaign-focus-select" className="text-[10px] font-mono font-bold text-[#94A3B8] uppercase block mb-1">Target Skill Gap Cohort *</label>
-                <select
-                  id="campaign-focus-select"
-                  value={selectedCampaign}
-                  onChange={(e) => setSelectedCampaign(e.target.value)}
-                  className="w-full bg-[#0F1724] text-[#F0F4FF] text-xs font-semibold p-2.5 rounded-md border border-[#2A384C] focus:outline-none focus:ring-1 focus:ring-[#4F8EF7]"
-                >
-                  <option value="selenium-java">Selenium & Java Automation Cohort (+35% Target Delta)</option>
-                  <option value="rest-assured">API Automation & TestNG Cohort (+25% Target Delta)</option>
-                </select>
+                  </thead>
+                  <tbody>
+                    {overview.heatmap.map(row => (
+                      <tr key={row.skillId}>
+                        <td>
+                          <span className="font-semibold block" style={{ color: "var(--text)" }}>{row.skillName}</span>
+                          <span className="text-[11px]" style={{ color: "var(--text-mute)" }}>{row.employees} working toward it</span>
+                        </td>
+                        {row.cells.map(cell => (
+                          <td key={cell.department} className="num" style={{ padding: "6px" }}>
+                            <span
+                              className="block rounded-md px-2 py-1.5 text-center text-[12px] font-semibold"
+                              style={cellStyle(cell.targetReached)}
+                              title={cell.targetReached === null
+                                ? `Nobody in ${cell.department} works toward this skill`
+                                : `${cell.employees} employee${cell.employees === 1 ? "" : "s"} in ${cell.department}`}
+                            >
+                              {cell.targetReached === null ? "–" : `${cell.targetReached}%`}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+              <p className="note mt-3">
+                <Info className="h-3.5 w-3.5 mt-0.5 flex-none" aria-hidden="true" />
+                Darker means closer to target. A dash means nobody in that department works toward the skill.
+              </p>
+            </>
+          )}
+        </SectionCard>
 
-              <div className="p-4 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs text-[#94A3B8] leading-relaxed space-y-2 font-sans">
-                <span className="font-mono text-[9px] uppercase font-bold text-[#4F8EF7] block">Forecasted Outcomes</span>
-                <p className="text-[11px] leading-relaxed text-[#F0F4FF]">Auto-enroll manual QAs into mapped Automation Tester learning plans:</p>
-                <ul className="list-disc pl-4 space-y-1 text-[#94A3B8] text-[11px] font-mono">
-                  <li>Enrolls 12 Manual QA Engineers.</li>
-                  <li>Assigns Udemy & LinkedIn Learning courses.</li>
-                  <li>Prepares candidates for Q3 automation targets.</li>
-                </ul>
-              </div>
-
-              <button
-                id="launch-cohort-campaign-btn"
-                onClick={handleLaunchCampaign}
-                className="w-full flex items-center justify-center gap-1.5 bg-[#4F8EF7] hover:bg-[#3B82F6] text-[#0F1724] font-bold text-xs uppercase tracking-wider py-2.5 px-4 rounded-md transition-all cursor-pointer"
-              >
-                <Cpu className="h-4 w-4" />
-                Launch Upskilling Campaign
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-            <h3 className="text-xs font-mono font-bold text-[#4F8EF7] uppercase tracking-wider mb-2">Mapped Course Catalog</h3>
-            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2">
-              {courses.map(c => (
-                <div key={c.id} className="p-3 bg-[#0F1724] rounded-md border border-[#2A384C] text-[11px] hover:border-[#4F8EF7] transition-colors">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-bold text-[#F0F4FF] truncate">{c.title}</span>
-                    <span className="text-[8px] font-mono font-bold text-[#4F8EF7] bg-[#4F8EF7]/10 border border-[#4F8EF7]/30 px-1 rounded uppercase shrink-0">{c.type}</span>
-                  </div>
-                  <span className="text-[9px] text-[#94A3B8] font-mono block mt-1">Provider: {c.provider}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* AI Strategic Capability Analytics Section */}
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-4 border-b border-[#2A384C] pb-3">
-          <div>
-            <h3 className="text-base font-bold text-[#F0F4FF]">AI Strategic Capability Analytics</h3>
-            <p className="text-xs text-[#94A3B8] mt-0.5">Consult the Capability Analytics Agent to run workforce readiness forecasts.</p>
-          </div>
-          <Sparkles className="h-5 w-5 text-[#4F8EF7]" />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 flex flex-col justify-between space-y-4">
-            <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
-              Evaluate organization upskilling indicators, compile heatmap trends, and predict potential timeline bottlenecks across engineering divisions.
-            </p>
-            <button
-              id="generate-analytics-btn"
-              onClick={onGenerateAnalytics}
-              disabled={isAnalyticsLoading}
-              className="flex items-center justify-center gap-2 bg-[#0F1724] border border-[#2A384C] hover:border-[#4F8EF7] text-[#F0F4FF] font-mono uppercase font-bold text-xs py-2.5 px-4 rounded-md transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {isAnalyticsLoading ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#4F8EF7]" />
-                  Analyzing Gaps...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="h-3.5 w-3.5 text-[#4F8EF7]" />
-                  Synthesize Workforce Analytics
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="lg:col-span-2">
-            {analyticsReport ? (
-              <div className="p-4 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs text-[#F0F4FF] leading-relaxed max-h-[300px] overflow-y-auto font-sans whitespace-pre-wrap">
-                {analyticsReport}
-              </div>
+        <div className="space-y-6">
+          <SectionCard
+            title="Upskilling campaign"
+            subtitle="Remind everyone below target on one skill. Each person gets the reminder in their workspace inbox, with their own current and target level."
+            icon={BellRing}
+          >
+            {!overview ? (
+              <div className="skeleton h-32" />
+            ) : overview.cohorts.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--text-dim)" }}>Nobody is below target on any skill.</p>
             ) : (
-              <div className="border border-dashed border-[#2A384C] rounded-lg p-10 text-center text-[#94A3B8]">
-                <FileText className="h-10 w-10 mx-auto stroke-1 mb-2 text-[#2A384C]" />
-                <p className="text-[11px] font-mono uppercase tracking-wider">Click the button to synthesize the workforce analytics report</p>
+              <div className="space-y-3">
+                <label htmlFor="campaign-cohort" className="stat-label block">Skill</label>
+                <select
+                  id="campaign-cohort"
+                  value={cohortId}
+                  onChange={e => { setCohortId(e.target.value); setCampaignState({ kind: "idle" }); }}
+                  className="w-full text-[13px] p-2.5 rounded-lg"
+                  style={{ border: "1px solid var(--line)" }}
+                >
+                  {overview.cohorts.map(c => (
+                    <option key={c.skillId} value={c.skillId}>
+                      {c.skillName} - {c.belowTarget} of {c.employeesTargeting} below target
+                    </option>
+                  ))}
+                </select>
+                <button
+                  id="launch-cohort-campaign-btn"
+                  type="button"
+                  onClick={launchCampaign}
+                  disabled={!cohort || campaignState.kind === "sending"}
+                  className="header-btn header-btn-primary w-full justify-center disabled:opacity-60"
+                >
+                  {campaignState.kind === "sending"
+                    ? <><RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending…</>
+                    : <><BellRing className="h-4 w-4" aria-hidden="true" /> Remind {cohort?.belowTarget ?? 0} employees</>}
+                </button>
+                {campaignState.kind === "done" && (
+                  <p role="status"><Tag tone="ok"><CheckCircle2 className="h-3 w-3" aria-hidden="true" />{campaignState.text}</Tag></p>
+                )}
+                {campaignState.kind === "error" && (
+                  <p role="alert"><Tag tone="risk"><AlertTriangle className="h-3 w-3" aria-hidden="true" />{campaignState.text}</Tag></p>
+                )}
               </div>
             )}
-          </div>
+          </SectionCard>
+
+          <SectionCard title="Course catalogue" subtitle={`${courses.length} courses the copilots recommend from.`} icon={BookOpen}>
+            <ul className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+              {courses.map(c => (
+                <li key={c.id} className="stat-tile" style={{ padding: "10px 12px" }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-semibold truncate" style={{ color: "var(--text)" }}>{c.title}</span>
+                    <Tag>{c.type}</Tag>
+                  </div>
+                  <span className="text-[11px]" style={{ color: "var(--text-mute)" }}>{c.provider}</span>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
         </div>
       </div>
 
-      {/* Resource & Employee Progress Tracker */}
-      <ResourceLearningTracker roles={roles} />
+      <SectionCard
+        title="Workforce analytics brief"
+        subtitle="The Capability Analytics AI writes from the organisation's figures, and says where a figure is not measured."
+        icon={Sparkles}
+        aside={
+          <button
+            id="generate-analytics-btn"
+            type="button"
+            onClick={onGenerateAnalytics}
+            disabled={isAnalyticsLoading}
+            className="header-btn disabled:opacity-60"
+          >
+            {isAnalyticsLoading
+              ? <><RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> Drafting…</>
+              : <><Cpu className="h-4 w-4" aria-hidden="true" /> Draft brief</>}
+          </button>
+        }
+      >
+        {analyticsReport ? (
+          <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto whitespace-pre-wrap"
+               style={{ background: "var(--surface-2)", border: "1px solid var(--line)", color: "var(--text-dim)" }}>
+            {analyticsReport}
+          </div>
+        ) : (
+          <div className="rounded-xl p-8 text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--line)" }}>
+            <FileText className="h-7 w-7 mx-auto mb-2" style={{ color: "var(--text-mute)" }} aria-hidden="true" />
+            <p className="text-xs" style={{ color: "var(--text-mute)" }}>
+              Select <strong>Draft brief</strong> for a summary of readiness, gaps and supply.
+            </p>
+          </div>
+        )}
+      </SectionCard>
 
+      <ResourceLearningTracker roles={roles} />
     </div>
   );
 };
