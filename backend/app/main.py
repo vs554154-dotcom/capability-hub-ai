@@ -122,13 +122,21 @@ async def health() -> dict[str, object]:
 
 # Serve the built frontend when it exists, the way server.ts serves dist/.
 if DIST_DIR.exists():
-    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
+    DIST_ROOT = DIST_DIR.resolve()
+    app.mount("/assets", StaticFiles(directory=DIST_ROOT / "assets"), name="assets")
 
     # HEAD as well as GET: some platforms probe the root with HEAD, which would
     # otherwise come back 405 from a GET-only route.
     @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
-    async def spa(full_path: str) -> FileResponse:
-        candidate = DIST_DIR / full_path
-        if full_path and candidate.is_file():
+    def spa(full_path: str) -> FileResponse:
+        # Containment check. This route previously served `DIST_DIR / full_path` for
+        # any path that existed, and `..` segments survive routing - so /../.env
+        # returned SESSION_SECRET and GEMINI_API_KEY, and /../capability-hub.db
+        # returned the entire database. In a container, /../../proc/self/environ would
+        # have exposed the secrets even with no .env file on disk. Resolve first
+        # (which also collapses symlinks), then require the result to stay under
+        # dist/. Anything outside gets the SPA shell, exactly like an unknown route.
+        candidate = (DIST_ROOT / full_path).resolve()
+        if full_path and candidate.is_relative_to(DIST_ROOT) and candidate.is_file():
             return FileResponse(candidate)
-        return FileResponse(DIST_DIR / "index.html")
+        return FileResponse(DIST_ROOT / "index.html")
