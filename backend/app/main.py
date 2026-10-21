@@ -111,16 +111,22 @@ async def on_startup() -> None:
     logger.info("CyBridge Python API ready.")
 
 
+# Liveness/readiness probe for hosting platforms and load balancers. Public, so it
+# deliberately reports nothing security-relevant: it used to include demoMode, which
+# told any anonymous caller whether the authentication bypass was switched on. That
+# flag is still surfaced to operators, as a startup warning in the logs.
 @app.get("/api/health")
 async def health() -> dict[str, object]:
-    return {"status": "ok", "backend": "python", "demoMode": DEMO_MODE}
+    return {"status": "ok", "backend": "python"}
 
 
 # Serve the built frontend when it exists, the way server.ts serves dist/.
 if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
 
-    @app.get("/{full_path:path}")
+    # HEAD as well as GET: some platforms probe the root with HEAD, which would
+    # otherwise come back 405 from a GET-only route.
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
     async def spa(full_path: str) -> FileResponse:
         candidate = DIST_DIR / full_path
         if full_path and candidate.is_file():

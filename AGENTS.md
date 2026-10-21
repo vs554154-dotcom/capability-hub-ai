@@ -22,10 +22,11 @@ While the **SkillGap-to-Growth Agent** focuses on identifying individual capabil
 
 ## 2. Technical Stack & Environment
 
-- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, Web Speech API (Speech Recognition & Speech Synthesis), MediaRecorder / MediaDevices API.
-- **Backend**: Express.js server (`server.ts` or `server-db.ts`), bundled using `esbuild` to CommonJS (`dist/server.cjs`).
-- **AI Integration**: Google Gemini API (`@google/genai` SDK, model `gemini-3.6-flash`) proxying requests server-side.
-- **Port Requirement**: Binds to `0.0.0.0:3000`.
+- **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Lucide Icons, Web Speech API (Speech Recognition & Speech Synthesis), MediaRecorder / MediaDevices API.
+- **Backend (live)**: Python / FastAPI in `backend/app/`, served by Uvicorn. Owns the SQLite schema and seed, and serves the built frontend from `dist/`.
+- **Backend (AI Studio only)**: Express.js in `server.ts` / `server-db.ts`, bundled with `esbuild` to `dist/server.cjs`. Frozen for feature work — see the decision below.
+- **AI Integration**: Google Gemini (model `gemini-3.6-flash`), called server-side only — `google-genai` in Python (`backend/app/ai.py`), `@google/genai` on the Node path.
+- **Port**: Binds `0.0.0.0:$PORT` — default `8000` for the Python backend, `3000` for the Node path.
 
 ### ARCHITECTURE DECISION — Python/FastAPI is the live backend
 
@@ -108,17 +109,26 @@ reasoning is not lost.
 
 ## 5. Development & Build Commands
 
-- **Dev Server**: `npm run dev` (runs `tsx server.ts` on port 3000)
-- **Production Build**: `npm run build`
-- **Production Start**: `npm run start` (runs `node dist/server.cjs`)
+**Python backend (live)** — run from the repo root:
+
+- **Install**: `python -m venv backend/.venv` then `backend/.venv/Scripts/python -m pip install -r backend/requirements.txt`
+- **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `dist/`)
+- **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+- **Authorization gate**: `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **46/46**
+
+**Frontend** (built with Node, served by whichever backend runs):
+
+- **Production Build**: `npm run build` → `dist/`
 - **Lint Verification**: `npm run lint` (`tsc --noEmit`)
+
+**Node path (AI Studio only, frozen)**: `npm run dev` (`tsx server.ts` on `:3000`), `npm run start` (`node dist/server.cjs`).
 
 ---
 
 ## 6. Agent Instructions & Behavioral Constraints
 
 When modifying or extending this application:
-1. **Server-Side Security**: All Gemini AI calls must strictly remain server-side in `server.ts`. Never expose API keys to the browser.
+1. **Server-Side Security**: All Gemini AI calls must strictly remain server-side — in `backend/app/ai.py` for the live backend. Never expose API keys to the browser. Authority comes from the session cookie only; a user id in a URL or body names a target, never the caller.
 2. **Camera & Microphone Permissions**: Hardware access (camera/mic) for interview scenarios must be handled gracefully with fallbacks and permission state indicators.
 3. **Responsive UI**: Keep dark mode visual design (#141E30 canvas, #0F1724 cards, #4F8EF7 / #10B981 accents) consistent across components.
 

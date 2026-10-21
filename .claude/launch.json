@@ -3,6 +3,12 @@
   "configurations": [
     {
       "name": "dev",
+      "runtimeExecutable": "scripts\\dev-python.cmd",
+      "runtimeArgs": [],
+      "port": 8000
+    },
+    {
+      "name": "dev-node-aistudio",
       "runtimeExecutable": "scripts\\dev.cmd",
       "runtimeArgs": [],
       "port": 3000

@@ -1,7 +1,9 @@
 # Cursor & Kiro Agent Rules for Capability Hub AI
 
-- Always inspect `AGENTS.md` and `.kiro/instructions.md` before making architectural modifications.
-- Keep all Gemini API calls server-side in `server.ts` or `server-db.ts` using `@google/genai` SDK and model `gemini-3.6-flash`.
-- Always verify changes with `npm run lint` (`tsc --noEmit`) and `npm run build`.
+- Always inspect `AGENTS.md` and `.kiro/instructions.md` before making architectural modifications. `AGENTS.md` is the source of truth.
+- The live backend is Python/FastAPI in `backend/app/`. Backend changes go there. `server.ts` / `server-db.ts` is frozen except to keep the Google AI Studio deployment working.
+- Keep all Gemini API calls server-side — `backend/app/ai.py` (`google-genai`, model `gemini-3.6-flash`). Never expose `GEMINI_API_KEY` to the browser.
+- Verify frontend changes with `npm run lint` (`tsc --noEmit`) and `npm run build`.
+- Verify backend changes with `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — it must stay 46/46.
 - Maintain the dark enterprise theme palette (#141E30 canvas, #0F1724 cards, #4F8EF7 / #10B981 accents).
 - Do not remove hardware permission declarations (`camera`, `microphone`) from `metadata.json`.
