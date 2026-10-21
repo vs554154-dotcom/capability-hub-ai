@@ -14,6 +14,7 @@ and the built Vite frontend from `dist/`. One build, one start command, one port
 | `SESSION_SECRET` | **yes in prod** | insecure dev default | Signs the session cookie. Set a long random string, or anyone who knows the default can forge sessions. The server logs a warning if it's missing on an HTTPS deploy. |
 | `DEMO_MODE` | no | `false` (off) | When `true`, a bare `userId` is accepted as login (no password). **Leave off/unset in any shared environment** — it is a full authentication bypass. |
 | `GEMINI_API_KEY` | no | — | Enables the real Gemini AI copilots. Without it, AI endpoints return deterministic fallbacks. Never commit it; set it in the host's secrets. |
+| `GEMINI_TIMEOUT_SECONDS` | no | `120` | Upper bound on a single Gemini call, which is never retried. Raise it if long reports are being cut off (each timeout is logged). Zero, negative or non-numeric values stop startup. |
 | `DATABASE_PATH` | no | `capability-hub.db` (cwd) | Path to the SQLite file. Point it at a **mounted, persistent, writable volume** on hosts whose app dir is ephemeral or read-only (see the SQLite note below). |
 | `AUTH_RATE_LIMIT_MAX` | no | `30` | Login attempts allowed per IP per 15 minutes. |
 | `TRUST_PROXY` | no | `true` | Read the client IP from `X-Forwarded-For`. Set `false` if not behind a proxy. |

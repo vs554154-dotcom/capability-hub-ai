@@ -38,6 +38,26 @@ DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+
+def _positive_seconds(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ValueError(f"{name} must be a number of seconds, got {raw!r}") from None
+    if value <= 0:
+        raise ValueError(f"{name} must be greater than zero, got {raw!r}")
+    return value
+
+
+# Upper bound on one Gemini call. Without it a call that never answers holds a
+# worker thread indefinitely. It bounds hung calls, not slow ones, so it sits well
+# above normal generation time: long reports have been observed to take over 90s.
+# A misconfigured value fails at startup rather than silently removing the bound.
+GEMINI_TIMEOUT_SECONDS = _positive_seconds("GEMINI_TIMEOUT_SECONDS", 120.0)
+
 # Matches the express-session cookie in server.ts.
 SESSION_COOKIE_NAME = "chub_sid"
 SESSION_MAX_AGE_SECONDS = 60 * 60 * 8  # 8 hours

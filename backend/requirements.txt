@@ -8,4 +8,4 @@ pydantic==2.10.4
 itsdangerous==2.2.0          # signed session cookies (Starlette SessionMiddleware)
 bcrypt==4.2.1                # password hashing, compatible with bcryptjs hashes
 python-dotenv==1.0.1
-google-genai==0.3.0          # Gemini, ported in a later stage
+google-genai==2.8.0          # Gemini; HttpOptions.timeout bounds every call (see ai.py)

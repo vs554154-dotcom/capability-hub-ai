@@ -2,4 +2,4 @@
 -r requirements.txt
 
 pytest==8.3.4
-httpx==0.27.2        # FastAPI's TestClient transport; 0.27.x matches starlette 0.41
+httpx==0.28.1        # FastAPI TestClient transport; matches google-genai 2.8 (needs >=0.28.1)
