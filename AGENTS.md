@@ -24,7 +24,7 @@ While the **SkillGap-to-Growth Agent** focuses on identifying individual capabil
 
 - **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Lucide Icons, Web Speech API (Speech Recognition & Speech Synthesis), MediaRecorder / MediaDevices API.
 - **Backend (live)**: Python / FastAPI in `backend/app/`, served by Uvicorn. Owns the SQLite schema and seed, and serves the built frontend from `dist/`.
-- **Backend (AI Studio only)**: Express.js in `server.ts` / `server-db.ts`, bundled with `esbuild` to `dist/server.cjs`. Frozen for feature work — see the decision below.
+- **Backend (AI Studio only)**: Express.js in `server.ts` / `server-db.ts`, bundled with `esbuild` to `build/server.cjs`. Frozen for feature work — see the decision below.
 - **AI Integration**: Google Gemini (model `gemini-3.6-flash`), called server-side only — `google-genai` in Python (`backend/app/ai.py`), `@google/genai` on the Node path.
 - **Port**: Binds `0.0.0.0:$PORT` — default `8000` for the Python backend, `3000` for the Node path.
 
@@ -114,14 +114,15 @@ reasoning is not lost.
 - **Install**: `python -m venv backend/.venv` then `backend/.venv/Scripts/python -m pip install -r backend/requirements.txt`
 - **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `dist/`)
 - **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
-- **Authorization gate**: `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **46/46**
+- **Test suite** (no server needed): `backend/.venv/Scripts/python -m pytest backend/tests` — install with `pip install -r backend/requirements-dev.txt`
+- **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **46/46**
 
 **Frontend** (built with Node, served by whichever backend runs):
 
 - **Production Build**: `npm run build` → `dist/`
 - **Lint Verification**: `npm run lint` (`tsc --noEmit`)
 
-**Node path (AI Studio only, frozen)**: `npm run dev` (`tsx server.ts` on `:3000`), `npm run start` (`node dist/server.cjs`).
+**Node path (AI Studio only, frozen)**: `npm run dev` (`tsx server.ts` on `:3000`), `npm run start` (`node build/server.cjs`).
 
 ---
 

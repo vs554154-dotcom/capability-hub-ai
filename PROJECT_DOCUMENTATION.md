@@ -21,7 +21,7 @@ In modern enterprise environments, business units struggle with talent shortages
 - **Interactive Multimedia:**
   - Web Speech API (`webkitSpeechRecognition`, `window.speechSynthesis`)
   - MediaRecorder & MediaDevices API for camera/microphone capture
-- **Backend Architecture:** Express.js server (`server.ts`), bundled with esbuild to CommonJS (`dist/server.cjs`).
+- **Backend Architecture:** Express.js server (`server.ts`), bundled with esbuild to CommonJS (`build/server.cjs`).
 - **Database Layer:** SQLite (`capability-hub.db`) via `better-sqlite3`, with a service layer in `server-db.ts`.
 - **AI Integration:** Google Gemini API (`@google/genai` SDK, `gemini-3.6-flash`), called server-side.
 - **Network & Server Port:** Binds to `0.0.0.0:3000` (currently a fixed port, not yet read from `process.env.PORT`).
@@ -144,7 +144,7 @@ npm run lint
 
 **Production Build & Launch**
 ```bash
-npm run build   # vite build + esbuild bundle to dist/server.cjs
+npm run build   # vite build -> dist/ (frontend), esbuild bundle -> build/server.cjs
 npm run start
 ```
 

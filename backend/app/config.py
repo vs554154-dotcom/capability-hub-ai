@@ -59,5 +59,11 @@ DEV_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-# Built frontend, served in production the way server.ts serves dist/.
-DIST_DIR = REPO_ROOT / "dist"
+# Built frontend - the public web root. Everything under it is served to any
+# browser, so nothing private may live here. Overridable so tests can point it at
+# a controlled tree.
+DIST_DIR = Path(os.getenv("DIST_DIR") or (REPO_ROOT / "dist"))
+
+# Files that exist for gated endpoints only (e.g. the Leadership source download).
+# Deliberately outside both public/ and dist/, so no static route can reach them.
+PRIVATE_DIR = Path(os.getenv("PRIVATE_DIR") or (REPO_ROOT / "private"))

@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from .. import db
-from ..config import REPO_ROOT
+from ..config import PRIVATE_DIR
 from ..deps import (
     LEADERSHIP,
     MANAGER,
@@ -163,7 +163,7 @@ async def download_app_zip(_: dict = Depends(require_role(LEADERSHIP))):
     anonymous visitor who found the URL; the role gate is the fix and is
     reproduced here rather than relaxed.
     """
-    zip_path = REPO_ROOT / "public" / "capability_hub_ai_source.zip"
+    zip_path = PRIVATE_DIR / "capability_hub_ai_source.zip"
     if not zip_path.exists():
         raise HTTPException(
             status_code=404,

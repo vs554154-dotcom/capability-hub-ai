@@ -1793,7 +1793,7 @@ ${emp.name} brings a verified track record of high quality engineering, clear te
   // specific reason.
   app.get("/api/download-app-zip", requireRole(UserRole.LEADERSHIP), (req, res) => {
     try {
-      const zipPath = path.join(process.cwd(), "public", "capability_hub_ai_source.zip");
+      const zipPath = path.join(process.cwd(), "private", "capability_hub_ai_source.zip");
       if (fs.existsSync(zipPath)) {
         return res.download(zipPath, "capability-hub-ai-source.zip");
       } else {

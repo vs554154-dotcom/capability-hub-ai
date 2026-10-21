@@ -11,7 +11,7 @@ WORKDIR /build
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build            # -> /build/dist (SPA assets)
+RUN npm run build:web        # -> /build/dist (frontend only - no server bundle)
 
 # ---- Stage 2: Python runtime ----
 FROM python:3.12-slim-bookworm AS runtime
@@ -27,6 +27,8 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/app ./backend/app
 COPY backend/seed ./backend/seed
 COPY backend/scripts ./backend/scripts
+# Served only through the Leadership-gated /api/download-app-zip, never statically.
+COPY private ./private
 COPY --from=frontend /build/dist ./dist
 
 # Written on first boot if absent; point DATABASE_PATH at a mounted volume to persist.
