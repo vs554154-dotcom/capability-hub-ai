@@ -63,6 +63,12 @@ def get_latest_post_assessment(
     return dict(row) if row else None
 
 
+def post_assessment_status_counts() -> dict[str, int]:
+    """How many post-training assessments are in each status."""
+    rows = query_all("SELECT status, COUNT(*) AS n FROM post_assessments GROUP BY status")
+    return {r["status"]: r["n"] for r in rows}
+
+
 def sign_off(assessment_id: str, signed_off_by: str, decision: str) -> None:
     execute(
         """

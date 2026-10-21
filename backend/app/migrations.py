@@ -115,6 +115,18 @@ def _rate_limits(conn: sqlite3.Connection) -> None:
     )
 
 
+def _eri_snapshots(conn: sqlite3.Connection) -> None:
+    """One Enterprise Readiness Index reading per day, the history behind its trend."""
+    conn.execute(
+        """CREATE TABLE eri_snapshots (
+            day TEXT PRIMARY KEY,
+            eri INTEGER NOT NULL,
+            coverage INTEGER NOT NULL,
+            recordedAt TEXT NOT NULL
+        )"""
+    )
+
+
 MIGRATIONS: list[Migration] = [
     Migration(
         1,
@@ -123,6 +135,7 @@ MIGRATIONS: list[Migration] = [
     ),
     Migration(2, "Sessions table: database-backed sign-in sessions", _sessions),
     Migration(3, "Rate-limit table: sign-in attempt counters shared across processes", _rate_limits),
+    Migration(4, "ERI snapshots: one readiness reading per day, for its trend", _eri_snapshots),
 ]
 
 LATEST_VERSION = max(m.version for m in MIGRATIONS)

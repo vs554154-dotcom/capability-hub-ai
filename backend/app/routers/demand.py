@@ -20,6 +20,11 @@ def enterprise_readiness_index(_: dict = Depends(require_manager_or_above)) -> d
     return analytics.enterprise_readiness_index()
 
 
+@router.get("/analytics/leadership")
+def leadership_overview(_: dict = Depends(require_manager_or_above)) -> dict[str, Any]:
+    return analytics.leadership_overview()
+
+
 @router.get("/project-demand/list")
 def list_demands(_: dict = Depends(require_auth)) -> dict[str, Any]:
     return {"success": True, "demands": demands.get_project_demands()}

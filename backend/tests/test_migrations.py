@@ -82,7 +82,7 @@ def test_an_empty_database_is_built_to_the_latest_version(tmp_path, baseline_col
     built = columns(conn)
     assert {t: c for t, c in built.items() if t in baseline_columns} == baseline_columns
     # Later migrations only add tables on top of the baseline.
-    assert set(built) - set(baseline_columns) == {"sessions", "rate_limits"}
+    assert set(built) - set(baseline_columns) == {"sessions", "rate_limits", "eri_snapshots"}
 
 
 def _legacy_node_database(path: Path) -> sqlite3.Connection:

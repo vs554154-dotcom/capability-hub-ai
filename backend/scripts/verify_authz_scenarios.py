@@ -26,6 +26,8 @@ EXPECT_DEMO_HOLE = "--expect-demo-hole" in sys.argv
 EMPLOYEE = {"identifier": "E1000", "password": "demo123"}          # Aarav, reports to user_2
 MANAGER = {"identifier": "marcus.sterling@capabilityhub.ai",
            "password": "mgr-demo-pass"}                            # Marcus = user_2
+LEADERSHIP = {"identifier": "david.vance@capabilityhub.ai",
+              "password": "exec-demo-pass"}                        # David = user_4
 EMP_ID = "E1000"
 MGR_ID = "user_2"
 FOREIGN_EMP = "E1002"      # Rohan - reports to mgr_3, NOT to Marcus
@@ -124,6 +126,11 @@ expect("reads a direct report", mgr.call("GET", "/api/users/" + EMP_ID)[0], 200)
 expect("reads direct report capability",
        mgr.call("GET", "/api/users/" + EMP_ID + "/capability")[0], 200)
 expect("lists project demands", mgr.call("GET", "/api/project-demand/list")[0], 200)
+expect("reads the readiness index", mgr.call("GET", "/api/analytics/eri")[0], 200)
+expect("reads the leadership overview", mgr.call("GET", "/api/analytics/leadership")[0], 200)
+exe = Session()
+expect("leadership logs in with credentials", exe.call("POST", "/api/auth/login", LEADERSHIP)[0], 200)
+expect("leadership reads the readiness index", exe.call("GET", "/api/analytics/eri")[0], 200)
 
 # --------------------------------------------------------------------------- #
 print("\nSCENARIO 3 - employee attempting manager access (must be refused)")
@@ -142,6 +149,8 @@ expect("employee -> manager insight", emp.call("POST", "/api/manager/insight",
 expect("employee -> parse JD", emp.call("POST", "/api/project-demand/parse-jd",
                                         {"jobDescriptionText": "x"})[0], 403)
 expect("employee -> download source zip", emp.call("GET", "/api/download-app-zip")[0], 403)
+expect("employee -> readiness index", emp.call("GET", "/api/analytics/eri")[0], 403)
+expect("employee -> leadership overview", emp.call("GET", "/api/analytics/leadership")[0], 403)
 
 # --------------------------------------------------------------------------- #
 print("\nSCENARIO 4 - manager attempting unauthorized employee impersonation")
@@ -199,7 +208,8 @@ none = Session()
 for path in ["/api/skills", "/api/roles", "/api/courses",
              "/api/users/" + EMP_ID, "/api/users/" + EMP_ID + "/capability",
              "/api/evidence", "/api/reminders", "/api/project-demand/list",
-             "/api/learning-tracker/resources"]:
+             "/api/learning-tracker/resources", "/api/analytics/eri",
+             "/api/analytics/leadership"]:
     expect("anonymous -> " + path, none.call("GET", path)[0], 401)
 expect("anonymous -> manager team", none.call("GET", "/api/manager/" + MGR_ID + "/team")[0],
        [401, 403])

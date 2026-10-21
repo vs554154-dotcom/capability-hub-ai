@@ -88,6 +88,25 @@ def resolve_demand(body: dict[str, Any]) -> dict[str, Any]:
     return demand
 
 
+# The skill level the matching engine treats as verified competency in a requirement.
+VERIFIED_LEVEL = 3
+
+
+def find_skill(name: str, skills: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The catalogue skill a demand's skill name refers to, ignoring case: the skill
+    with exactly that name, else the first whose name contains it or is contained in
+    it. Exact first, or "SQL" would resolve to "PostgreSQL & Vector Database
+    Optimization" and "Java" to "Java Core & OOP Principles"."""
+    wanted = name.strip().lower()
+    exact = next((s for s in skills if s["name"].lower() == wanted), None)
+    if exact:
+        return exact
+    return next(
+        (s for s in skills if wanted in s["name"].lower() or s["name"].lower() in wanted),
+        None,
+    )
+
+
 def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
     """Score every employee against the demand and rank them, with a written
     explanation and recommended next actions for each.
@@ -117,14 +136,11 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
         missing: list[str] = []
         for req_name in required:
             req = req_name.lower()
-            skill = next(
-                (s for s in all_skills if req in s["name"].lower() or s["name"].lower() in req),
-                None,
-            )
+            skill = find_skill(req_name, all_skills)
             hit = False
             if skill:
                 held = next((u for u in levels if u["skillId"] == skill["id"]), None)
-                if held and held["currentLevel"] >= 3:
+                if held and held["currentLevel"] >= VERIFIED_LEVEL:
                     hit = True
             if not hit and emp.get("primarySkills"):
                 hit = any(req in ps.lower() or ps.lower() in req for ps in emp["primarySkills"])

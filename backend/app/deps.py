@@ -169,5 +169,9 @@ def require_learning_step_owner(
     raise HTTPException(status_code=403, detail=NOT_OWN_ACTION)
 
 
-require_manager_or_above = require_role(MANAGER, LD, LEADERSHIP)
+# Roles that may see organisation-wide figures: the analytics dashboards and the
+# analytics copilot's organisation grounding.
+ORG_VIEW_ROLES = (MANAGER, LD, LEADERSHIP)
+
+require_manager_or_above = require_role(*ORG_VIEW_ROLES)
 require_leadership = require_role(LEADERSHIP)

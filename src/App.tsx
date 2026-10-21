@@ -405,8 +405,9 @@ export default function App() {
       const res = await fetch("/api/ai/orchestrator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // No userId: the server grounds the briefing in the signed-in caller, and for
+        // managers and above in the organisation-wide figures.
         body: JSON.stringify({
-          userId: currentUser?.id || "user_1",
           prompt: "Synthesize enterprise capability statistics, map key bottlenecks, and prepare a board upskilling recommendation report.",
           agent: "analytics"
         })

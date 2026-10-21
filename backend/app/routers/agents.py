@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..deps import (
+    ORG_VIEW_ROLES,
     ensure_may_access,
     json_body,
     require_auth,
@@ -43,7 +44,8 @@ def orchestrator(
     # naming someone else needs the same right as reading their record.
     subject_id = body.get("userId") or session_user["id"]
     ensure_may_access(session_user, subject_id)
-    return {"response": copilot.orchestrate(subject_id, prompt, body.get("agent"))}
+    org_view = session_user["role"] in ORG_VIEW_ROLES
+    return {"response": copilot.orchestrate(subject_id, prompt, body.get("agent"), org_view)}
 
 
 @router.post("/manager/insight")
@@ -117,5 +119,7 @@ def complete_skillgap_assessment(
         "success": True,
         "userId": user_id,
         "overallScore": body.get("overallScore"),
-        "message": f"SkillGap assessment recorded for {user['name']}.",
+        # Nothing is stored: the score was computed in the browser, so it is not
+        # trusted as a record. The message used to say "recorded".
+        "message": f"SkillGap assessment completed for {user['name']}.",
     }

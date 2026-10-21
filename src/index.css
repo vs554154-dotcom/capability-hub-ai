@@ -1326,3 +1326,288 @@ header.app-header::after {
   .app-aurora .aurora-photo-beam { animation: none !important; }
   .app-aurora .aurora-photo-beam { opacity: 0 !important; }
 }
+
+/* =========================================================
+   8. PAGE PRIMITIVES
+   One structure for every workspace: a page header that says
+   what the page is for and how to use it, section cards with
+   a consistent heading row, stat tiles, meters and tables.
+   Built only on the theme tokens, so all six palettes apply.
+   ========================================================= */
+
+/* Status hues: deep on the light palette, bright on the dark ones. */
+:root,
+[data-theme="executive_light"] {
+  --ok: #047857;   --ok-rgb: 4 120 87;
+  --warn: #B45309; --warn-rgb: 180 83 9;
+  --risk: #BE123C; --risk-rgb: 190 18 60;
+}
+[data-theme="hybrid_cobalt"],
+[data-theme="pearl_emerald"],
+[data-theme="ice_indigo"],
+[data-theme="warm_amber"],
+[data-theme="teal_matrix"] {
+  --ok: #34D399;   --ok-rgb: 52 211 153;
+  --warn: #FBBF24; --warn-rgb: 251 191 36;
+  --risk: #FB7185; --risk-rgb: 251 113 133;
+}
+
+.page-head {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: 26px 28px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgb(var(--accent-rgb) / 10%), transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgb(var(--accent-2-rgb) / 8%), transparent 60%),
+    rgb(var(--surface-rgb) / 88%);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.page-head::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+}
+.page-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.page-title {
+  margin-top: 6px;
+  font-size: clamp(22px, 2.4vw, 28px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.page-lede {
+  margin-top: 8px;
+  max-width: 76ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.page-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  counter-reset: page-step;
+}
+.page-step {
+  counter-increment: page-step;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgb(var(--surface-2-rgb) / 70%);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.page-step::before {
+  content: counter(page-step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--on-accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.page-step strong { color: var(--text); font-weight: 700; }
+
+.section-card {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 22px;
+}
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.section-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: rgb(var(--accent-rgb) / 12%);
+  border: 1px solid rgb(var(--accent-rgb) / 22%);
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.section-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-mute);
+}
+
+.stat-tile {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgb(var(--surface-2-rgb) / 75%);
+  padding: 14px 16px;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+.stat-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.stat-hint {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-mute);
+}
+
+/* The track is a pale step of the fill's own hue, so the whole bar reads as one
+   state; the fill carries the value. */
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb) / 14%);
+  overflow: hidden;
+}
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.meter.tone-ok   { background: rgb(var(--ok-rgb) / 16%); }
+.meter.tone-warn { background: rgb(var(--warn-rgb) / 16%); }
+.meter.tone-risk { background: rgb(var(--risk-rgb) / 16%); }
+.meter.tone-ok > span   { background: var(--ok); }
+.meter.tone-warn > span { background: var(--warn); }
+.meter.tone-risk > span { background: var(--risk); }
+
+/* The one number a page leads with. Same sans as everything else. */
+.hero-figure {
+  font-size: clamp(52px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.tag.tone-ok     { color: var(--ok);   background: rgb(var(--ok-rgb) / 10%);   border-color: rgb(var(--ok-rgb) / 30%); }
+.tag.tone-warn   { color: var(--warn); background: rgb(var(--warn-rgb) / 10%); border-color: rgb(var(--warn-rgb) / 30%); }
+.tag.tone-risk   { color: var(--risk); background: rgb(var(--risk-rgb) / 10%); border-color: rgb(var(--risk-rgb) / 30%); }
+.tag.tone-accent { color: var(--accent); background: rgb(var(--accent-rgb) / 10%); border-color: rgb(var(--accent-rgb) / 30%); }
+.tone-text-ok   { color: var(--ok); }
+.tone-text-warn { color: var(--warn); }
+.tone-text-risk { color: var(--risk); }
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.data-table th:first-child { border-top-left-radius: 10px; }
+.data-table th:last-child { border-top-right-radius: 10px; }
+.data-table td {
+  padding: 11px 12px;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgb(var(--line-rgb) / 70%);
+  font-variant-numeric: tabular-nums;
+}
+.data-table tbody tr { transition: background-color 0.2s ease; }
+.data-table tbody tr:hover { background: rgb(var(--accent-rgb) / 5%); }
+.data-table .num { text-align: right; }
+
+.note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-mute);
+}
+
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: skeletonSweep 1.4s ease-in-out infinite;
+}
+@keyframes skeletonSweep {
+  from { background-position: 100% 0; }
+  to   { background-position: -100% 0; }
+}

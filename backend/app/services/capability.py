@@ -178,10 +178,9 @@ def team_rollup(manager_id: str) -> list[dict[str, Any]]:
             gap_count = sum(1 for s in levels if s["currentLevel"] < s["targetLevel"])
             risk = "High" if gap_count >= 4 else "Medium" if gap_count >= 2 else "Low"
 
+            # Someone with no skill records scores from approved evidence alone - never
+            # a made-up figure. (This used to derive a score from the employee id.)
             score = skill_score(levels, approved)
-            if not levels:
-                digits = "".join(c for c in member["id"] if c.isdigit())
-                score = 25 + (((int(digits) if digits else 1) * 37) % 68)
 
             motivation = compute_motivation_scores(member["id"])
             result.append({

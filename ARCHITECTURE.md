@@ -272,6 +272,7 @@ test fingerprints the file and fails if it changes.
 | 1 | Baseline: the 12 tables in `schema_sql.py`, and any column an older database lacks |
 | 2 | `sessions` table, for sessions the server can end (section 7) |
 | 3 | `rate_limits` table, so sign-in throttling is shared by every worker (section 7) |
+| 4 | `eri_snapshots` table, one Enterprise Readiness Index reading per day (section 8) |
 
 ### Seed data
 
@@ -329,6 +330,7 @@ erDiagram
 | `skill_baselines` | Levels captured at the moment of handoff, the "before" that growth is measured against. |
 | `sessions` | Sign-in sessions: who, when it expires, and whether it was ended (section 7). Added by migration 2. |
 | `rate_limits` | Sign-in attempts per client address in the current 15-minute window. Added by migration 3. |
+| `eri_snapshots` | One Enterprise Readiness Index reading per day, with the share of its weight measured. Added by migration 4. |
 | `post_assessments` | Post-training GROW assessments and a manager's sign-off. |
 
 ---
@@ -454,7 +456,7 @@ graph:
 | POST | `/api/agent/complete-skillgap-assessment` | `require_self_or_elevated_body` |
 | POST | `/api/learning-plan/step` | `require_learning_step_owner` |
 | GET | `/api/manager/{id}/team` | manager-or-above; a manager only their own id |
-| GET | `/api/learning-tracker/resources`, `/api/analytics/workforce`, `/api/analytics/eri` | manager-or-above (tracker scoped) |
+| GET | `/api/learning-tracker/resources`, `/api/analytics/workforce`, `/api/analytics/eri`, `/api/analytics/leadership` | manager-or-above (tracker scoped) |
 | POST | `/api/validation`, `/api/learning-plan/assign` | manager-or-above + `ensure_may_access` |
 | POST | `/api/manager/insight`, `/post-assessment`, `/post-assessment/{id}/signoff` | manager-or-above + `ensure_may_access` |
 | POST | `/api/project-demand/create`, `/match`, `/parse-jd`, `/handoff-skillgap`, `/generate-client-resume` | manager-or-above (organisation-wide) |
@@ -477,6 +479,33 @@ place.
 | **Risk** | High at 4+ skills below target, Medium at 2–3 | `capability.team_rollup` |
 | **Match** | 45% technical + 20% domain + 15% experience + 20% capability readiness, capped at 99; below 80 needs upskilling | `talent.match_candidates` |
 | **Resume eligibility** | project-hiring track complete **and** assessment signed off as cleared **and** at least one skill above its handoff baseline | `talent.resume_eligibility` |
+| **Enterprise Readiness Index** | weighted mean of the eight `AGENTS.md` components, over the **measured** ones only (see below) | `analytics.readiness_index` |
+| **Supply against demand** | per skill named by an open demand: ready = employees at level 3+ (the level matching treats as verified), developing = below 3 with a target of 3+ | `analytics.leadership_overview` |
+
+A demand names skills by text. `talent.find_skill` resolves a name to the catalogue
+skill of exactly that name, ignoring case, and only falls back to containment when
+there is none. Containment first would resolve "SQL" to "PostgreSQL & Vector Database
+Optimization" and "Java" to "Java Core & OOP Principles".
+
+### The Enterprise Readiness Index
+
+| Component | Weight | Computed from |
+|---|---|---|
+| Skill proficiency | 25% | average Skill score |
+| Level-1 video/MCQ assessments | 20% | **not measured**: interview scores are computed in the browser and not stored |
+| Workplace evidence validation | 15% | approved ÷ submitted evidence |
+| Certification health | 15% | **not measured**: no certification records are kept |
+| Capability readiness (CRI) | 10% | average Capability Readiness Score |
+| Deployment availability | 5% | share of employees with Skill and Will both 60+ (Deploy Now) |
+| Learning engagement | 5% | average learning-plan completion |
+| Manager GROW validation | 5% | cleared ÷ signed-off post-training assessments; not measured until one is signed off |
+
+The index is the weighted mean over the measured components, re-weighted to their
+share, and the response reports that share as `coverage`. A component with no data is
+excluded, never given an assumed score. Each read of `/api/analytics/eri` records that
+day's reading in `eri_snapshots` (one row per day, the latest reading wins), and the
+trend line is drawn from those rows only. Nothing is back-filled, so the trend starts
+on the first day the index is read.
 
 Skill and Will are independent on purpose. Pending evidence counts toward Will
 (initiative) but only *approved* evidence lifts Skill, so a highly capable person can
@@ -524,7 +553,10 @@ contains only verified facts and instructs the model not to invent any.
 - **Grounded and authorised.** Copilot prompts include a person's skills and
   evidence, so choosing *whose* data goes into a prompt is an authorization decision:
   the subject defaults to the caller, and naming anyone else needs the same right as
-  reading their record.
+  reading their record. The `analytics` persona is grounded in organisation-wide
+  figures (the index, its components, skill-gap risk, supply against demand) only for
+  managers, L&D and leadership, the roles allowed to read those figures; anyone else
+  gets their own skill picture.
 - **Personas.** `skill_gap`, `concierge`, `coach` and `analytics` each have a
   system instruction in `copilot.PERSONAS`; an unknown persona falls back to a
   generic orchestrator. Model: `gemini-3.6-flash`, through `google-genai` 2.8.
@@ -608,7 +640,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 | Suite | Runs | Covers |
 |---|---|---|
 | `pytest backend/tests` | in-process, isolated DB, no network, ~15 s | 56 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
-| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 46 checks across six scenarios: employee features, manager features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
+| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 54 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
 isolated database and a controlled file tree, including a decoy secret file beside
@@ -637,17 +669,21 @@ The React app is unchanged by the backend architecture and relies on it as follo
 
 These are real and are not yet fixed:
 
-1. **The Enterprise Readiness Index is a fixed figure.** `/api/analytics/eri`
-   returns constant numbers (84 / 82 / 88 / 91), and the analytics copilot's
-   fallback quotes the same 84%. The composite in `AGENTS.md` depends on data the
-   system does not collect, such as certifications and Level-1 assessments, so it
-   cannot yet be computed honestly. The Leadership dashboard's quarterly trend line
-   is likewise hard-coded in the frontend.
-2. **One host.** All shared state (data, sessions and sign-in rate limits) is in
+1. **Some screens still show illustrative figures.** The landing page's hero
+   statistics and sample score card, the L&D page's cohort "target delta" labels, and
+   parts of the Skill-vs-Will matrix (experience years and evidence confidence derived
+   from list position, and a sample cohort shown when a manager has no reports) are
+   not computed from records.
+2. **40% of the readiness index is not measured.** Level-1 interview assessments
+   and certification health have no stored data, so the index covers the other 60%
+   of its weight and says so. Interview scores are computed in the browser; storing
+   them as an input would let a client post any score, so they need server-side
+   scoring first.
+3. **One host.** All shared state (data, sessions and sign-in rate limits) is in
    the SQLite file, so any number of workers or processes on one host share it;
    two processes on one database were checked live to share sessions and rate
    limits. Several *hosts* would need a networked database, because SQLite on a
    network filesystem is not safe. On a host with an ephemeral filesystem, mount a
    volume for `DATABASE_PATH` or the data resets on redeploy.
-3. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
+4. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
    Changes to the API contract are not mirrored there.

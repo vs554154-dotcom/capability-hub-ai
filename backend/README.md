@@ -22,7 +22,7 @@ the built SPA, so no Node process is involved at runtime.
 | Metrics | Skill-vs-Will motivation scores, workforce metrics, shortlist status | **Done** |
 | Hardening | Auth rate limiting, learning-step ownership, gated staff directory | **Done** |
 
-**Verification:** `scripts/verify_authz_scenarios.py` reports **46/46** against
+**Verification:** `scripts/verify_authz_scenarios.py` reports **54/54** against
 this backend — the same suite the Node path passes.
 
 ## Where this folder must live

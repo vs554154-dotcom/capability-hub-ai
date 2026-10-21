@@ -59,7 +59,7 @@ Consequences for anyone (human or agent) working here:
    keep the AI Studio deployment alive, and never as the place a new capability
    lands first.
 3. `backend/scripts/verify_authz_scenarios.py` runs against either backend and is
-   the gate that matters: **46/46 against Python**.
+   the gate that matters: **54/54 against Python**.
 4. **Known consequence:** AI Studio cannot run Python. Deploying the Python
    backend means deploying to a container host (see `DEPLOY.md`). The Node path
    remains only so the existing AI Studio applet keeps working.
@@ -117,7 +117,7 @@ reasoning is not lost.
 - **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `dist/`)
 - **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
 - **Test suite** (no server needed): `backend/.venv/Scripts/python -m pytest backend/tests` — install with `pip install -r backend/requirements-dev.txt`
-- **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **46/46**
+- **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **54/54**
 
 **Frontend** (built with Node, served by whichever backend runs):
 

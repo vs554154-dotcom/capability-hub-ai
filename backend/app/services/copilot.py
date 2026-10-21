@@ -12,6 +12,7 @@ from .. import ai
 from ..database import transaction
 from ..errors import NotFound
 from ..repositories import assessments, catalog, evidence, user_skills, users
+from .analytics import org_context
 
 PERSONAS = {
     "skill_gap": """
@@ -67,9 +68,27 @@ def evidence_lines(user_id: str) -> str:
     )
 
 
-def orchestrate(subject_id: str, prompt: str, agent: str | None) -> str:
+def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool = False) -> str:
     """Answer `prompt` as the chosen persona, grounded in the subject's skills,
-    evidence and the course catalogue."""
+    evidence and the course catalogue - or, for the analytics persona when the
+    caller may see organisation-wide figures (`org_view`), in those figures."""
+    if agent == "analytics" and org_view:
+        context = org_context()
+        text = ai.generate(
+            prompt,
+            system_instruction=(
+                f"{PERSONAS['analytics']}\n\n"
+                "Use only the figures below. Where a component is not measured, say so "
+                "rather than estimating it.\n\n"
+                f"=== ORGANISATION METRICS ===\n{context}"
+            ),
+            temperature=0.7,
+        )
+        return text or (
+            "### Capability Analytics - computed summary (the AI model was unavailable)\n"
+            f"{context}"
+        )
+
     with transaction():
         user = users.get_user_by_id(subject_id)
         # An unknown subject grounds the answer in nothing. (It used to fall back to
@@ -131,10 +150,9 @@ def orchestrate(subject_id: str, prompt: str, agent: str | None) -> str:
     if agent == "analytics":
         return (
             "### Capability Analytics\n"
-            "- Enterprise Readiness Index is tracking at 84%.\n"
-            "- Primary bottlenecks sit in AI-layer competencies "
-            "(Gemini API Integration, Next.js App Architecture).\n"
-            "- Recommend a cohort-based upskilling programme for the affected teams."
+            "Organisation-wide figures are available to managers, L&D and leadership. "
+            f"Here is {name}'s own skill picture:\n\n"
+            f"{skills_text or '- No skill records yet.'}"
         )
     return (
         "I was unable to reach the model, so here is a deterministic summary: "

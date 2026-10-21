@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Sparkles, TrendingUp, Compass, Cpu, ShieldAlert, LineChart, CheckCircle2 } from "lucide-react";
+import {
+  AlertTriangle, CheckCircle2, CircleDashed, Compass, Cpu, Gauge, Info, LineChart,
+  ListChecks, Scale, ShieldAlert, Sparkles, Target, TrendingUp,
+} from "lucide-react";
+import { Meter, PageHeader, SectionCard, StatTile, Tag, scoreTone } from "./ui/Page";
+import { TrendChart } from "./ui/TrendChart";
 
 interface LeadershipDashboardProps {
   analyticsReport: string;
@@ -7,327 +12,347 @@ interface LeadershipDashboardProps {
   onGenerateAnalytics: () => void;
 }
 
+interface EriFactor {
+  key: string;
+  label: string;
+  weight: number;
+  score: number | null;
+  measured: boolean;
+  basis: string;
+}
+
+interface EriReport {
+  enterpriseReadinessIndex: number | null;
+  coverage: number;
+  workforceCount: number;
+  deployNowCount: number;
+  factors: EriFactor[];
+  trend: { day: string; eri: number; coverage: number }[];
+}
+
+interface Overview {
+  riskRadar: { skillName: string; employeesTargeting: number; belowTarget: number; gapShare: number }[];
+  supplyDemand: {
+    skillName: string; openDemands: number; resourcesNeeded: number;
+    ready: number; developing: number; balance: number; strategy: string;
+  }[];
+  projection: {
+    openGaps: number; employeesWithGaps: number;
+    currentEri: number | null; projectedEri: number | null; coverage: number;
+  };
+  directives: string[];
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+  return res.json();
+}
+
 export const LeadershipDashboard: React.FC<LeadershipDashboardProps> = ({
   analyticsReport,
   isAnalyticsLoading,
   onGenerateAnalytics,
 }) => {
-  const [eriData, setEriData] = useState<any>(null);
+  const [eri, setEri] = useState<EriReport | null>(null);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/analytics/eri")
-      .then(res => {
-        if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
-          return res.json();
-        }
-        return null;
-      })
-      .then(data => {
-        if (data && data.success) {
-          setEriData(data);
-        }
-      })
-      .catch(err => console.error("Error fetching ERI data:", err));
+    Promise.all([getJson<EriReport>("/api/analytics/eri"), getJson<Overview>("/api/analytics/leadership")])
+      .then(([e, o]) => { setEri(e); setOverview(o); })
+      .catch(err => setError(err.message));
   }, []);
 
-  const TRENDS_DATA = [
-    { label: "Q1 2025", value: 48 },
-    { label: "Q2 2025", value: 55 },
-    { label: "Q3 2025", value: 64 },
-    { label: "Q4 2025", value: 71 },
-    { label: "Q1 2026", value: 78 },
-    { label: "Q2 2026", value: eriData?.enterpriseReadinessIndex || 84 },
-  ];
+  const header = (
+    <PageHeader
+      eyebrow="Executive console · Capability Analytics AI"
+      icon={TrendingUp}
+      title="Enterprise capability readiness"
+      lede={
+        <>
+          Bird's-eye intelligence computed live from workforce records: skill levels,
+          manager-approved evidence, learning progress and open client demand. A component
+          the platform does not record yet is shown as <strong>not measured</strong> and left
+          out of the index, never estimated.
+        </>
+      }
+      steps={[
+        <><strong>Read the index.</strong> One score built from eight weighted components.</>,
+        <><strong>Find the risk.</strong> Skills where most people are still below target.</>,
+        <><strong>Check supply.</strong> Ready people against what open client demands need.</>,
+        <><strong>Brief the board.</strong> The analytics copilot drafts it from these figures.</>,
+      ]}
+    />
+  );
+
+  if (error) {
+    return (
+      <div className="space-y-6 py-6">
+        {header}
+        <SectionCard title="Analytics unavailable" icon={AlertTriangle}>
+          <p className="text-sm" style={{ color: "var(--text-dim)" }}>
+            The readiness figures could not be loaded ({error}). Refresh the page to try again.
+          </p>
+        </SectionCard>
+      </div>
+    );
+  }
+
+  if (!eri || !overview) {
+    return (
+      <div className="space-y-6 py-6" aria-busy="true">
+        {header}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="skeleton h-72 lg:col-span-5" />
+          <div className="skeleton h-72 lg:col-span-7" />
+        </div>
+        <div className="skeleton h-64" />
+      </div>
+    );
+  }
+
+  const index = eri.enterpriseReadinessIndex;
+  const unmeasuredWeight = 100 - eri.coverage;
+  const trend = eri.trend.map(p => ({
+    day: p.day, value: p.eri, note: `measured over ${p.coverage}% of the index`,
+  }));
+  const { projection } = overview;
+  const projectionGain =
+    projection.currentEri !== null && projection.projectedEri !== null
+      ? projection.projectedEri - projection.currentEri : null;
 
   return (
-    <div className="space-y-8 animate-fade-in py-6">
-      
-      {/* Title */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#F0F4FF]">Executive Capability & Workforce Intelligence</h2>
-          <p className="text-xs text-[#94A3B8] mt-1">Strategic overview of enterprise capability maturity, human capital risk buffers, and future workforce forecasting.</p>
-        </div>
-      </div>
+    <div className="space-y-6 py-6">
+      {header}
 
-      {/* Main Grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Executive Capability Trend Map (Left 2 columns) */}
-        <div className="lg:col-span-2 bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4 border-b border-[#2A384C] pb-3">
-              <h3 className="text-xs font-mono font-bold text-[#4F8EF7] uppercase tracking-wider">Enterprise Capability Maturity (6-Month Trend)</h3>
-              <LineChart className="h-5 w-5 text-[#4F8EF7]" />
-            </div>
-            
-            {/* SVG Visual Bar Graph */}
-            <div className="w-full h-48 bg-[#0F1724] rounded-md border border-[#2A384C] flex items-end justify-between p-4 relative overflow-hidden">
-              <div className="absolute inset-0 grid grid-rows-4 pointer-events-none p-4">
-                {[100, 75, 50, 25].map(tick => (
-                  <div key={tick} className="border-b border-[#2A384C]/60 w-full text-[9px] font-mono text-[#94A3B8] text-left pt-1">
-                    {tick}%
-                  </div>
-                ))}
-              </div>
-
-              {TRENDS_DATA.map((t, idx) => (
-                <div key={idx} className="flex flex-col items-center flex-1 z-10 pt-4">
-                  <div className="relative w-full flex justify-center items-end" style={{ height: "110px" }}>
-                    <div 
-                      className="bg-[#4F8EF7] hover:bg-[#3B82F6] w-8 rounded-t transition-all duration-300 relative group flex justify-center cursor-pointer"
-                      style={{ height: `${t.value}%` }}
-                    >
-                      <div className="absolute -top-7 bg-[#141E30] text-[#4F8EF7] border border-[#4F8EF7]/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                        {t.value}%
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono text-[#94A3B8] mt-2 uppercase font-semibold">{t.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-            <div className="p-4 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs space-y-2">
-              <span className="font-mono text-[9px] text-[#4F8EF7] uppercase font-bold block mb-1">
-                Explainable Enterprise Readiness Index (ERI: {eriData?.enterpriseReadinessIndex || 84}%)
-              </span>
-              <p className="text-[#94A3B8] leading-relaxed font-sans text-[11px]">
-                8-Factor synthesized calculation across <strong className="text-[#F0F4FF]">{eriData?.workforceCount || 22} CYB Workforce Resources</strong>:
-              </p>
-              <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px] font-mono">
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">Skill Prof. (25%):</span> <strong className="text-emerald-400">{eriData?.factors?.skillProficiency?.score || 88}%</strong>
-                </div>
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">Video/MCQ (20%):</span> <strong className="text-emerald-400">{eriData?.factors?.videoMcqAssessments?.score || 85}%</strong>
-                </div>
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">Evidence (15%):</span> <strong className="text-emerald-400">{eriData?.factors?.workplaceEvidence?.score || 80}%</strong>
-                </div>
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">Cert Health (15%):</span> <strong className="text-emerald-400">{eriData?.factors?.certificationHealth?.score || 82}%</strong>
-                </div>
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">CRI (10%):</span> <strong className="text-emerald-400">{eriData?.factors?.capabilityReadinessIndex?.score || 88}%</strong>
-                </div>
-                <div className="bg-[#141E30] p-1.5 rounded border border-[#2A384C]">
-                  <span className="text-[#94A3B8]">Deploy Avail (5%):</span> <strong className="text-emerald-400">{eriData?.factors?.deploymentAvailability?.score || 75}%</strong>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-[#4F8EF7]/10 rounded-md border border-[#4F8EF7]/30 text-xs flex flex-col justify-between">
-              <div>
-                <span className="font-mono text-[9px] text-[#4F8EF7] uppercase font-bold block mb-1">Strategic Target Alignment</span>
-                <p className="text-[#94A3B8] leading-relaxed font-sans text-[11px]">
-                  Target is <strong className="text-[#F0F4FF]">90% ERI</strong> across all 22 CYB engineering resources by Q4, enabling automated talent matching and 100% internal project fulfillment.
-                </p>
-              </div>
-              <div className="mt-2 pt-2 border-t border-[#4F8EF7]/20 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#94A3B8]">Deploy Now Resources:</span>
-                <span className="text-emerald-400 font-bold">{eriData?.deployNowCount || 8} / {eriData?.workforceCount || 22}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Executive Risk Index & Priorities (Right 1 column) */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-mono font-bold text-[#4F8EF7] uppercase tracking-wider">Strategic Risk Radar</h3>
-              <ShieldAlert className="h-4 w-4 text-[#F59E0B]" />
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-[11px] font-mono text-[#94A3B8] mb-1">
-                  <span>Generative AI Engineering</span>
-                  <span className="text-[#F59E0B] font-bold">High Gap (Risk: 58%)</span>
-                </div>
-                <div className="w-full bg-[#0F1724] h-2 rounded-full overflow-hidden border border-[#2A384C]">
-                  <div className="bg-[#F59E0B] h-full" style={{ width: "58%" }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-mono text-[#94A3B8] mb-1">
-                  <span>Cloud & AWS Architecture</span>
-                  <span className="text-[#4F8EF7] font-bold">Medium Risk (42%)</span>
-                </div>
-                <div className="w-full bg-[#0F1724] h-2 rounded-full overflow-hidden border border-[#2A384C]">
-                  <div className="bg-[#4F8EF7] h-full" style={{ width: "42%" }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-mono text-[#94A3B8] mb-1">
-                  <span>Selenium & Java Automation</span>
-                  <span className="text-[#10B981] font-bold">Low Risk (88%)</span>
-                </div>
-                <div className="w-full bg-[#0F1724] h-2 rounded-full overflow-hidden border border-[#2A384C]">
-                  <div className="bg-[#10B981] h-full" style={{ width: "88%" }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Compass className="h-4 w-4 text-[#4F8EF7]" />
-              <h4 className="text-xs font-mono font-bold text-[#4F8EF7] uppercase tracking-wider">Executive Directives</h4>
-            </div>
-            <p className="text-[11px] text-[#94A3B8] leading-relaxed font-sans">
-              1. <strong className="text-[#F0F4FF]">Fund GenAI Reskilling Cohorts:</strong> Upskill 50 Java/Full-Stack devs in LLM orchestration.<br />
-              2. <strong className="text-[#F0F4FF]">Mandate GROW Coaching Loops:</strong> Ensure weekly GROW 1-on-1 check-ins for all direct reports.
+      {/* 1. The index and its history */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 stagger-children">
+        <SectionCard
+          className="lg:col-span-5"
+          title="Enterprise Readiness Index"
+          subtitle="Weighted average of the components measured today."
+          icon={Gauge}
+          aside={<Tag tone="accent">{eri.coverage}% of weight measured</Tag>}
+        >
+          {index === null ? (
+            <p className="text-sm" style={{ color: "var(--text-dim)" }}>
+              Not measurable yet: no component has data.
             </p>
+          ) : (
+            <>
+              <div className="flex items-end gap-3">
+                <span className="hero-figure">{index}%</span>
+                <Tag tone={scoreTone(index)}>
+                  {scoreTone(index) === "ok" ? "Strong" : scoreTone(index) === "warn" ? "Developing" : "At risk"}
+                </Tag>
+              </div>
+              <div className="mt-4"><Meter value={index} tone={scoreTone(index)} label="Enterprise Readiness Index" /></div>
+            </>
+          )}
+          <div className="grid grid-cols-3 gap-3 mt-5">
+            <StatTile label="Workforce" value={eri.workforceCount} hint="employees scored" />
+            <StatTile label="Deploy Now" value={eri.deployNowCount} hint="Skill and Will both 60+" />
+            <StatTile label="Not measured" value={`${unmeasuredWeight}%`} hint="of the index's weight" />
           </div>
-        </div>
+        </SectionCard>
 
+        <SectionCard
+          className="lg:col-span-7"
+          title="Readiness over time"
+          subtitle="One reading per day, taken when this page is opened. Nothing is back-filled."
+          icon={LineChart}
+        >
+          {trend.length >= 2 ? (
+            <TrendChart points={trend} label="Enterprise Readiness Index" />
+          ) : (
+            <div className="rounded-xl p-6 text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--line)" }}>
+              <CircleDashed className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--text-mute)" }} aria-hidden="true" />
+              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                {trend.length === 1 ? `First reading recorded: ${trend[0].value}% on ${trend[0].day}` : "No readings yet"}
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-mute)" }}>
+                The line appears from the second day. It is built only from real daily readings.
+              </p>
+            </div>
+          )}
+        </SectionCard>
       </div>
 
-      {/* CAPABILITY SUPPLY & DEMAND INTELLIGENCE TABLE */}
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg space-y-4">
-        <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-          <div className="flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-[#4F8EF7]" />
-            <h3 className="text-sm font-bold text-[#F0F4FF]">Capability Supply vs. Demand Intelligence (90-Day Outlook)</h3>
-          </div>
-          <span className="text-[10px] font-mono bg-[#4F8EF7]/20 text-[#4F8EF7] px-2.5 py-0.5 rounded border border-[#4F8EF7]/40 uppercase font-bold">
-            Live AI Workforce Model
-          </span>
+      {/* 2. What the index is made of */}
+      <SectionCard
+        title="How the index is built"
+        subtitle="Eight weighted components. Unmeasured ones are excluded and the rest re-weighted, so the index never rests on a guess."
+        icon={ListChecks}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          {eri.factors.map(f => (
+            <div key={f.key}>
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <span className="text-[13px] font-semibold" style={{ color: "var(--text)" }}>{f.label}</span>
+                <span className="flex items-center gap-2">
+                  <Tag>weight {f.weight}%</Tag>
+                  {f.measured
+                    ? <strong className="text-sm" style={{ color: "var(--text)" }}>{f.score}%</strong>
+                    : <Tag tone="warn">Not measured</Tag>}
+                </span>
+              </div>
+              {f.measured && f.score !== null
+                ? <Meter value={f.score} tone={scoreTone(f.score)} label={f.label} />
+                : <div className="meter" style={{ background: "var(--surface-3)" }} />}
+              <p className="mt-1.5 text-[11.5px] leading-relaxed" style={{ color: "var(--text-mute)" }}>{f.basis}</p>
+            </div>
+          ))}
         </div>
+      </SectionCard>
 
+      {/* 3. Where risk sits, and what to do */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SectionCard
+          title="Skill-gap risk"
+          subtitle="Skills people are working toward, ranked by how many are still below their target level."
+          icon={ShieldAlert}
+        >
+          {overview.riskRadar.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--text-dim)" }}>Every targeted skill is at target.</p>
+          ) : (
+            <ul className="space-y-4">
+              {overview.riskRadar.map(r => {
+                const tone = r.gapShare >= 75 ? "risk" : r.gapShare >= 40 ? "warn" : "ok";
+                return (
+                  <li key={r.skillName}>
+                    <div className="flex items-center justify-between gap-3 mb-1.5 text-[13px]">
+                      <span className="font-semibold" style={{ color: "var(--text)" }}>{r.skillName}</span>
+                      <span style={{ color: "var(--text-dim)" }}>
+                        <strong style={{ color: "var(--text)" }}>{r.belowTarget}</strong> of {r.employeesTargeting} below target
+                      </span>
+                    </div>
+                    <Meter value={r.gapShare} tone={tone} label={`${r.skillName}: ${r.gapShare}% below target`} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Directives"
+          subtitle="Derived from the figures on this page. They change as the data does."
+          icon={Compass}
+        >
+          <ol className="space-y-3">
+            {overview.directives.map((d, i) => (
+              <li key={i} className="flex gap-3 text-[13px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+                <span className="flex-none grid place-items-center h-6 w-6 rounded-full text-[11px] font-bold font-mono"
+                      style={{ background: "rgb(var(--accent-rgb) / 12%)", color: "var(--accent)" }}>{i + 1}</span>
+                <span>{d}</span>
+              </li>
+            ))}
+          </ol>
+        </SectionCard>
+      </div>
+
+      {/* 4. Supply against demand */}
+      <SectionCard
+        title="Capability supply against open demand"
+        subtitle="For each skill the open client demands require: people ready now (level 3+, the level matching treats as verified) and people working toward it."
+        icon={Scale}
+      >
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
+          <table className="data-table min-w-[720px]">
             <thead>
-              <tr className="bg-[#0F1724] text-[#94A3B8] uppercase border-b border-[#2A384C]">
-                <th className="py-2.5 px-3">Capability Domain</th>
-                <th className="py-2.5 px-3">Current Supply</th>
-                <th className="py-2.5 px-3">Developing</th>
-                <th className="py-2.5 px-3">Interview Ready</th>
-                <th className="py-2.5 px-3">90-Day Demand</th>
-                <th className="py-2.5 px-3">Projected Gap</th>
-                <th className="py-2.5 px-3">Recommended Strategy</th>
+              <tr>
+                <th>Skill</th>
+                <th className="num">Open demands</th>
+                <th className="num">People needed</th>
+                <th className="num">Ready now</th>
+                <th className="num">Developing</th>
+                <th className="num">Balance</th>
+                <th>Recommended action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A384C]/60 text-[#F0F4FF]">
-              <tr className="hover:bg-[#0F1724]/50">
-                <td className="py-2.5 px-3 font-bold text-[#4F8EF7]">Generative AI Engineering</td>
-                <td className="py-2.5 px-3">84</td>
-                <td className="py-2.5 px-3 text-amber-400">47</td>
-                <td className="py-2.5 px-3 text-emerald-400">31</td>
-                <td className="py-2.5 px-3">142</td>
-                <td className="py-2.5 px-3 text-rose-400 font-bold">-58</td>
-                <td className="py-2.5 px-3 text-[11px]">Reskill 32 • Redeploy 14 • Hire 12</td>
-              </tr>
-              <tr className="hover:bg-[#0F1724]/50">
-                <td className="py-2.5 px-3 font-bold text-[#4F8EF7]">Cloud & Vector Architecture</td>
-                <td className="py-2.5 px-3">110</td>
-                <td className="py-2.5 px-3 text-amber-400">28</td>
-                <td className="py-2.5 px-3 text-emerald-400">65</td>
-                <td className="py-2.5 px-3">130</td>
-                <td className="py-2.5 px-3 text-amber-400 font-bold">-20</td>
-                <td className="py-2.5 px-3 text-[11px]">Accelerate 20 via Learning Concierge</td>
-              </tr>
-              <tr className="hover:bg-[#0F1724]/50">
-                <td className="py-2.5 px-3 font-bold text-[#4F8EF7]">Automation QA & Cypress</td>
-                <td className="py-2.5 px-3">160</td>
-                <td className="py-2.5 px-3 text-amber-400">35</td>
-                <td className="py-2.5 px-3 text-emerald-400">120</td>
-                <td className="py-2.5 px-3">145</td>
-                <td className="py-2.5 px-3 text-emerald-400 font-bold">+15 (Optimal)</td>
-                <td className="py-2.5 px-3 text-[11px]">Internal Mobility & Project Matching</td>
-              </tr>
+            <tbody>
+              {overview.supplyDemand.map(r => (
+                <tr key={r.skillName}>
+                  <td style={{ color: "var(--text)", fontWeight: 600 }}>{r.skillName}</td>
+                  <td className="num">{r.openDemands}</td>
+                  <td className="num">{r.resourcesNeeded}</td>
+                  <td className="num">{r.ready}</td>
+                  <td className="num">{r.developing}</td>
+                  <td className="num">
+                    {r.balance >= 0
+                      ? <Tag tone="ok"><CheckCircle2 className="h-3 w-3" aria-hidden="true" />+{r.balance}</Tag>
+                      : <Tag tone="risk"><AlertTriangle className="h-3 w-3" aria-hidden="true" />short {-r.balance}</Tag>}
+                  </td>
+                  <td>{r.strategy}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
+        <p className="note mt-3">
+          <Info className="h-3.5 w-3.5 mt-0.5 flex-none" aria-hidden="true" />
+          Counted per skill, so one person can appear as ready for several skills. Shown: the
+          eight skills with the largest shortfall.
+        </p>
+      </SectionCard>
 
-      {/* WHAT-IF SCENARIO SIMULATION CARD */}
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg space-y-4">
-        <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-400" />
-            <h3 className="text-sm font-bold text-[#F0F4FF]">Interactive Upskilling What-If Scenario Simulator</h3>
+      {/* 5. What closing the gaps would do, and the board briefing */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <SectionCard
+          title="If every open gap closed"
+          subtitle="Skill proficiency recomputed with each below-target skill at its target; other components held where they are."
+          icon={Target}
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile label="Index today" value={projection.currentEri !== null ? `${projection.currentEri}%` : "–"} />
+            <StatTile
+              label="Projected"
+              value={projection.projectedEri !== null ? `${projection.projectedEri}%` : "–"}
+              hint={projectionGain !== null ? `${projectionGain >= 0 ? "+" : ""}${projectionGain} points` : undefined}
+              tone="ok"
+            />
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-            Predictive Model
-          </span>
-        </div>
+          <p className="note mt-4">
+            <Info className="h-3.5 w-3.5 mt-0.5 flex-none" aria-hidden="true" />
+            {projection.openGaps} open skill gaps across {projection.employeesWithGaps} employees.
+          </p>
+        </SectionCard>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-mono stagger-children">
-          <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C] hover-lift">
-            <span className="text-[#94A3B8] block mb-1">Scenario Target</span>
-            <span className="text-white font-bold text-xs">Train 50 Java Devs in GenAI</span>
-          </div>
-          <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C]">
-            <span className="text-[#94A3B8] block mb-1">Expected Ready Count</span>
-            <span className="text-emerald-400 font-bold text-xs">38 Engineers (76% Conversion)</span>
-          </div>
-          <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C]">
-            <span className="text-[#94A3B8] block mb-1">Projected Gap Reduction</span>
-            <span className="text-[#4F8EF7] font-bold text-xs">27% Total Risk Reduction</span>
-          </div>
-          <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C]">
-            <span className="text-[#94A3B8] block mb-1">Expected Readiness Time</span>
-            <span className="text-amber-400 font-bold text-xs">60 Days Average</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Strategic Intelligence AI Assistant */}
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-4 border-b border-[#2A384C] pb-3">
-          <div>
-            <h3 className="text-base font-bold text-[#F0F4FF]">Strategic Intelligence AI Executive Analyst</h3>
-            <p className="text-xs text-[#94A3B8] mt-0.5">Consult the Capability Analytics AI to run strategic models and prepare executive board briefings.</p>
-          </div>
-          <Sparkles className="h-5 w-5 text-[#4F8EF7] animate-pulse" />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 flex flex-col justify-between space-y-4">
-            <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
-              Synthesize strategic gap indices and prepare predictive workforce readiness briefings for the next board meeting.
-            </p>
+        <SectionCard
+          className="lg:col-span-2"
+          title="Board briefing"
+          subtitle="The Capability Analytics AI writes from the figures above, and says so where a component is not measured."
+          icon={Sparkles}
+          aside={
             <button
               id="exec-generate-analytics-btn"
               onClick={onGenerateAnalytics}
               disabled={isAnalyticsLoading}
-              className="flex items-center justify-center gap-2 bg-[#0F1724] border border-[#2A384C] hover:border-[#4F8EF7] text-[#F0F4FF] font-mono uppercase font-bold text-xs py-2.5 px-4 rounded-md transition-all disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-2 text-xs font-bold py-2 px-3.5 rounded-lg transition-all disabled:opacity-50 cursor-pointer"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
             >
-              {isAnalyticsLoading ? (
-                <>
-                  <Compass className="h-3.5 w-3.5 animate-spin text-[#4F8EF7]" />
-                  Analyzing Executive Trends...
-                </>
-              ) : (
-                <>
-                  <Cpu className="h-3.5 w-3.5 text-[#4F8EF7]" />
-                  Compile Strategic Board Briefing
-                </>
-              )}
+              {isAnalyticsLoading
+                ? <><Compass className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Drafting…</>
+                : <><Cpu className="h-3.5 w-3.5" aria-hidden="true" /> Draft briefing</>}
             </button>
-          </div>
-
-          <div className="lg:col-span-2">
-            {analyticsReport ? (
-              <div className="p-4 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs text-[#F0F4FF] leading-relaxed max-h-[300px] overflow-y-auto font-sans whitespace-pre-wrap">
-                {analyticsReport}
-              </div>
-            ) : (
-              <div className="border border-dashed border-[#2A384C] rounded-lg p-10 text-center text-[#94A3B8]">
-                <Compass className="h-10 w-10 mx-auto stroke-1 mb-2 text-[#2A384C]" />
-                <p className="text-[11px] font-mono uppercase tracking-wider">Click the button to compile the Executive Capability board report.</p>
-              </div>
-            )}
-          </div>
-        </div>
+          }
+        >
+          {analyticsReport ? (
+            <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto whitespace-pre-wrap"
+                 style={{ background: "var(--surface-2)", border: "1px solid var(--line)", color: "var(--text-dim)" }}>
+              {analyticsReport}
+            </div>
+          ) : (
+            <div className="rounded-xl p-8 text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--line)" }}>
+              <Sparkles className="h-7 w-7 mx-auto mb-2" style={{ color: "var(--text-mute)" }} aria-hidden="true" />
+              <p className="text-xs" style={{ color: "var(--text-mute)" }}>
+                Select <strong>Draft briefing</strong> for a board-ready summary of readiness, risk and supply.
+              </p>
+            </div>
+          )}
+        </SectionCard>
       </div>
-
     </div>
   );
 };
