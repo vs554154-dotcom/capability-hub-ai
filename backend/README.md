@@ -80,11 +80,16 @@ again and no proxy is involved. Note `dist/` only exists after `npm run build`.
 
 ## This backend owns the database
 
-`app/schema_sql.py` holds the DDL for all 12 tables — including the columns
-`server-db.ts` added by ALTER migration — and `seed/seed.json` holds 306 seed
-rows. On startup `database.py` creates any missing table and seeds any table that is
-still **empty**, so a deployment with live data is never overwritten on restart
-and a fresh deployment builds itself.
+The schema is versioned. On startup `database.py` applies every migration in
+`app/migrations.py` newer than the database (the version lives in SQLite's
+`PRAGMA user_version`), then seeds any table that is still **empty** from
+`seed/seed.json` (306 rows) - so a deployment with live data is never overwritten on
+restart, and a fresh deployment builds itself.
+
+Migration 1 is the baseline in `app/schema_sql.py`: all 12 tables, including every
+column `server-db.ts` added by ALTER TABLE. It upgrades any older database in place,
+Node-built ones included. To change the schema, add a migration; never edit
+`schema_sql.py` (a test fails if it changes). See `ARCHITECTURE.md` for the rules.
 
 This is what made Python deployable on its own. It previously refused to start
 unless the Node server had created the database first.

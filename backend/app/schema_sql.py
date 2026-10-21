@@ -1,11 +1,12 @@
-"""Schema DDL for the CyBridge database.
+"""The version-1 baseline schema. FROZEN - do not edit.
 
-Generated from the canonical schema, including the columns that server-db.ts added
-through ALTER migrations, so a fresh Python-created database is byte-identical in
-structure to one the Node server would have produced.
+This is the schema migration 1 builds (see migrations.py): all 12 tables, including
+every column the Node server added over time with ALTER TABLE.
 
-This module makes the Python backend self-sufficient: it no longer requires the Node
-server to have run first.
+To change the schema, add a migration in migrations.py. Editing this file instead
+would give new databases a schema that already-deployed databases never receive,
+because migration 1 has already run on those and never runs again.
+test_migrations.py fails if these statements change.
 """
 
 # Executed in order. SQLite strips IF NOT EXISTS when it stores a statement in

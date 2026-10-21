@@ -133,5 +133,6 @@ reasoning is not lost.
 When modifying or extending this application:
 1. **Server-Side Security**: All Gemini AI calls must strictly remain server-side — in `backend/app/ai.py` for the live backend. Never expose API keys to the browser. Authority comes from the session cookie only; a user id in a URL or body names a target, never the caller.
 2. **Camera & Microphone Permissions**: Hardware access (camera/mic) for interview scenarios must be handled gracefully with fallbacks and permission state indicators.
-3. **Responsive UI**: Keep dark mode visual design (#141E30 canvas, #0F1724 cards, #4F8EF7 / #10B981 accents) consistent across components.
+3. **Schema changes go through migrations**: Append a `Migration` with the next version number in `backend/app/migrations.py`. Never edit `backend/app/schema_sql.py` — it is the frozen version-1 baseline, and a test fails if it changes. Editing it would give new databases a schema that already-deployed ones never receive.
+4. **Responsive UI**: Keep dark mode visual design (#141E30 canvas, #0F1724 cards, #4F8EF7 / #10B981 accents) consistent across components.
 

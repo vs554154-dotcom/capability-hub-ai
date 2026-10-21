@@ -13,13 +13,17 @@ transaction cannot leak into another request.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from contextlib import contextmanager
 from typing import Any, Iterator, Sequence
 
 from .config import DB_PATH, SEED_PATH
-from .schema_sql import SCHEMA_STATEMENTS, SEED_TABLE_ORDER
+from .migrations import current_version, migrate
+from .schema_sql import SEED_TABLE_ORDER
+
+logger = logging.getLogger("cybridge.database")
 
 
 class DatabaseMissingError(RuntimeError):
@@ -31,18 +35,24 @@ _init_lock = threading.Lock()
 _initialised = False
 
 
-def _open() -> sqlite3.Connection:
-    if not DB_PATH.exists():
-        try:
-            DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:  # unwritable volume, read-only filesystem
-            raise DatabaseMissingError(
-                f"Cannot create the SQLite database at {DB_PATH}: {exc}. "
-                "Set DATABASE_PATH to a writable location."
-            ) from exc
+def _ensure_directory() -> None:
+    if DB_PATH.exists():
+        return
+    try:
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:  # unwritable volume, read-only filesystem
+        raise DatabaseMissingError(
+            f"Cannot create the SQLite database at {DB_PATH}: {exc}. "
+            "Set DATABASE_PATH to a writable location."
+        ) from exc
 
+
+def _open() -> sqlite3.Connection:
+    """A connection for request work: Python manages its transactions, and
+    `transaction()` decides when to commit."""
+    _ensure_directory()
     # timeout: how long a writer waits for another writer's lock before raising,
-    # which matters now that requests run concurrently in the threadpool.
+    # which matters because requests run concurrently in the threadpool.
     conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL")
@@ -50,24 +60,22 @@ def _open() -> sqlite3.Connection:
     return conn
 
 
-def _apply_schema_and_seed(conn: sqlite3.Connection) -> None:
-    """Create every table, then load seed data into any table that is still empty.
+def _seed_empty_tables(conn: sqlite3.Connection) -> list[str]:
+    """Load seed rows into every table that is still empty, and return their names.
 
-    A table that already has rows is never re-seeded, so a running deployment's data
-    survives restarts and a fresh deployment builds itself.
+    A table with rows is never touched, so a deployment's data survives restarts and
+    a fresh one builds itself. Runs under the write lock, so two processes starting
+    together cannot both decide a table is empty and both fill it.
     """
-    for statement in SCHEMA_STATEMENTS:
-        conn.execute(statement)
-
-    if SEED_PATH.exists():
-        seed: dict[str, list[dict[str, Any]]] = json.loads(
-            SEED_PATH.read_text(encoding="utf-8")
-        )
+    if not SEED_PATH.exists():
+        return []
+    seed: dict[str, list[dict[str, Any]]] = json.loads(SEED_PATH.read_text(encoding="utf-8"))
+    seeded: list[str] = []
+    conn.execute("BEGIN IMMEDIATE")
+    try:
         for table in SEED_TABLE_ORDER:
             rows = seed.get(table) or []
-            if not rows:
-                continue
-            if conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]:
+            if not rows or conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]:
                 continue
             columns = list(rows[0].keys())
             placeholders = ", ".join("?" for _ in columns)
@@ -76,15 +84,23 @@ def _apply_schema_and_seed(conn: sqlite3.Connection) -> None:
                 f"INSERT OR IGNORE INTO {table} ({column_list}) VALUES ({placeholders})",
                 [tuple(row.get(c) for c in columns) for row in rows],
             )
-    conn.commit()
+            seeded.append(table)
+        conn.execute("COMMIT")
+    except BaseException:
+        if conn.in_transaction:
+            conn.execute("ROLLBACK")
+        raise
+    return seeded
 
 
 def init_database() -> None:
-    """Create the schema and seed empty tables. Idempotent and thread-safe.
+    """Migrate the schema to the latest version, then seed any empty table.
+    Idempotent and thread-safe.
 
     Called from the application's startup hook, and again lazily by the first
-    transaction - so code that runs without the lifespan (tests, scripts) still finds
-    a built database.
+    transaction, so code that runs without the lifespan (tests, scripts) still finds
+    a built database. A database that cannot be migrated stops startup with the
+    reason rather than letting requests run against the wrong schema.
     """
     global _initialised
     if _initialised:
@@ -92,9 +108,21 @@ def init_database() -> None:
     with _init_lock:
         if _initialised:
             return
-        conn = _open()
+        _ensure_directory()
+        # Autocommit mode: the migration runner and the seeder each control their
+        # own transactions explicitly.
+        conn = sqlite3.connect(DB_PATH, isolation_level=None, timeout=10)
         try:
-            _apply_schema_and_seed(conn)
+            conn.execute("PRAGMA journal_mode = WAL")
+            applied = migrate(conn)
+            if applied:
+                logger.info(
+                    "Database migrated to schema version %s (applied %s).",
+                    current_version(conn), ", ".join(map(str, applied)),
+                )
+            seeded = _seed_empty_tables(conn)
+            if seeded:
+                logger.info("Seeded empty tables: %s.", ", ".join(seeded))
         finally:
             conn.close()
         _initialised = True

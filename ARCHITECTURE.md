@@ -91,8 +91,9 @@ backend/app/
 │   ├── users.py  catalog.py  user_skills.py  evidence.py  learning.py
 │   ├── demands.py  reminders.py  assessments.py
 │   └── _common.py       clock, id generation, JSON-shape helpers
-├── database.py        connections, transactions, schema + seed initialisation
-├── schema_sql.py      DDL for all 12 tables
+├── database.py        connections, transactions, startup (migrate, then seed)
+├── migrations.py      versioned schema migrations
+├── schema_sql.py      the frozen version-1 baseline: DDL for all 12 tables
 ├── errors.py          domain errors (NotFound, Invalid)
 ├── ai.py              Gemini client wrapper
 ├── security.py        bcrypt hashing
@@ -230,16 +231,46 @@ Writes that must be atomic, and are:
 | Assign a learning track | delete old plan + insert every new step |
 | Handoff to SkillGap | skill baselines + escalation reminder |
 
-### Schema and seed
+### Schema and migrations
 
-The backend owns its schema. `schema_sql.py` holds the DDL for all 12 tables, and
-`database.init_database()` runs it from the application's startup hook (lifespan).
-Code that runs without the app, such as tests and scripts, gets the same thing
-lazily from the first `transaction()`.
+The backend owns its schema, and changes to it are **versioned migrations**
+(`migrations.py`). The version is SQLite's built-in `PRAGMA user_version`. At startup,
+`database.init_database()` applies every migration newer than the database, then
+seeds empty tables. It runs from the application's lifespan hook, and lazily from the
+first `transaction()` for code that runs without the app, such as tests and scripts.
+
+How a migration runs:
+
+- **All or nothing.** Each migration runs in its own `BEGIN IMMEDIATE` transaction
+  that also records the new version, so a database can never claim a version whose
+  changes it lacks. A migration that fails part-way leaves the database exactly as
+  it was.
+- **Safe under concurrent starts.** The version is re-read once the write lock is
+  held, so two processes starting together cannot both apply the same migration.
+- **Referentially safe.** A migration that would *introduce* a foreign-key violation
+  is rolled back. Violations already present in the data do not block startup.
+- **Never run backwards.** A database newer than the code (migrated by a later
+  release, then rolled back) is refused at startup, with the reason, instead of being
+  read with the wrong schema.
+
+**Migration 1 is the baseline.** It brings any database to the schema in
+`schema_sql.py`: it creates missing tables, then adds every missing column with the
+type and default the baseline declares. That one rule covers every historical
+shape: an empty file, a database this backend built, and a database built by any
+version of the Node server, which added 20 columns over time with `ALTER TABLE`.
+Existing rows are kept, and new columns take their defaults.
+
+To change the schema, **append a migration with the next version number**. Never edit
+`schema_sql.py`. It is the frozen baseline, and editing it would give new databases
+a schema that existing ones never receive, because migration 1 never runs twice. A
+test fingerprints the file and fails if it changes.
+
+### Seed data
 
 `seed/seed.json` holds 306 rows. On startup, each table that is **still empty** is
-seeded; a table with rows is never touched. A fresh deployment therefore builds
-itself, and a running one keeps its data across restarts. Password hashes are
+seeded, under the write lock so concurrent starts cannot both fill it; a table with
+rows is never touched. A fresh deployment therefore builds itself, and a running one
+keeps its data across restarts. Password hashes are
 deliberately absent from the seed: the first sign-in to each account sets its
 password.
 
@@ -450,6 +481,13 @@ contains only verified facts and instructs the model not to invent any.
 - **Never raises.** `ai.generate()` returns `None` on any failure and the caller
   substitutes its fallback. Fallbacks are recognisable: structured responses carry
   `"_fallback": true`, and text fallbacks have a fixed form.
+- **Bounded, never retried.** Every call is limited to `GEMINI_TIMEOUT_SECONDS`
+  (default 120) and makes exactly one attempt, so the worst case for a request is that
+  long and no longer. Retries are switched off explicitly: the SDK's retry policy
+  retries timeouts, and measured against a 1-second timeout it took 22 seconds. The
+  default sits well above normal generation time, because long reports have taken
+  over 90 seconds. A timeout is logged as one, so a value cutting off real answers is
+  visible and can be raised.
 - **Structured output.** `ai.generate_json()` strips Markdown fences and, if the
   model wrapped the JSON in prose, recovers the outermost `{...}` or `[...]` before
   parsing.
@@ -459,7 +497,7 @@ contains only verified facts and instructs the model not to invent any.
   reading their record.
 - **Personas.** `skill_gap`, `concierge`, `coach` and `analytics` each have a
   system instruction in `copilot.PERSONAS`; an unknown persona falls back to a
-  generic orchestrator. Model: `gemini-3.6-flash`.
+  generic orchestrator. Model: `gemini-3.6-flash`, through `google-genai` 2.8.
 
 Because a fallback also returns `200`, a healthy status code does not prove the
 model was reached. Check for the fallback marker instead.
@@ -515,6 +553,7 @@ Every setting comes from the environment, read once by `config.py`:
 | `PORT` | `8000` | Listen port; injected by most hosts |
 | `SESSION_SECRET` | insecure dev value (warns) | Signs the session cookie — **set it in production** |
 | `GEMINI_API_KEY` | unset | Enables real AI; otherwise fallbacks |
+| `GEMINI_TIMEOUT_SECONDS` | `120` | Upper bound on one Gemini call; invalid values stop startup |
 | `DEMO_MODE` | `false` | Password-free sign-in. **Keep off** anywhere shared |
 | `DATABASE_PATH` | `capability-hub.db` in repo root | Point at a persistent volume in production |
 | `COOKIE_SAMESITE` | `none` on HTTPS, else `lax` | Session cookie SameSite policy |
@@ -538,7 +577,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~6 s | 39 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~15 s | 56 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 46 checks across six scenarios: employee features, manager features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
@@ -568,25 +607,18 @@ The React app is unchanged by the backend architecture and relies on it as follo
 
 These are real and are not yet fixed:
 
-1. **No schema migrations.** `CREATE TABLE IF NOT EXISTS` builds missing tables but
-   never alters existing ones. Adding a column to `schema_sql.py` will not change a
-   deployed database. A versioned migration step is needed before the schema next
-   changes.
-2. **The Enterprise Readiness Index is a fixed figure.** `/api/analytics/eri`
+1. **The Enterprise Readiness Index is a fixed figure.** `/api/analytics/eri`
    returns constant numbers (84 / 82 / 88 / 91), and the analytics copilot's
    fallback quotes the same 84%. The composite in `AGENTS.md` depends on data the
    system does not collect, such as certifications and Level-1 assessments, so it
    cannot yet be computed honestly. The Leadership dashboard's quarterly trend line
    is likewise hard-coded in the frontend.
-3. **Sessions cannot be revoked server-side.** Logging out clears the browser's
+2. **Sessions cannot be revoked server-side.** Logging out clears the browser's
    cookie, but a copy of a signed cookie stays valid until it expires (8 hours).
    Rotating `SESSION_SECRET` invalidates every session at once.
-4. **Single instance.** The SQLite file and the in-memory rate limiter are
+3. **Single instance.** The SQLite file and the in-memory rate limiter are
    per-process. Scaling horizontally needs a networked database and a shared rate
    limit store. On a host with an ephemeral filesystem, mount a volume for
    `DATABASE_PATH` or the data resets on redeploy.
-5. **No explicit timeout on Gemini calls.** A call that hangs holds one threadpool
-   worker until the SDK gives up. Other requests are unaffected (section 5), but
-   enough hung calls at once would exhaust the pool.
-6. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
+4. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
    Changes to the API contract are not mirrored there.
