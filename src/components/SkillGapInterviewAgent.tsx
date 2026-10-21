@@ -105,6 +105,14 @@ interface Assessment {
   practicalExercise?: PracticalExercise;
 }
 
+// The gaps the evaluations actually returned, merged across answers. The final report
+// used to show the same fixed gap lists to every candidate, and to add fixed gaps to
+// every request it sent the Learning Concierge.
+const collectGaps = (evals: Record<string, AnswerEvaluation>) => ({
+  technical: Array.from(new Set(Object.values(evals).flatMap(e => e.technicalGaps || e.missingConcepts || []))),
+  communication: Array.from(new Set(Object.values(evals).flatMap(e => e.communicationGaps || []))),
+});
+
 interface AnswerEvaluation {
   overallScore: number;
   technicalScore: number;
@@ -122,6 +130,8 @@ interface AnswerEvaluation {
   softSkillCourses?: string[];
   feedback: string;
   recommendedLearning: string[];
+  /** Set when no model was reachable and the score is a length-based placeholder. */
+  _fallback?: boolean;
 }
 
 interface SkillGapInterviewAgentProps {
@@ -645,12 +655,14 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     const willRes = calculateWillScore();
     const willScore = willRes.totalWill;
 
-    // Matrix Quadrant Determination
-    let quadrant = "Deploy Now";
-    if (skillScore >= 65 && willScore >= 65) quadrant = "Deploy Now (Top Performer)";
-    else if (skillScore < 65 && willScore >= 65) quadrant = "Accelerate Learning (High Will, Skill Gap)";
-    else if (skillScore >= 65 && willScore < 65) quadrant = "Retain & Coach (High Skill, Low Will)";
-    else quadrant = "Re-evaluate & Structure (Skill & Will Gaps)";
+    // Quadrant, on the same 60/60 line and with the same names as the manager's
+    // Skill-vs-Will matrix (this used 65 and different names, so a practice result could
+    // disagree with the matrix for the same scores).
+    let quadrant: string;
+    if (skillScore >= 60 && willScore >= 60) quadrant = "Deploy Now";
+    else if (skillScore < 60 && willScore >= 60) quadrant = "Accelerate Learning";
+    else if (skillScore >= 60 && willScore < 60) quadrant = "Retain & Coach";
+    else quadrant = "Intervention Required";
 
     const totalScore = Math.round((skillScore * 0.6) + (willScore * 0.4));
     return {
@@ -1681,42 +1693,42 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#10B981]" />
-                      <h4 className="text-xs font-bold text-[#F0F4FF]">Agentic AI Dual-Stream Evaluation (Technical + Communication/Soft Skills)</h4>
+                      <h4 className="text-xs font-bold text-[#F0F4FF]">AI evaluation of your answer</h4>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-bold text-[#94A3B8]">Overall Rating:</span>
                       <span className="text-sm font-mono font-extrabold text-[#10B981] bg-[#10B981]/10 px-2.5 py-0.5 rounded border border-[#10B981]/30">
                         {currentEval.overallScore}%
                       </span>
+                      {currentEval._fallback && (
+                        <span className="tag tone-warn" title="No AI model was reachable, so this score reflects answer length only.">
+                          Provisional
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Comprehensive 6-Metric Breakdown Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Tech Depth</span>
-                      <span className="text-xs font-mono font-bold text-[#4F8EF7] mt-0.5 block">{currentEval.technicalScore}%</span>
-                    </div>
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Problem Solving</span>
-                      <span className="text-xs font-mono font-bold text-[#10B981] mt-0.5 block">{currentEval.problemSolvingScore}%</span>
-                    </div>
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Speech Fluency</span>
-                      <span className="text-xs font-mono font-bold text-[#A855F7] mt-0.5 block">{currentEval.speechFluencyScore || currentEval.communicationScore}%</span>
-                    </div>
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Grammar & Vocab</span>
-                      <span className="text-xs font-mono font-bold text-[#F59E0B] mt-0.5 block">{currentEval.grammarScore || currentEval.communicationScore}%</span>
-                    </div>
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Pronunciation</span>
-                      <span className="text-xs font-mono font-bold text-cyan-400 mt-0.5 block">{currentEval.pronunciationScore || currentEval.communicationScore}%</span>
-                    </div>
-                    <div className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
-                      <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">Body Language</span>
-                      <span className="text-xs font-mono font-bold text-rose-400 mt-0.5 block">{currentEval.bodyLanguageScore || currentEval.communicationScore}%</span>
-                    </div>
+                  {/* One tile per score the evaluation actually returned. The speech,
+                      grammar, pronunciation and body-language tiles used to fall back to
+                      the communication score, showing one number under five names; the
+                      model only ever receives the transcribed text. */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {([
+                      ["Tech depth", currentEval.technicalScore, "text-[#4F8EF7]"],
+                      ["Problem solving", currentEval.problemSolvingScore, "text-[#10B981]"],
+                      ["Communication", currentEval.communicationScore, "text-[#A855F7]"],
+                      ["Speech fluency", currentEval.speechFluencyScore, "text-[#A855F7]"],
+                      ["Grammar & vocabulary", currentEval.grammarScore, "text-[#F59E0B]"],
+                      ["Pronunciation", currentEval.pronunciationScore, "text-cyan-400"],
+                      ["Body language", currentEval.bodyLanguageScore, "text-rose-400"],
+                    ] as [string, number | undefined, string][])
+                      .filter(([, value]) => typeof value === "number")
+                      .map(([label, value, tone]) => (
+                        <div key={label} className="bg-[#141E30] p-2 rounded border border-[#2A384C] text-center">
+                          <span className="text-[9px] font-mono text-[#94A3B8] block uppercase">{label}</span>
+                          <span className={`text-xs font-mono font-bold mt-0.5 block ${tone}`}>{value}%</span>
+                        </div>
+                      ))}
                   </div>
 
                   {/* Feedback */}
@@ -1763,24 +1775,22 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                       <div className="bg-[#141E30] p-3 rounded-lg border border-[#A855F7]/30 space-y-2">
                         <div className="flex items-center gap-1.5 border-b border-[#2A384C] pb-1.5">
                           <Heart className="h-3.5 w-3.5 text-[#A855F7]" />
-                          <strong className="text-xs font-bold text-[#F0F4FF]">Communication & Behavioral Soft Skill Stream</strong>
+                          <strong className="text-xs font-bold text-[#F0F4FF]">Communication</strong>
                         </div>
 
                         <div className="space-y-1">
-                          <span className="text-[10px] font-mono font-bold font-bold text-[#A855F7] uppercase block">Communication & Body Language Analysis:</span>
+                          <span className="text-[10px] font-mono font-bold text-[#A855F7] uppercase block">What is assessed</span>
                           <p className="text-[11px] text-[#94A3B8] italic">
-                            Evaluated speech pacing, grammar clarity, articulation of technical terms, and posture during response.
+                            Scored from your transcribed answer: structure, clarity, and how technical terms are explained.
+                            Pace, pronunciation and body language are not assessed - the model receives only the text.
                           </p>
                         </div>
 
+                        {currentEval.communicationGaps && currentEval.communicationGaps.length > 0 && (
                         <div className="space-y-1 pt-1">
-                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase block">Identified Soft Skill / Speech Gaps:</span>
+                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase block">Communication gaps:</span>
                           <ul className="space-y-1 text-[11px] text-[#94A3B8]">
-                            {(currentEval.communicationGaps || [
-                              "Speech pacing & filler pause reduction during explanation",
-                              "Structuring response using STAR method for executive clarity",
-                              "Maintaining interview body language and visual confidence"
-                            ]).map((cg, idx) => (
+                            {currentEval.communicationGaps.map((cg, idx) => (
                               <li key={idx} className="flex items-start gap-1.5">
                                 <AlertCircle className="h-3 w-3 text-rose-400 shrink-0 mt-0.5" />
                                 <span>{cg}</span>
@@ -1788,6 +1798,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                             ))}
                           </ul>
                         </div>
+                        )}
                       </div>
                     </div>
 
@@ -1797,10 +1808,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                         onClick={() => {
                           const allGaps = [
                             ...(currentEval.technicalGaps || currentEval.missingConcepts),
-                            ...(currentEval.communicationGaps || [
-                              "Executive Technical Pitching & STAR Communication",
-                              "Spoken Grammar & Vocal Clarity"
-                            ])
+                            ...(currentEval.communicationGaps || [])
                           ];
                           if (onCloseModal) onCloseModal();
                           onRedirectToConcierge(allGaps, assessment?.roleTitle || targetRole);
@@ -2260,15 +2268,15 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
         </div>
 
         <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
-          <span className="text-xs font-mono text-[#94A3B8] block">Will & Adaptability Index</span>
+          <span className="text-xs font-mono text-[#94A3B8] block">Self-reported Will</span>
           <span className="text-2xl font-mono font-bold text-[#A855F7] mt-1 block">{results.willScore}%</span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">15 Behavioral & Intent Qs</span>
+          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">From 5 behaviour questions</span>
         </div>
 
         <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
           <span className="text-xs font-mono text-[#94A3B8] block">Skill-vs-Will Matrix Position</span>
           <span className="text-xs font-mono font-bold text-amber-400 mt-2 block leading-tight">{results.quadrant}</span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">9-Box Quadrant</span>
+          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">2×2 quadrant</span>
         </div>
 
         <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
@@ -2323,83 +2331,49 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
         <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-[#4F8EF7]" />
-            <h3 className="text-xs font-bold text-[#F0F4FF]">Agent Mapped Dual-Stream Learning Roadmap</h3>
+            <h3 className="text-xs font-bold text-[#F0F4FF]">Gaps found in your answers</h3>
           </div>
           <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 px-2.5 py-0.5 rounded border border-[#10B981]/30">
             Tech + Soft Skills Auto-Handoff Ready
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Stream 1: Technical Skill Gaps & Assigned Training */}
-          <div className="bg-[#141E30] p-3.5 rounded-lg border border-[#4F8EF7]/30 space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-[#2A384C] pb-2">
-              <Cpu className="h-4 w-4 text-[#4F8EF7]" />
-              <strong className="text-xs font-bold text-[#F0F4FF]">1. Technical Gaps & Assigned Courses</strong>
+        {(() => {
+          const gaps = collectGaps(evaluations);
+          const streams: [string, string[], string][] = [
+            ["1. Technical gaps", gaps.technical, "#4F8EF7"],
+            ["2. Communication gaps", gaps.communication, "#A855F7"],
+          ];
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {streams.map(([title, items, colour]) => (
+                <div key={title} className="bg-[#141E30] p-3.5 rounded-lg border space-y-2.5" style={{ borderColor: `${colour}4D` }}>
+                  <strong className="text-xs font-bold text-[#F0F4FF] block border-b border-[#2A384C] pb-2">{title}</strong>
+                  {items.length === 0 ? (
+                    <p className="text-[11px] text-[#94A3B8]">None identified in your answers.</p>
+                  ) : (
+                    <ul className="space-y-2 text-xs text-[#94A3B8]">
+                      {items.map(item => (
+                        <li key={item} className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: colour }} />
+                          <span className="text-[11px] text-[#F0F4FF]">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
-
-            <ul className="space-y-2 text-xs text-[#94A3B8]">
-              <li className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-[#F0F4FF] block text-[11px]">System Design & Resilience</strong>
-                  <span className="text-[10px]">Hands-on modules covering microservices fault isolation, rate limiting & circuit breakers.</span>
-                </div>
-              </li>
-              <li className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-[#F0F4FF] block text-[11px]">Production GenAI & RAG Benchmarking</strong>
-                  <span className="text-[10px]">Vector database retrieval metrics (MRR, NDCG) and multi-agent guardrails.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Stream 2: Communication & Soft Skill Gaps & Assigned Training */}
-          <div className="bg-[#141E30] p-3.5 rounded-lg border border-[#A855F7]/30 space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-[#2A384C] pb-2">
-              <Heart className="h-4 w-4 text-[#A855F7]" />
-              <strong className="text-xs font-bold text-[#F0F4FF]">2. Communication Gaps & Assigned Training</strong>
-            </div>
-
-            <ul className="space-y-2 text-xs text-[#94A3B8]">
-              <li className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#A855F7] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-[#F0F4FF] block text-[11px]">Executive Technical Pitching & STAR Method</strong>
-                  <span className="text-[10px]">Structuring complex architectural trade-offs clearly for client & leadership interviews.</span>
-                </div>
-              </li>
-              <li className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#A855F7] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-[#F0F4FF] block text-[11px]">Vocal Clarity, Grammar & Video Body Language</strong>
-                  <span className="text-[10px]">Speech pacing drills, filler word reduction, and posture/eye-contact confidence.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Redirect to Learning Concierge Banner */}
         {onRedirectToConcierge && (
           <div className="pt-2">
             <button
               onClick={() => {
-                const allGaps = Array.from(
-                  new Set([
-                    ...Object.values(evaluations).flatMap(e => [
-                      ...(e.technicalGaps || e.missingConcepts || []),
-                      ...(e.communicationGaps || [
-                        "Executive Technical Pitching & STAR Method Communication",
-                        "Speech Pacing & Spoken Grammar Clarity"
-                      ])
-                    ]),
-                    "System Architecture & Microservices Resilience",
-                    "Executive Technical Pitching & STAR Communication"
-                  ])
-                );
+                const gaps = collectGaps(evaluations);
+                const allGaps = [...gaps.technical, ...gaps.communication];
                 if (onCloseModal) onCloseModal();
                 onRedirectToConcierge(
                   allGaps,

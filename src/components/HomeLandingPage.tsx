@@ -48,7 +48,11 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
   const [loginSuccess, setLoginSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Slides Data (Light Color Scheme)
+  // Slides. Every figure here is either a real count (profileCount, from the server)
+  // or a fact about the product. The previews are labelled as examples and use no real
+  // person's name. (They used to show invented statistics - "88.4%", "1,240+",
+  // "7 Days Avg" - a seeded employee's name on mock data, a "Live Data" badge on a
+  // static grid, and body-language scoring the product does not do.)
   const slides = [
     {
       id: "slide-1",
@@ -57,14 +61,14 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
       subtitle: "Stop Searching for Talent. Start Discovering Capability. Sahi Talent. Sahi Skills. Sahi Project.",
       accentColor: "#2563EB",
       metrics: [
-        { label: "Target Role Readiness", value: "88.4%", color: "#059669" },
-        { label: "Evidence Verified", value: "1,240+", color: "#2563EB" },
-        { label: "Time-to-Readiness (TTR)", value: "7 Days Avg", color: "#7C3AED" }
+        { label: "Workforce profiles", value: profileCount > 0 ? String(profileCount) : "–", color: "#059669" },
+        { label: "AI copilots", value: "4", color: "#2563EB" },
+        { label: "Readiness components", value: "8", color: "#7C3AED" }
       ],
       features: [
-        "Demand-Centric AI Orchestration: Demand ➔ Discover ➔ Assess ➔ Gap ➔ Grow ➔ Deploy",
-        "Explainable 'Why This Candidate?' fitment with Time-to-Readiness (TTR) metrics",
-        "Evidence-backed client resume generator with zero-hallucination guardrails"
+        "Demand-centric orchestration: Demand ➔ Match ➔ Hand off ➔ Learn ➔ Validate ➔ Deploy",
+        "Explainable 'Why this candidate?' fitment, ranked against the interview date",
+        "Client resumes written only from verified records"
       ],
       imageGradient: "from-indigo-50/90 via-blue-50/60 to-white",
       previewComponent: (
@@ -72,25 +76,25 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
             <div className="flex items-center gap-2">
               <Cpu className="h-5 w-5 text-indigo-600" />
-              <span className="text-xs font-bold font-mono text-slate-900">Resource Capability Matrix • Aarav Sharma</span>
+              <span className="text-xs font-bold font-mono text-slate-900">Capability view</span>
             </div>
-            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-              Verified 2026
+            <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold">
+              Example
             </span>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-slate-600 font-medium">Next.js App Architecture</span>
-              <span className="text-indigo-600 font-bold">Lvl 4 / Lvl 4 (100%)</span>
+              <span className="text-indigo-600 font-bold">Level 3 of 4</span>
             </div>
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
-              <div className="bg-gradient-to-r from-indigo-500 to-emerald-500 h-full w-[100%]" />
+              <div className="bg-gradient-to-r from-indigo-500 to-emerald-500 h-full w-[75%]" />
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-slate-600 font-medium">Gemini API Integration</span>
-              <span className="text-purple-600 font-bold">Lvl 4 / Lvl 4 (100%)</span>
+              <span className="text-purple-600 font-bold">Level 4 of 4</span>
             </div>
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
               <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-[100%]" />
@@ -101,19 +105,19 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
     },
     {
       id: "slide-2",
-      badge: "SKILL-VS-WILL 9-BOX MATRIX ANALYTICS",
+      badge: "SKILL-VS-WILL MATRIX",
       title: "Evaluate Technical Depth alongside Motivation & Will",
-      subtitle: "Map employees across the 9-Box grid using 15 structured behavioral indicators, manager observable validations, and technical assessment scores.",
+      subtitle: "Place each person by capability (Skill) and drive to grow (Will), both computed from what they actually do: skill levels, manager-approved evidence, learning follow-through and goal progress.",
       accentColor: "#7C3AED",
       metrics: [
-        { label: "Technical Skill Score", value: "60% Wt", color: "#2563EB" },
-        { label: "Will & Adaptability Index", value: "40% Wt", color: "#7C3AED" },
-        { label: "Manager Will Validations", value: "Observable", color: "#D97706" }
+        { label: "Skill axis", value: "Levels + evidence", color: "#2563EB" },
+        { label: "Will axis", value: "Behaviour", color: "#7C3AED" },
+        { label: "Quadrant line", value: "60 / 60", color: "#D97706" }
       ],
       features: [
-        "15-Question Structured Will & Behavioral Assessment",
-        "Manager Validation for workplace observable behaviors",
-        "Automated quadrant placement (High Skill / High Will)"
+        "Will from learning, evidence initiative and goal progress - not a survey",
+        "Only manager-approved evidence lifts Skill",
+        "Four quadrants, each with a suggested next step"
       ],
       imageGradient: "from-purple-50/90 via-pink-50/50 to-white",
       previewComponent: (
@@ -121,19 +125,17 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <span className="text-xs font-bold font-mono text-slate-900 flex items-center gap-1.5">
               <Award className="h-4 w-4 text-purple-600" />
-              9-Box Capability Distribution Grid
+              Skill-vs-Will quadrants
             </span>
-            <span className="text-[10px] text-purple-700 font-mono bg-purple-50 px-2 py-0.5 rounded border border-purple-200 font-semibold">
-              Live Data
+            <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold">
+              Example
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-1.5 text-[9px] font-mono text-center">
-            <div className="bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">High Skill / Low Will</div>
-            <div className="bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">High Skill / Med Will</div>
-            <div className="bg-emerald-100/90 p-2 rounded border border-emerald-300 text-emerald-800 font-bold">★ High Skill / High Will</div>
-            <div className="bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">Med Skill / Low Will</div>
-            <div className="bg-indigo-100/90 p-2 rounded border border-indigo-300 text-indigo-800 font-bold">Med Skill / Med Will</div>
-            <div className="bg-slate-50 p-2 rounded border border-slate-200 text-slate-600">Med Skill / High Will</div>
+          <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono text-center">
+            <div className="bg-emerald-100/90 p-2.5 rounded border border-emerald-300 text-emerald-800 font-bold">Deploy Now<br /><span className="font-normal">High Skill · High Will</span></div>
+            <div className="bg-amber-50 p-2.5 rounded border border-amber-200 text-amber-800 font-bold">Retain &amp; Coach<br /><span className="font-normal">High Skill · Low Will</span></div>
+            <div className="bg-indigo-100/90 p-2.5 rounded border border-indigo-300 text-indigo-800 font-bold">Accelerate Learning<br /><span className="font-normal">Low Skill · High Will</span></div>
+            <div className="bg-rose-50 p-2.5 rounded border border-rose-200 text-rose-800 font-bold">Intervention Required<br /><span className="font-normal">Low Skill · Low Will</span></div>
           </div>
         </div>
       )
@@ -142,7 +144,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
       id: "slide-3",
       badge: "4 DEDICATED AI COPILOTS",
       title: "Intelligent Guidance for Employees, Managers & L&D Leaders",
-      subtitle: "Four specialized AI agents orchestrate personalized learning, GROW coaching frameworks, JD scenario interviews, and talent sourcing.",
+      subtitle: "Four AI copilots, each grounded in the records its user is allowed to see: personalised learning, GROW coaching, JD interview practice and organisation analytics.",
       accentColor: "#059669",
       metrics: [
         { label: "SkillGap-to-Growth Agent", value: "Adaptive", color: "#2563EB" },
@@ -151,46 +153,46 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
       ],
       features: [
         "1-on-1 AI technical mentor for doubts & concepts",
-        "Manager GROW coaching scripts & post-assessment",
-        "Automated gap redirection to curated course catalog"
+        "Manager GROW coaching questions & post-training assessment",
+        "Interview gaps handed to the Learning Concierge for courses"
       ],
       imageGradient: "from-emerald-50/90 via-teal-50/50 to-white",
       previewComponent: (
         <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
           <div className="bg-white/95 p-3.5 rounded-xl border border-indigo-200 shadow-md">
             <span className="text-indigo-600 font-bold block mb-1">1. SkillGap Agent</span>
-            <span className="text-[10px] text-slate-600">JD Scenario Interviews & Adaptive Roadmaps</span>
+            <span className="text-[10px] text-slate-600">JD Interview Practice & Adaptive Roadmaps</span>
           </div>
           <div className="bg-white/95 p-3.5 rounded-xl border border-emerald-200 shadow-md">
             <span className="text-emerald-600 font-bold block mb-1">2. Learning Concierge</span>
-            <span className="text-[10px] text-slate-600">1-on-1 AI Mentor, Doubts & Verified Courses</span>
+            <span className="text-[10px] text-slate-600">1-on-1 AI Mentor, Doubts & Catalogue Courses</span>
           </div>
           <div className="bg-white/95 p-3.5 rounded-xl border border-amber-200 shadow-md">
             <span className="text-amber-600 font-bold block mb-1">3. Manager GROW Coach</span>
-            <span className="text-[10px] text-slate-600">Coaching Scripts & Readiness Verification</span>
+            <span className="text-[10px] text-slate-600">Coaching Questions & Readiness Sign-off</span>
           </div>
           <div className="bg-white/95 p-3.5 rounded-xl border border-purple-200 shadow-md">
-            <span className="text-purple-600 font-bold block mb-1">4. L&D Analytics</span>
-            <span className="text-[10px] text-slate-600">Enterprise Risk & Cohort Intelligence</span>
+            <span className="text-purple-600 font-bold block mb-1">4. Capability Analytics</span>
+            <span className="text-[10px] text-slate-600">Readiness Index, Risk & Supply vs Demand</span>
           </div>
         </div>
       )
     },
     {
       id: "slide-4",
-      badge: "DUAL-STREAM DYNAMIC JD EVALUATION",
-      title: "Technical Depth + Spoken Communication & Body Language",
-      subtitle: "Gemini AI evaluates video/audio interview responses across technical accuracy, problem solving logic, speech fluency, grammar, pronunciation, and presentation posture.",
+      badge: "JD INTERVIEW PRACTICE",
+      title: "Practise the Interview Before the Client Does",
+      subtitle: "Multiple-choice and spoken questions generated from a real job description. Gemini scores each transcribed answer on technical depth, problem solving and communication, and names the gaps to close.",
       accentColor: "#D97706",
       metrics: [
-        { label: "Technical Competency", value: "Stream 1", color: "#2563EB" },
-        { label: "Communication & Soft Skills", value: "Stream 2", color: "#7C3AED" },
-        { label: "Spoken Evaluation", value: "Gemini AI", color: "#059669" }
+        { label: "Questions", value: "From the JD", color: "#2563EB" },
+        { label: "Spoken answers", value: "Transcribed", color: "#7C3AED" },
+        { label: "Scoring", value: "Gemini AI", color: "#059669" }
       ],
       features: [
-        "Speech fluency, grammar & pronunciation scoring",
-        "Body language and visual interview confidence rating",
-        "Targeted course assignment for technical & soft skills"
+        "Questions generated from the job description",
+        "Technical, problem-solving and communication scores for each answer",
+        "Gaps handed to the Learning Concierge for courses and exercises"
       ],
       imageGradient: "from-amber-50/90 via-orange-50/50 to-white",
       previewComponent: (
@@ -198,30 +200,27 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <div className="flex items-center gap-1.5">
               <Video className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-bold font-mono text-slate-900">Spoken Response AI Evaluation</span>
+              <span className="text-xs font-bold font-mono text-slate-900">Answer evaluation</span>
             </div>
-            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-              Score: 88%
+            <span className="text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold">
+              Example
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-center text-[9px] font-mono">
+          <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono">
             <div className="bg-slate-50 p-2 rounded border border-slate-200">
-              <span className="text-slate-500 block">Tech Depth</span>
-              <span className="text-indigo-600 font-bold">92%</span>
+              <span className="text-slate-500 block">Tech depth</span>
+              <span className="text-indigo-600 font-bold">Scored</span>
             </div>
             <div className="bg-slate-50 p-2 rounded border border-slate-200">
-              <span className="text-slate-500 block">Speech Fluency</span>
-              <span className="text-purple-600 font-bold">85%</span>
+              <span className="text-slate-500 block">Problem solving</span>
+              <span className="text-purple-600 font-bold">Scored</span>
             </div>
             <div className="bg-slate-50 p-2 rounded border border-slate-200">
-              <span className="text-slate-500 block">Grammar</span>
-              <span className="text-amber-600 font-bold">88%</span>
-            </div>
-            <div className="bg-slate-50 p-2 rounded border border-slate-200">
-              <span className="text-slate-500 block">Body Language</span>
-              <span className="text-emerald-600 font-bold">86%</span>
+              <span className="text-slate-500 block">Communication</span>
+              <span className="text-emerald-600 font-bold">Scored</span>
             </div>
           </div>
+          <p className="text-[10px] text-slate-500 font-mono">Plus the concepts the answer missed, and courses to close them.</p>
         </div>
       )
     }
@@ -688,7 +687,7 @@ export const HomeLandingPage: React.FC<HomeLandingPageProps> = ({
           </div>
           <h4 className="text-xs font-bold text-[#F0F4FF] font-mono">4. Capability Analytics</h4>
           <p className="text-xs text-[#94A3B8] font-sans">
-            Enterprise 9-Box skill-vs-will distribution, upskilling cohort tracking, and risk forecasting.
+            The Enterprise Readiness Index, Skill-vs-Will distribution, skill-gap risk, and supply against open demand.
           </p>
         </div>
 

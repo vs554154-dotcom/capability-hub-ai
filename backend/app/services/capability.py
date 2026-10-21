@@ -187,7 +187,9 @@ def team_rollup(manager_id: str) -> list[dict[str, Any]]:
                 "userId": member["id"],
                 "userName": member["name"],
                 "title": member["title"],
-                "targetRoleTitle": role["title"] if role else "Automation Tester",
+                # None when no target role is chosen. (This used to say "Automation
+                # Tester" for anyone without one.)
+                "targetRoleTitle": role["title"] if role else None,
                 "avatar": member["avatar"],
                 "overallScore": score,
                 "skillScore": score,
@@ -196,6 +198,8 @@ def team_rollup(manager_id: str) -> list[dict[str, Any]]:
                 "learningProgressPercent": motivation["engagementScore"],
                 "gapCount": gap_count,
                 "pendingValidationCount": pending,
+                "approvedEvidenceCount": approved,
+                "experienceYears": member.get("experienceYears"),
                 "riskStatus": risk,
             })
     return result

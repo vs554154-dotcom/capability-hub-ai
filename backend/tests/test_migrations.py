@@ -206,3 +206,18 @@ def test_a_database_newer_than_the_code_is_refused(tmp_path):
 
     with pytest.raises(MigrationError, match="newer"):
         migrate(conn)
+
+
+def test_the_title_fix_changes_only_the_exact_seeded_value(tmp_path):
+    conn = connect(tmp_path / "db.sqlite")
+    migrate(conn, [m for m in MIGRATIONS if m.version < 5])
+    conn.executescript("""
+        INSERT INTO users (id, name, email, role, avatar, title, department)
+        VALUES ('E1', 'A', 'a@x', 'employee', 'a.png', 'Senior Senior Software Engineer', 'QA'),
+               ('E2', 'B', 'b@x', 'employee', 'b.png', 'Senior Senior Software Engineer II', 'QA');
+    """)
+
+    migrate(conn)
+
+    titles = dict(conn.execute("SELECT id, title FROM users").fetchall())
+    assert titles == {"E1": "Senior Software Engineer", "E2": "Senior Senior Software Engineer II"}

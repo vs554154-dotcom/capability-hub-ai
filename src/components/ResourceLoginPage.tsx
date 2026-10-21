@@ -113,7 +113,7 @@ export const ResourceLoginPage: React.FC<ResourceLoginPageProps> = ({
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#4F8EF7]" />
 
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-[#F0F4FF]">Single Sign-On (SSO) Authentication</h2>
+              <h2 className="text-lg font-bold text-[#F0F4FF]">Sign in to your workspace</h2>
               <p className="text-xs text-[#94A3B8]">Sign in with your corporate resource account email or employee ID.</p>
             </div>
 
@@ -221,26 +221,26 @@ export const ResourceLoginPage: React.FC<ResourceLoginPageProps> = ({
 
       </div>
 
-      {/* System Status Footer Bar */}
+      {/* How sign-in works - facts only, no status claims nothing checks. */}
       <div className="app-content max-w-6xl mx-auto w-full pt-12">
         <div className="bg-[#141E30]/80 border border-[#2A384C] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#94A3B8]">
           <div className="flex items-center gap-3">
             <Server className="h-4 w-4 text-[#4F8EF7]" />
-            <span>CyBridge - Workforce Capability Agent Security Gateway • v2.4</span>
+            <span>CyBridge sign-in</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-[11px]">
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              Live Data
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3 text-[#4F8EF7]" />
+              Password per account
             </span>
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-              SSO Gateway: Active
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3 text-[#4F8EF7]" />
+              Signing out ends the session on the server
             </span>
-            <span className="flex items-center gap-1.5 text-[#4F8EF7]">
+            <span className="flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-[#4F8EF7]" />
-              Agent Orchestrator: Online
+              Your role decides your workspace
             </span>
           </div>
         </div>

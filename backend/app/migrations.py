@@ -127,6 +127,15 @@ def _eri_snapshots(conn: sqlite3.Connection) -> None:
     )
 
 
+def _fix_seeded_title(conn: sqlite3.Connection) -> None:
+    """The seed gave one employee the title "Senior Senior Software Engineer". Only
+    that exact value is corrected, so a title someone has since changed is left alone."""
+    conn.execute(
+        "UPDATE users SET title = 'Senior Software Engineer' "
+        "WHERE title = 'Senior Senior Software Engineer'"
+    )
+
+
 MIGRATIONS: list[Migration] = [
     Migration(
         1,
@@ -136,6 +145,7 @@ MIGRATIONS: list[Migration] = [
     Migration(2, "Sessions table: database-backed sign-in sessions", _sessions),
     Migration(3, "Rate-limit table: sign-in attempt counters shared across processes", _rate_limits),
     Migration(4, "ERI snapshots: one readiness reading per day, for its trend", _eri_snapshots),
+    Migration(5, "Data: correct a duplicated word in one seeded job title", _fix_seeded_title),
 ]
 
 LATEST_VERSION = max(m.version for m in MIGRATIONS)

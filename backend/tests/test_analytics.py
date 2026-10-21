@@ -242,3 +242,24 @@ def test_campaigns_are_for_ld_and_leadership_only(manager, employee, anon):
 def test_a_campaign_needs_a_known_skill(ld):
     assert ld.post("/api/analytics/campaign", json={}).status_code == 400
     assert ld.post("/api/analytics/campaign", json={"skillId": "no_such_skill"}).status_code == 404
+
+
+def test_the_team_view_reports_recorded_experience_and_evidence(manager):
+    team = manager.get("/api/manager/user_2/team").json()
+    for row in team:
+        user = query_one("SELECT experienceYears FROM users WHERE id = ?", (row["userId"],))
+        assert row["experienceYears"] == user["experienceYears"]
+        approved = query_one(
+            "SELECT COUNT(*) FROM evidences WHERE userId = ? AND status = 'approved'", (row["userId"],)
+        )[0]
+        assert row["approvedEvidenceCount"] == approved
+
+
+def test_no_target_role_is_reported_as_none(monkeypatch):
+    from backend.app.repositories import users as users_repo
+    real = users_repo.get_users
+    monkeypatch.setattr(users_repo, "get_users", lambda: [
+        {**u, "targetRoleId": None} if u["id"] == "E1000" else u for u in real()
+    ])
+    row = next(r for r in capability.team_rollup("user_2") if r["userId"] == "E1000")
+    assert row["targetRoleTitle"] is None

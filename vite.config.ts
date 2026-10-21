@@ -20,6 +20,11 @@ export default defineConfig(() => {
     server: {
       port: 5173,
       proxy: {'/api': {target: apiTarget, changeOrigin: true}},
+      // Only the frontend's own sources trigger reloads. Watching dist/ also crashed
+      // the dev server on Windows (EBUSY) whenever `npm run build` replaced files there.
+      watch: {
+        ignored: ['**/dist/**', '**/backend/**', '**/private/**', '**/*.md', '**/capability-hub.db*'],
+      },
     },
   };
 });

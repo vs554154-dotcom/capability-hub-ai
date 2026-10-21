@@ -47,6 +47,7 @@ restart, and a fresh deployment builds itself.
 | 2 | `sessions`: sign-ins are recorded here and the cookie holds only a session id, so signing out or changing a password ends sessions on the server. |
 | 3 | `rate_limits`: sign-in attempt counters shared by every worker. |
 | 4 | `eri_snapshots`: one Enterprise Readiness Index reading per day, for its trend. |
+| 5 | Data only: corrects one seeded job title, where it is still the original value. |
 
 To change the schema, add a migration; never edit `schema_sql.py` (a test fails if
 it changes).
@@ -65,7 +66,7 @@ python backend/scripts/verify_auth.py http://localhost:8000                 # 14
 python backend/scripts/verify_ai.py http://localhost:8000                   # AI endpoints
 ```
 
-**`pytest`** — 90 tests, in-process against an isolated database: object-level
+**`pytest`** — 93 tests, in-process against an isolated database: object-level
 authorization, path traversal, migrations, sessions, rate limits, the readiness
 index, and Gemini through the real SDK against a local stand-in.
 

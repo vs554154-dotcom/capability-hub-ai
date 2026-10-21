@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { User, UserRole } from "../types";
-import { NAV_BY_ROLE, ROLE_LABEL } from "./RoleHeader";
+import { NAV_BY_ROLE, ROLE_LABEL } from "./navigation";
 import { PageHeader, SectionCard, Tag } from "./ui/Page";
 
 interface GuidePageProps {

@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { TeamMemberCapability } from "../types";
-import { Sparkles, Download, ShieldCheck, UserCheck, AlertTriangle, CheckCircle2, Presentation, HelpCircle } from "lucide-react";
+import { Sparkles, Download, ShieldCheck, UserCheck, AlertTriangle, CheckCircle2, HelpCircle } from "lucide-react";
 
 export interface MatrixEmployee {
   id: string; // E01, E02...
@@ -11,105 +11,28 @@ export interface MatrixEmployee {
   skillScore: number; // Y-axis: Capability / Skill (0-100)
   willScore: number; // X-axis: Interest in Learning / Motivation / Desire (0-100)
   learningEngagement: number; // Distinct LMS course completion %
-  experienceYears: number; // Bubble size driver
-  readiness: "Ready Now" | "Ready in 15d" | "Ready in 30d" | "At Risk";
+  experienceYears: number | null; // Bubble size driver; null when not recorded
+  readiness: Readiness;
   quadrant: "Deploy Now" | "Accelerate Learning" | "Retain & Coach" | "Intervention Required";
-  aiRecommendation: string;
-  evidenceConfidence: number;
+  suggestion: string;
+  evidence: { approved: number; pending: number };
 }
 
-const SAMPLE_COHORT: MatrixEmployee[] = [
-  {
-    id: "E01",
-    name: "Elena Vance",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
-    title: "Senior Full-Stack Developer",
-    targetRole: "AI Engineering Lead",
-    skillScore: 92,
-    willScore: 95,
-    learningEngagement: 88,
-    experienceYears: 7,
-    readiness: "Ready Now",
-    quadrant: "Deploy Now",
-    aiRecommendation: "High technical capability & strong interest in learning. Deploy immediately to high-priority AI projects.",
-    evidenceConfidence: 94
-  },
-  {
-    id: "E02",
-    name: "Lucas Thorne",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
-    title: "Cloud Infrastructure Architect",
-    targetRole: "AI Solutions Architect",
-    skillScore: 88,
-    willScore: 90,
-    learningEngagement: 92,
-    experienceYears: 9,
-    readiness: "Ready Now",
-    quadrant: "Deploy Now",
-    aiRecommendation: "Customer-ready for Enterprise Cloud. Outstanding vector cache architecture skills and high learning enthusiasm.",
-    evidenceConfidence: 91
-  },
-  {
-    id: "E03",
-    name: "Priya Sharma",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200",
-    title: "Software QA Tester",
-    targetRole: "Automation Test Architect",
-    skillScore: 42,
-    willScore: 94,
-    learningEngagement: 96,
-    experienceYears: 3,
-    readiness: "Ready in 15d",
-    quadrant: "Accelerate Learning",
-    aiRecommendation: "Exceptional interest in learning new automation tools. Rapidly completing Cypress tracks.",
-    evidenceConfidence: 86
-  },
-  {
-    id: "E04",
-    name: "David Kim",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-    title: "Senior Database Administrator",
-    targetRole: "Data & Vector Specialist",
-    skillScore: 86,
-    willScore: 38,
-    learningEngagement: 25,
-    experienceYears: 11,
-    readiness: "Ready in 30d",
-    quadrant: "Retain & Coach",
-    aiRecommendation: "Deep technical skill but hesitant/low interest in learning new vector DB workflows. 1-on-1 coaching recommended.",
-    evidenceConfidence: 88
-  },
-  {
-    id: "E05",
-    name: "Sarah Jenkins",
-    avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=200",
-    title: "DevOps Engineer",
-    targetRole: "MLOps Specialist",
-    skillScore: 78,
-    willScore: 88,
-    learningEngagement: 82,
-    experienceYears: 5,
-    readiness: "Ready Now",
-    quadrant: "Deploy Now",
-    aiRecommendation: "High initiative and strong deployment readiness. Verified Docker & Kubernetes pipelines.",
-    evidenceConfidence: 89
-  },
-  {
-    id: "E06",
-    name: "Alex Chen",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
-    title: "Junior Backend Developer",
-    targetRole: "Full-Stack AI Developer",
-    skillScore: 35,
-    willScore: 89,
-    learningEngagement: 90,
-    experienceYears: 2,
-    readiness: "Ready in 30d",
-    quadrant: "Accelerate Learning",
-    aiRecommendation: "Eager learner with high drive to learn. Assign pair-programming mentor for rapid skill elevation.",
-    evidenceConfidence: 82
-  }
-];
+// Labelled by what they are - the number of skills below target - rather than by a
+// time to readiness the system has no basis to predict.
+type Readiness = "No open gaps" | "1 gap" | "2–3 gaps" | "4+ gaps";
+
+const SUGGESTION: Record<MatrixEmployee["quadrant"], string> = {
+  "Deploy Now": "Ready for client work. Put them forward for open demands that need their skills.",
+  "Accelerate Learning": "Keen but short on skills. Fast-track a learning track and pair with a mentor.",
+  "Retain & Coach": "Capable but less engaged. Use a 1-on-1 to find what would motivate them.",
+  "Intervention Required": "Short on skills and engagement. Agree a structured development plan.",
+};
+
+const BUBBLE_DEFAULT = 40;
+const bubbleSize = (years: number | null) =>
+  years === null ? BUBBLE_DEFAULT : Math.min(52, Math.max(34, 32 + years * 1.8));
+
 
 interface SkillVsWillMatrixProps {
   teamMembers?: TeamMemberCapability[];
@@ -122,50 +45,39 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
 }) => {
   const [selectedQuadrant, setSelectedQuadrant] = useState<string>("All");
   const [hoveredEmployee, setHoveredEmployee] = useState<MatrixEmployee | null>(null);
-  const [presentationMode, setPresentationMode] = useState<boolean>(false);
   const [exportNotice, setExportNotice] = useState<string>("");
 
-  // Construct active cohort from teamMembers prop if available
-  const activeCohort: MatrixEmployee[] = (teamMembers && teamMembers.length > 0)
-    ? teamMembers.map((m, idx) => {
-        const skillScore = m.skillScore ?? m.overallScore;
-        const willScore = m.willScore ?? (80 + ((idx * 7) % 20));
-        const learningEngagement = m.engagementScore ?? m.learningProgressPercent ?? (70 + ((idx * 11) % 28));
+  // Every value comes from the team endpoint. Nothing is derived from list position.
+  const activeCohort: MatrixEmployee[] = (teamMembers || []).map(m => {
+    const skillScore = m.skillScore ?? m.overallScore;
+    const willScore = m.willScore ?? 0;
+    const learningEngagement = m.engagementScore ?? m.learningProgressPercent ?? 0;
 
-        let readiness: "Ready Now" | "Ready in 15d" | "Ready in 30d" | "At Risk" = "Ready Now";
-        if (m.gapCount >= 4) readiness = "At Risk";
-        else if (m.gapCount >= 2) readiness = "Ready in 30d";
-        else if (m.gapCount >= 1) readiness = "Ready in 15d";
+    const readiness: Readiness =
+      m.gapCount >= 4 ? "4+ gaps" : m.gapCount >= 2 ? "2–3 gaps" : m.gapCount === 1 ? "1 gap" : "No open gaps";
 
-        let quadrant: "Deploy Now" | "Accelerate Learning" | "Retain & Coach" | "Intervention Required" = "Deploy Now";
-        if (skillScore >= 60 && willScore >= 60) quadrant = "Deploy Now";
-        else if (skillScore < 60 && willScore >= 60) quadrant = "Accelerate Learning";
-        else if (skillScore >= 60 && willScore < 60) quadrant = "Retain & Coach";
-        else quadrant = "Intervention Required";
+    let quadrant: MatrixEmployee["quadrant"];
+    if (skillScore >= 60 && willScore >= 60) quadrant = "Deploy Now";
+    else if (skillScore < 60 && willScore >= 60) quadrant = "Accelerate Learning";
+    else if (skillScore >= 60 && willScore < 60) quadrant = "Retain & Coach";
+    else quadrant = "Intervention Required";
 
-        return {
-          id: `E0${idx + 1}`,
-          name: m.userName,
-          avatar: m.avatar,
-          title: m.title,
-          targetRole: m.targetRoleTitle || "Target Role Specialist",
-          skillScore,
-          willScore,
-          learningEngagement,
-          experienceYears: 3 + (idx % 6),
-          readiness,
-          quadrant,
-          aiRecommendation: readiness === "Ready Now"
-            ? "Strong technical capability and high learning drive. Customer-ready deployment candidate."
-            : readiness === "Ready in 15d"
-            ? "High interest in learning new frameworks. Fast-track upskilling path recommended."
-            : readiness === "Ready in 30d"
-            ? "Moderate skill gap. Pair with mentor to accelerate practical workplace application."
-            : "Requires manager 1-on-1 check-in to realign learning goals and support development.",
-          evidenceConfidence: 82 + (idx % 14)
-        };
-      })
-    : SAMPLE_COHORT;
+    return {
+      id: m.userId,
+      name: m.userName,
+      avatar: m.avatar,
+      title: m.title,
+      targetRole: m.targetRoleTitle || "No target role chosen",
+      skillScore,
+      willScore,
+      learningEngagement,
+      experienceYears: m.experienceYears ?? null,
+      readiness,
+      quadrant,
+      suggestion: SUGGESTION[quadrant],
+      evidence: { approved: m.approvedEvidenceCount ?? 0, pending: m.pendingValidationCount ?? 0 },
+    };
+  });
 
   const filteredEmployees = selectedQuadrant === "All"
     ? activeCohort
@@ -204,7 +116,7 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
     const nodes = filteredEmployees.map((emp, idx) => ({
       id: emp.id,
       idx,
-      size: Math.min(52, Math.max(34, 32 + emp.experienceYears * 1.8)),
+      size: bubbleSize(emp.experienceYears),
       topPct: Math.min(MAX_PCT, Math.max(MIN_PCT, 100 - emp.skillScore)),
       leftPct: Math.min(MAX_PCT, Math.max(MIN_PCT, 100 - emp.willScore)),
     }));
@@ -291,7 +203,7 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 bg-[#4F8EF7]/10 text-[#4F8EF7] border border-[#4F8EF7]/40 rounded text-[10px] font-mono font-bold uppercase tracking-wider">
-                DEPLOYIQ Intelligence
+                Team analytics
               </span>
               <span className="text-xs text-[#94A3B8] font-mono">Skill-vs-Will 2×2 Quadrant Model</span>
             </div>
@@ -316,11 +228,11 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
 
   const getReadinessBadgeClass = (readiness: string) => {
     switch (readiness) {
-      case "Ready Now":
+      case "No open gaps":
         return "bg-[#10B981]/20 text-[#10B981] border-[#10B981]/50";
-      case "Ready in 15d":
+      case "1 gap":
         return "bg-[#4F8EF7]/20 text-[#4F8EF7] border-[#4F8EF7]/50";
-      case "Ready in 30d":
+      case "2–3 gaps":
         return "bg-[#F59E0B]/20 text-[#F59E0B] border-[#F59E0B]/50";
       default:
         return "bg-[#EF4444]/20 text-[#EF4444] border-[#EF4444]/50";
@@ -328,7 +240,24 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
   };
 
   const handleExport = () => {
-    setExportNotice("Executive Slide & Matrix Data prepared for export!");
+    const quote = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = [
+      "Name", "Title", "Target role", "Skill", "Will", "Learning engagement %", "Quadrant",
+      "Skills below target", "Evidence approved", "Evidence pending", "Experience (years)",
+    ];
+    const rows = activeCohort.map(e => [
+      e.name, e.title, e.targetRole, e.skillScore, e.willScore, e.learningEngagement, e.quadrant,
+      teamMembers.find(m => m.userId === e.id)?.gapCount ?? "", e.evidence.approved, e.evidence.pending,
+      e.experienceYears,
+    ]);
+    const csv = [header, ...rows].map(r => r.map(quote).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `skill-vs-will-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setExportNotice(`Downloaded ${rows.length} people as CSV.`);
     setTimeout(() => setExportNotice(""), 4000);
   };
 
@@ -339,7 +268,7 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 bg-[#4F8EF7]/10 text-[#4F8EF7] border border-[#4F8EF7]/40 rounded text-[10px] font-mono font-bold uppercase tracking-wider">
-              DEPLOYIQ Intelligence
+              Team analytics
             </span>
             <span className="text-xs text-[#94A3B8] font-mono">Skill-vs-Will 2×2 Quadrant Model</span>
           </div>
@@ -350,24 +279,13 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setPresentationMode(!presentationMode)}
-            className={`px-3.5 py-2 rounded-md text-xs font-mono font-bold uppercase border transition-all flex items-center gap-2 cursor-pointer ${
-              presentationMode
-                ? "bg-[#4F8EF7] text-white border-[#4F8EF7] shadow-lg shadow-[#4F8EF7]/20"
-                : "bg-[#0F1724] text-[#F0F4FF] border-[#2A384C] hover:border-[#4F8EF7]"
-            }`}
-          >
-            <Presentation className="h-4 w-4" />
-            {presentationMode ? "Interactive View" : "Executive PPT View"}
-          </button>
 
           <button
             onClick={handleExport}
             className="px-3.5 py-2 bg-[#0F1724] border border-[#2A384C] hover:border-[#10B981] text-[#10B981] rounded-md text-xs font-mono font-bold uppercase transition-all flex items-center gap-2 cursor-pointer"
           >
             <Download className="h-4 w-4" />
-            Export Slide
+            Export CSV
           </button>
         </div>
       </div>
@@ -557,7 +475,7 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
               const topPos = placed ? placed.topPct : 100 - emp.skillScore;
               const leftPos = placed ? placed.leftPct : 100 - emp.willScore;
 
-              const bubbleSize = Math.min(52, Math.max(34, 32 + emp.experienceYears * 1.8));
+              const size = bubbleSize(emp.experienceYears);
               const isHovered = hoveredEmployee?.id === emp.id;
 
               return (
@@ -566,17 +484,17 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
                   style={{
                     top: `${Math.min(88, Math.max(8, topPos))}%`,
                     left: `${Math.min(88, Math.max(8, leftPos))}%`,
-                    width: `${bubbleSize}px`,
-                    height: `${bubbleSize}px`,
+                    width: `${size}px`,
+                    height: `${size}px`,
                   }}
                   onMouseEnter={() => setHoveredEmployee(emp)}
                   onMouseLeave={() => setHoveredEmployee(null)}
                   className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-all cursor-pointer pointer-events-auto flex items-center justify-center shadow-lg group ${
-                    emp.readiness === "Ready Now"
+                    emp.readiness === "No open gaps"
                       ? "border-[#10B981] bg-[#10B981]/20 text-[#10B981]"
-                      : emp.readiness === "Ready in 15d"
+                      : emp.readiness === "1 gap"
                       ? "border-[#4F8EF7] bg-[#4F8EF7]/20 text-[#4F8EF7]"
-                      : emp.readiness === "Ready in 30d"
+                      : emp.readiness === "2–3 gaps"
                       ? "border-[#F59E0B] bg-[#F59E0B]/20 text-[#F59E0B]"
                       : "border-[#EF4444] bg-[#EF4444]/20 text-[#EF4444]"
                   } ${isHovered ? "scale-125 z-30 ring-4 ring-[#4F8EF7]/50 shadow-2xl" : "hover:scale-110 z-20"}`}
@@ -644,16 +562,20 @@ export const SkillVsWillMatrix: React.FC<SkillVsWillMatrixProps> = ({
               <span className="text-lg font-bold text-[#4F8EF7] font-mono">{hoveredEmployee.learningEngagement}%</span>
             </div>
             <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C]">
-              <span className="text-[10px] font-mono text-[#94A3B8] uppercase font-bold block">Evidence Confidence</span>
-              <span className="text-lg font-bold text-[#F59E0B] font-mono">{hoveredEmployee.evidenceConfidence}%</span>
+              <span className="text-[10px] font-mono text-[#94A3B8] uppercase font-bold block">Evidence approved</span>
+              <span className="text-lg font-bold text-[#F59E0B] font-mono">
+                {hoveredEmployee.evidence.approved + hoveredEmployee.evidence.pending === 0
+                  ? "None yet"
+                  : `${hoveredEmployee.evidence.approved} of ${hoveredEmployee.evidence.approved + hoveredEmployee.evidence.pending}`}
+              </span>
             </div>
           </div>
 
           <div className="bg-[#141E30] border border-[#2A384C] rounded p-3 flex items-start gap-2">
             <Sparkles className="h-4 w-4 text-[#4F8EF7] mt-0.5 shrink-0" />
             <div>
-              <span className="text-[10px] font-mono text-[#4F8EF7] font-bold uppercase block">AI Recommendation & Coaching Action Plan:</span>
-              <p className="text-xs text-[#F0F4FF] mt-0.5 font-sans">{hoveredEmployee.aiRecommendation}</p>
+              <span className="text-[10px] font-mono text-[#4F8EF7] font-bold uppercase block">Suggested next step for this quadrant</span>
+              <p className="text-xs text-[#F0F4FF] mt-0.5 font-sans">{hoveredEmployee.suggestion}</p>
             </div>
           </div>
         </div>

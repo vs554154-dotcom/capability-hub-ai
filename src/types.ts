@@ -101,7 +101,9 @@ export interface TeamMemberCapability {
   overallScore: number;
   gapCount: number;
   pendingValidationCount: number;
-  targetRoleTitle?: string;
+  targetRoleTitle?: string | null;
+  approvedEvidenceCount?: number;
+  experienceYears?: number | null;
   skillScore?: number;
   willScore?: number;
   engagementScore?: number;

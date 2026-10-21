@@ -41,7 +41,8 @@ Three properties follow from that shape and are relied on throughout:
 2. **Identity comes from the session cookie and nothing else.** A user id in a URL
    or request body names the *target* of an action, never the caller.
 3. **No number on screen is invented.** Every metric is computed from stored records,
-   or omitted. (One remaining exception is listed under known limitations.)
+   or shown as not measured, or omitted. The landing page's product illustrations are
+   labelled "Example" and use no real person's data.
 
 ---
 
@@ -274,6 +275,7 @@ test fingerprints the file and fails if it changes.
 | 2 | `sessions` table, for sessions the server can end (section 7) |
 | 3 | `rate_limits` table, so sign-in throttling is shared by every worker (section 7) |
 | 4 | `eri_snapshots` table, one Enterprise Readiness Index reading per day (section 8) |
+| 5 | Data: corrects one seeded job title ("Senior Senior Software Engineer"), only where it is still that exact value |
 
 ### Seed data
 
@@ -647,7 +649,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 90 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, and campaigns; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 93 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, and campaigns; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 57 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
@@ -677,17 +679,12 @@ The React app is unchanged by the backend architecture and relies on it as follo
 
 These are real and are not yet fixed:
 
-1. **Some screens still show illustrative figures.** The landing page's hero
-   statistics and sample score card, parts of the Skill-vs-Will matrix (experience
-   years and evidence confidence derived from list position, and a sample cohort shown
-   when a manager has no reports), and the interview result's speech and body-language
-   tiles (which repeat the one communication score) are not computed from records.
-2. **40% of the readiness index is not measured.** Level-1 interview assessments
+1. **40% of the readiness index is not measured.** Level-1 interview assessments
    and certification health have no stored data, so the index covers the other 60%
    of its weight and says so. Interview scores are computed in the browser; storing
    them as an input would let a client post any score, so they need server-side
    scoring first.
-3. **One host.** All shared state (data, sessions and sign-in rate limits) is in
+2. **One host.** All shared state (data, sessions and sign-in rate limits) is in
    the SQLite file, so any number of workers or processes on one host share it;
    two processes on one database were checked live to share sessions and rate
    limits. Several *hosts* would need a networked database, because SQLite on a
