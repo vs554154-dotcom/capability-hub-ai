@@ -3,6 +3,52 @@ import { User, Message } from "../types";
 import { Send, Cpu, Sparkles, BookOpen, GraduationCap, Compass, ArrowRight, RefreshCw, Video, MessageSquare, ExternalLink, Paperclip, UploadCloud, Upload, FileCheck, X, Check } from "lucide-react";
 import { SkillGapInterviewAgent } from "./SkillGapInterviewAgent";
 import { parseUploadedFile, ParsedFileInfo } from "../utils/fileParser";
+import { PageHeader } from "./ui/Page";
+
+// What this page is for, per role: each role reaches a different copilot here.
+const HUB_COPY: Record<string, { eyebrow: string; title: string; lede: React.ReactNode; steps: React.ReactNode[] }> = {
+  employee: {
+    eyebrow: "Employee workspace · SkillGap agent",
+    title: "Practise, find your gaps, get a plan",
+    lede: <>Two ways in: a JD interview practice (multiple-choice and spoken questions, scored against a job description) or a chat with the SkillGap agent and the Learning Concierge. Gaps an interview finds go straight to the Concierge for courses and exercises.</>,
+    steps: [
+      <><strong>Start a practice</strong> from your target role or a pasted job description.</>,
+      <><strong>Answer</strong> the multiple-choice and spoken questions.</>,
+      <><strong>Read your scores</strong> and the gaps found.</>,
+      <><strong>Ask the Concierge</strong> for courses and exercises for those gaps.</>,
+    ],
+  },
+  manager: {
+    eyebrow: "Manager workspace · GROW coach",
+    title: "Coach your team with GROW",
+    lede: <>Ask the Manager GROW Coach about a report. It reads their skills and evidence and answers with Goal, Reality, Options and Will questions for your next 1-on-1. It can only see people who report to you.</>,
+    steps: [
+      <><strong>Pick a prompt</strong> or ask in your own words.</>,
+      <><strong>Name the report</strong> you are preparing for.</>,
+      <><strong>Take the GROW questions</strong> into your 1-on-1.</>,
+    ],
+  },
+  ld: {
+    eyebrow: "L&D workspace · Analytics AI",
+    title: "Ask the Capability Analytics AI",
+    lede: <>It answers from the organisation's own figures: the readiness index and its components, skill-gap risk, and supply against open demand. Where a figure is not measured, it says so instead of estimating.</>,
+    steps: [
+      <><strong>Ask a question</strong> or pick a prompt.</>,
+      <><strong>Check a figure</strong> against your L&D insights page.</>,
+      <><strong>Turn the answer</strong> into a learning campaign.</>,
+    ],
+  },
+  leadership: {
+    eyebrow: "Leadership workspace · Strategy AI",
+    title: "Ask the Capability Analytics AI",
+    lede: <>It answers from the organisation's own figures: the readiness index and its components, skill-gap risk, and supply against open demand. Where a figure is not measured, it says so instead of estimating.</>,
+    steps: [
+      <><strong>Ask a question</strong> or pick a prompt.</>,
+      <><strong>Check a figure</strong> against the Readiness page.</>,
+      <><strong>Draft a briefing</strong> for the board.</>,
+    ],
+  },
+};
 
 interface AgentHubProps {
   currentUser: User;
@@ -59,10 +105,13 @@ export const AgentHub: React.FC<AgentHubProps> = ({
     }
   };
 
-  // Scroll to bottom on new messages
+  // Keep the newest message in view by scrolling the message panel itself. (Scrolling
+  // the last message into view moved the whole page, so the copilot page opened
+  // scrolled past its own header.)
   useEffect(() => {
-    if (hubMode === "chat") {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const panel = chatEndRef.current?.parentElement;
+    if (hubMode === "chat" && panel) {
+      panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
     }
   }, [messages, isLoading, hubMode]);
 
@@ -191,28 +240,8 @@ export const AgentHub: React.FC<AgentHubProps> = ({
   return (
     <div className="space-y-4 py-6 animate-fade-in min-h-[750px]">
       
-      {/* Central AI Orchestrator Workflow Banner */}
-      <div className="bg-[#141E30] border border-[#4F8EF7]/40 rounded-lg p-3 shadow-md flex items-center justify-between text-xs font-mono">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#4F8EF7]" />
-          <span className="font-bold text-white uppercase tracking-wide">Central AI Orchestrator Loop:</span>
-        </div>
-        <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[#94A3B8] flex-wrap">
-          <span className="text-[#4F8EF7] font-bold">Demand</span> ➔
-          <span className="text-[#4F8EF7]">Discover</span> ➔
-          <span className="text-amber-400">Assess</span> ➔
-          <span className="text-amber-400">Gap</span> ➔
-          <span className="text-purple-400">Grow</span> ➔
-          <span className="text-emerald-400">Validate</span> ➔
-          <span className="text-emerald-400">Interview</span> ➔
-          <span className="text-emerald-400 font-bold">Deploy</span> ➔
-          <span className="text-[#4F8EF7]">Forecast</span>
-        </div>
-        <span className="text-[10px] bg-[#4F8EF7]/20 text-[#4F8EF7] px-2 py-0.5 rounded border border-[#4F8EF7]/40 uppercase font-bold">
-          4 Collaborative Copilots
-        </span>
-      </div>
-      
+      <PageHeader {...HUB_COPY[currentUser.role]} icon={Sparkles} />
+
       {/* Top Banner when SkillGap agent is selected */}
       {selectedAgent === "skill_gap" && (
         <div className="bg-[#141E30] border border-[#4F8EF7]/40 rounded-lg p-4 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

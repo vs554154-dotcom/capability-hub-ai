@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { User, Skill, Evidence, TeamMemberCapability, TargetRole } from "../types";
-import { Check, X, Shield, Cpu, RefreshCw, MessageSquare, Sparkles, Send, Calendar, AlertTriangle, UserCheck, Bell, ChevronRight, HelpCircle, CheckCircle2, ArrowRight, Award } from "lucide-react";
+import { Check, X, Shield, Cpu, RefreshCw, MessageSquare, Sparkles, Send, Calendar, AlertTriangle, UserCheck, Bell, ChevronRight, HelpCircle, CheckCircle2, ArrowRight, Award, Users } from "lucide-react";
 import { SkillVsWillMatrix } from "./SkillVsWillMatrix";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
+import { PageHeader } from "./ui/Page";
 
 interface ManagerDashboardProps {
   currentUser: User;
@@ -216,19 +217,29 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   return (
     <div className="space-y-8 animate-fade-in py-6">
       
-      {/* Title & Action Notification Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#F0F4FF]">Manager Capability & Coaching Board</h2>
-          <p className="text-xs text-[#94A3B8] mt-1">Supervise direct reports, issue agentic reminders, schedule checkpoints, and review workplace evidence.</p>
-        </div>
-        {actionFeedback && (
-          <div className="p-3 bg-[#10B981]/10 border border-[#10B981]/40 text-[#10B981] font-mono text-xs rounded-md animate-fade-in flex items-center gap-2">
-            <UserCheck className="h-4 w-4" />
-            <span>{actionFeedback}</span>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        eyebrow="Manager workspace · Team board"
+        icon={Users}
+        title="Your team's capability"
+        lede={
+          <>
+            Your direct reports on one board: where each sits on the Skill-vs-Will matrix, the
+            evidence waiting for your verdict, and the coaching and post-training checks that move
+            them toward deployment. You see your own reports only.
+          </>
+        }
+        steps={[
+          <><strong>Read the matrix.</strong> Skill and Will place each person in a quadrant.</>,
+          <><strong>Act per person.</strong> AI insight, reminders, check-ins and post-training assessment.</>,
+          <><strong>Assign tracks</strong> sized to each person's deadline.</>,
+          <><strong>Review evidence.</strong> Each approval raises that skill one level.</>,
+        ]}
+        actions={actionFeedback ? (
+          <span className="tag tone-ok animate-fade-in" role="status">
+            <UserCheck className="h-3.5 w-3.5" aria-hidden="true" /> {actionFeedback}
+          </span>
+        ) : undefined}
+      />
 
       {/* Cohort Statistics Cards Header */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger-children">

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { SkillGapInterviewAgent } from "./SkillGapInterviewAgent";
+import { PageHeader } from "./ui/Page";
 
 interface ProjectDemandAgentProps {
   currentUser?: User;
@@ -338,43 +339,31 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
   return (
     <div className="space-y-8 py-6">
       
-      {/* Agent Banner Header */}
-      <div className="bg-[#0F1724] border border-[#2A384C] rounded-xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-[#4F8EF7]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#141E30] border border-[#4F8EF7]/40 rounded-lg text-[#4F8EF7]">
-              <Target className="h-7 w-7" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#4F8EF7] bg-[#4F8EF7]/10 px-2 py-0.5 rounded">
-                  Entry-Point AI Agent
-                </span>
-                <span className="text-[10px] font-mono text-[#94A3B8] uppercase tracking-wider">
-                  Phase 0: Project Demand Discovery
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold text-[#F0F4FF] mt-1 tracking-tight">
-                Talent Sourcing & Project Demand Agent
-              </h2>
-              <p className="text-xs text-[#94A3B8] mt-0.5 max-w-2xl">
-                Holds job opening details and manager-provided JDs. Scans candidate resumes across the organization to identify the single best fit resume, and triggers evaluation to discover skill gaps for targeted upskilling.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchDemands()}
-              className="flex items-center gap-1.5 bg-[#141E30] hover:bg-[#1E293B] text-[#94A3B8] hover:text-white border border-[#2A384C] text-xs font-mono font-semibold py-2 px-3 rounded-lg transition-all cursor-pointer"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoadingDemands ? "animate-spin" : ""}`} />
-              Sync Requisitions
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Demand to deploy · Talent sourcing"
+        icon={Target}
+        title="From client demand to the right people"
+        lede={
+          <>
+            Where the loop starts. Capture a client's demand, rank every employee against it with
+            a written reason for each, and hand the missing skills to the SkillGap agent. Once a
+            person has trained, been assessed and signed off, generate their client resume from
+            verified facts only.
+          </>
+        }
+        steps={[
+          <><strong>Pick a demand</strong> or paste a new job description for Gemini to parse.</>,
+          <><strong>Match</strong>: every employee scored, with "why this candidate".</>,
+          <><strong>Hand off gaps</strong> to start upskilling against a captured baseline.</>,
+          <><strong>Generate the resume</strong> once training is signed off.</>,
+        ]}
+        actions={
+          <button type="button" onClick={() => fetchDemands()} className="header-btn">
+            <RefreshCw className={`h-4 w-4 ${isLoadingDemands ? "animate-spin" : ""}`} aria-hidden="true" />
+            Refresh demands
+          </button>
+        }
+      />
 
       {/* Main Grid: Requisition Intake / Catalog & AI Matcher */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

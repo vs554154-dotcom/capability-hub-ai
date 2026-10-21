@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Skill, TargetRole, LearningCourse, Evidence, WeeklyLearningStep } from "../types";
 import { SkillRadarChart } from "./SkillRadarChart";
+import { PageHeader } from "./ui/Page";
 import { Award, Briefcase, CheckCircle2, AlertCircle, Send, GraduationCap, Clock, ExternalLink, Calendar, CheckSquare, Sparkles, ChevronRight, Zap, BookOpen, Wrench, Edit3, Target, X, Check, FileText, Star, Users } from "lucide-react";
 
 // Demand dates are stored as full ISO timestamps, which render as
@@ -203,7 +204,26 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
   return (
     <div className="space-y-8 animate-fade-in py-6">
-      
+
+      <PageHeader
+        eyebrow="Employee workspace · My readiness"
+        icon={Target}
+        title={`Your path to ${capabilityData?.targetRoleTitle && capabilityData.targetRoleTitle !== "None Selected" ? capabilityData.targetRoleTitle : "your target role"}`}
+        lede={
+          <>
+            How ready you are for the role you are aiming at, which skills are short, and the
+            learning plan and evidence that close the gap. Your score moves when a manager
+            approves your evidence, not when you mark something done.
+          </>
+        }
+        steps={[
+          <><strong>Choose a target role</strong> to set the skills and levels you are measured against.</>,
+          <><strong>Read your gaps</strong> in the radar and the skill gap analyzer.</>,
+          <><strong>Work the plan</strong>: learning steps and knowledge checks, sized to your deadline.</>,
+          <><strong>Submit evidence</strong> of real work; each approval raises that skill a level.</>,
+        ]}
+      />
+
       {/* SHORTLIST STATUS BANNER */}
       {isShortlisted ? (
         <div className="bg-[#141E30] status-wash status-wash-success border border-[#10B981]/40 rounded-xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
