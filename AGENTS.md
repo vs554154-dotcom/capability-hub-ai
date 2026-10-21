@@ -23,55 +23,59 @@ While the **SkillGap-to-Growth Agent** focuses on identifying individual capabil
 ## 2. Technical Stack & Environment
 
 - **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, Lucide Icons, Web Speech API (Speech Recognition & Speech Synthesis), MediaRecorder / MediaDevices API.
-- **Backend (live)**: Python / FastAPI in `backend/app/`, served by Uvicorn. Owns the SQLite schema and seed, and serves the built frontend from `dist/`.
-- **Backend (AI Studio only)**: Express.js in `server.ts` / `server-db.ts`, bundled with `esbuild` to `build/server.cjs`. Frozen for feature work — see the decision below.
-- **AI Integration**: Google Gemini (model `gemini-3.6-flash`), called server-side only — `google-genai` in Python (`backend/app/ai.py`), `@google/genai` on the Node path.
-- **Port**: Binds `0.0.0.0:$PORT` — default `8000` for the Python backend, `3000` for the Node path.
+- **Backend**: Python / FastAPI in `backend/app/`, served by Uvicorn. Owns the SQLite schema (versioned migrations) and seed, and serves the built frontend from `dist/`. It is the only backend.
+- **AI Integration**: Google Gemini (model `gemini-3.6-flash`) through `google-genai`, called server-side only from `backend/app/ai.py`.
+- **Port**: Binds `0.0.0.0:$PORT`, default `8000`. In development the Vite server (`npm run dev`, `:5173`) proxies `/api` to it.
 
-### ARCHITECTURE DECISION — Python/FastAPI is the live backend
+### ARCHITECTURE DECISION — one backend: Python/FastAPI
 
-**Decided 2026-09-09, superseding the 2026-09-06 decision below. `backend/`
-(FastAPI) is the production backend. `server.ts` / `server-db.ts` (Node) is
-retained as the Google AI Studio deployment path only.**
+**Decided 2026-10-21, completing the 2026-09-09 decision below. The Node server
+(`server.ts` / `server-db.ts`) has been removed. `backend/` is the only backend,
+and Google AI Studio is no longer a deployment target.**
 
-Backend work goes into `backend/`. The Python service is now self-sufficient: it
-owns its schema (`backend/app/schema_sql.py`), seeds itself
-(`backend/seed/seed.json`), serves the built frontend from `dist/`, and runs
-standalone on any host.
+The Python service is self-sufficient: it owns its schema
+(`backend/app/migrations.py`), seeds itself (`backend/seed/seed.json`), serves the
+built frontend from `dist/`, and runs on any container host (see `DEPLOY.md`).
 
 Rationale:
 
-- **Python was the requested stack.** The migration was commissioned; this
-  reverses the interim decision to stay on Node.
-- **The blocking constraint was removed.** Python previously could not start
-  without Node having created the database. It now owns schema and seed, so it
-  is a peer, not a consumer.
-- **The deployment constraint was removed.** Containerisation (`Dockerfile`,
-  `$PORT`, `/api/health`) means the app no longer depends on the Node-only AI
-  Studio applet host.
+- **Two implementations of one API drift.** The Node path had been frozen since
+  2026-09-09; every change since (object-level authorization, revocable sessions,
+  shared rate limits, the computed readiness index) existed only in Python, so the
+  frozen copy was an older, weaker version of the product still in the tree.
+- **The only reason to keep it was AI Studio**, which cannot run Python. The app
+  is container-deployable (`Dockerfile`, `$PORT`, `/api/health`), so that host is
+  no longer needed.
 
 Consequences for anyone (human or agent) working here:
 
 1. Implement backend changes in `backend/app/`, respecting its layers — routers
    (HTTP only) → `services/` (business rules, transactions) → `repositories/` (SQL
    only). `ARCHITECTURE.md` defines what each layer may and may not do.
-2. `server.ts` / `server-db.ts` is **frozen** for feature work. Touch it only to
-   keep the AI Studio deployment alive, and never as the place a new capability
-   lands first.
-3. `backend/scripts/verify_authz_scenarios.py` runs against either backend and is
-   the gate that matters: **54/54 against Python**.
-4. **Known consequence:** AI Studio cannot run Python. Deploying the Python
-   backend means deploying to a container host (see `DEPLOY.md`). The Node path
-   remains only so the existing AI Studio applet keeps working.
+2. Node is a build tool only: it builds the frontend into `dist/`. Nothing in the
+   runtime image is Node.
+3. `backend/scripts/verify_authz_scenarios.py` against a running server is the gate
+   that matters: **54/54**.
+4. Databases created by the old Node server still upgrade in place: migration 1
+   reconciles any older schema (see `ARCHITECTURE.md`, section 6).
+
+<details>
+<summary>Superseded: 2026-09-09 — Python live, Node kept for AI Studio</summary>
+
+Python became the production backend and the Node path was frozen, kept only so
+the existing AI Studio applet kept working. Removed on 2026-10-21 for the reasons
+above.
+
+</details>
 
 <details>
 <summary>Superseded: 2026-09-06 — Node.js as the single backend</summary>
 
 The earlier decision made Node the sole backend on the grounds that AI Studio
 runs Node only, that `server-db.ts` owned all 12 `CREATE TABLE` statements, and
-that duplication was expensive. The first two grounds no longer hold: the app is
-now container-deployable and Python owns its own schema. Recorded here so the
-reasoning is not lost.
+that duplication was expensive. Python now owns its schema and the app is
+container-deployable, so neither ground holds. Recorded here so the reasoning is
+not lost.
 
 </details>
 
@@ -103,7 +107,7 @@ reasoning is not lost.
 ## 4. Key Metrics & Terminology Standards
 
 - **Skill-vs-Will Matrix (2×2 Quadrant Model)**: Categorizes workforce across Deploy Now (High Skill/High Will), Accelerate Learning (Low Skill/High Will), Retain & Coach (High Skill/Low Will), and Intervention Required (Low Skill/Low Will). (An optional 3×3 9-Box grid is supported for 9-cell classification).
-- **Enterprise Readiness Index (ERI)**: Composite organizational capability metric (%) synthesized from Skill Proficiency (25%), Level-1 Video/MCQ Assessments (20%), Workplace Evidence Validation (15%), Certification Health (15%), Capability Readiness Index - CRI (10%), Deployment Availability (5%), Learning Engagement Velocity (5%), and Manager GROW Validation (5%).
+- **Enterprise Readiness Index (ERI)**: Composite organizational capability metric (%) synthesized from Skill Proficiency (25%), Level-1 Video/MCQ Assessments (20%), Workplace Evidence Validation (15%), Certification Health (15%), Capability Readiness Index - CRI (10%), Deployment Availability (5%), Learning Engagement Velocity (5%), and Manager GROW Validation (5%). Computed in `backend/app/services/analytics.py` over the components that have stored data; the rest are reported as not measured, never estimated (`ARCHITECTURE.md`, section 8).
 - **Manager GROW Coach Positioning**: Focused strictly on team capability development, growth planning, and coaching conversations (avoiding administrative appraisal terminology).
 - **Bird's-Eye Intelligence**: Always written with correct possessive punctuation (`bird's-eye`).
 
@@ -111,20 +115,19 @@ reasoning is not lost.
 
 ## 5. Development & Build Commands
 
-**Python backend (live)** — run from the repo root:
+**Backend** — run from the repo root:
 
-- **Install**: `python -m venv backend/.venv` then `backend/.venv/Scripts/python -m pip install -r backend/requirements.txt`
+- **Install**: `python -m venv backend/.venv` then `backend/.venv/Scripts/python -m pip install -r backend/requirements.txt` (or run `setup.sh`)
 - **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `dist/`)
-- **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+- **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT` (add `--workers N` for more cores; sessions and rate limits are shared through the database)
 - **Test suite** (no server needed): `backend/.venv/Scripts/python -m pytest backend/tests` — install with `pip install -r backend/requirements-dev.txt`
 - **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **54/54**
 
-**Frontend** (built with Node, served by whichever backend runs):
+**Frontend** (Node is used only to build it):
 
-- **Production Build**: `npm run build` → `dist/`
+- **Dev Server**: `npm run dev` — Vite with hot reload on `:5173`, `/api` proxied to `:8000` (start the backend first)
+- **Production Build**: `npm run build` → `dist/`, served by the backend
 - **Lint Verification**: `npm run lint` (`tsc --noEmit`)
-
-**Node path (AI Studio only, frozen)**: `npm run dev` (`tsx server.ts` on `:3000`), `npm run start` (`node build/server.cjs`).
 
 ---
 

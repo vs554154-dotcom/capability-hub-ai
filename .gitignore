@@ -1,5 +1,4 @@
 node_modules/
-build/
 dist/
 coverage/
 .DS_Store
@@ -12,9 +11,9 @@ backend/.venv/
 __pycache__/
 *.pyc
 
-# Local database. Derived: the schema and seed are owned by server-db.ts and
-# recreated on boot. Also accumulates bcrypt password hashes as accounts are
-# claimed, which do not belong in version control.
+# Local database. Derived: the backend builds the schema (backend/app/migrations.py)
+# and seeds it (backend/seed/seed.json) on boot. Also accumulates bcrypt password
+# hashes and sessions as accounts are used, which do not belong in version control.
 capability-hub.db
 capability-hub.db-journal
 capability-hub.db-wal

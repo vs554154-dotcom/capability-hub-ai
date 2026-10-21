@@ -1,7 +1,6 @@
-"""Runtime configuration.
+"""Runtime configuration, read once from the environment (and .env) at import.
 
-Mirrors the environment contract of server.ts so the two backends behave
-identically for the same .env file.
+Every variable is listed, with its default, in .env.example and DEPLOY.md.
 """
 from __future__ import annotations
 
@@ -16,8 +15,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(REPO_ROOT / ".env")
 
 # This backend owns its schema and seed (see schema_sql.py and seed/seed.json) and
-# creates the database if it is absent. DATABASE_PATH is accepted as well as the older
-# CAPABILITY_DB_PATH so the same variable works across hosts and both backends.
+# creates the database if it is absent. The older name CAPABILITY_DB_PATH is still
+# accepted, so existing deployments keep working.
 DB_PATH = Path(
     os.getenv("DATABASE_PATH")
     or os.getenv("CAPABILITY_DB_PATH")
@@ -27,8 +26,8 @@ DB_PATH = Path(
 # Seed rows loaded into any table that is still empty on startup.
 SEED_PATH = Path(__file__).resolve().parent.parent / "seed" / "seed.json"
 
-# Signs the session cookie. server.ts uses the same variable and the same insecure
-# development fallback, and warns when it is unset.
+# Signs the session cookie. Unset, an insecure development fallback is used and
+# startup logs a warning.
 SESSION_SECRET = os.getenv("SESSION_SECRET") or "dev-insecure-secret-change-me"
 SESSION_SECRET_IS_DEFAULT = not os.getenv("SESSION_SECRET")
 
@@ -58,7 +57,6 @@ def _positive_seconds(name: str, default: float) -> float:
 # A misconfigured value fails at startup rather than silently removing the bound.
 GEMINI_TIMEOUT_SECONDS = _positive_seconds("GEMINI_TIMEOUT_SECONDS", 120.0)
 
-# Matches the express-session cookie in server.ts.
 SESSION_COOKIE_NAME = "chub_sid"
 SESSION_MAX_AGE_SECONDS = 60 * 60 * 8  # 8 hours
 
@@ -68,8 +66,8 @@ IS_HTTPS_DEPLOY = (
     or (os.getenv("APP_URL") or "").startswith("https://")
 )
 
-# Session cookie SameSite policy. Embedding the app in a cross-site iframe (as AI
-# Studio does) needs "none"; a standalone deployment is better served by the
+# Session cookie SameSite policy. Embedding the app in a cross-site iframe needs
+# "none"; a standalone deployment is better served by the
 # stricter "lax". Defaults to "none" on HTTPS, "lax" otherwise; COOKIE_SAMESITE
 # overrides. Browsers reject SameSite=None without Secure, so "none" forces Secure.
 _samesite = (os.getenv("COOKIE_SAMESITE") or "").strip().lower()
@@ -85,8 +83,6 @@ PORT = int(os.getenv("PORT", "8000"))
 DEV_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
 ]
 
 # Built frontend - the public web root. Everything under it is served to any

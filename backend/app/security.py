@@ -1,14 +1,13 @@
 """Password hashing.
 
-bcrypt hashes written by bcryptjs (Node) and by this module are the same format,
-so an account whose password was set under the Node server authenticates here and
-vice versa. Both share the `users.passwordHash` column.
+Hashes live in `users.passwordHash`. The former Node server wrote them with
+bcryptjs in the same format, so a password claimed under it still authenticates.
 """
 from __future__ import annotations
 
 import bcrypt
 
-# bcryptjs in server.ts uses a cost factor of 10.
+# Cost factor 10, the same as hashes already stored.
 BCRYPT_ROUNDS = 10
 
 

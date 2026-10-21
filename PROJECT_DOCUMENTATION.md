@@ -21,10 +21,12 @@ In modern enterprise environments, business units struggle with talent shortages
 - **Interactive Multimedia:**
   - Web Speech API (`webkitSpeechRecognition`, `window.speechSynthesis`)
   - MediaRecorder & MediaDevices API for camera/microphone capture
-- **Backend Architecture:** Express.js server (`server.ts`), bundled with esbuild to CommonJS (`build/server.cjs`).
-- **Database Layer:** SQLite (`capability-hub.db`) via `better-sqlite3`, with a service layer in `server-db.ts`.
-- **AI Integration:** Google Gemini API (`@google/genai` SDK, `gemini-3.6-flash`), called server-side.
-- **Network & Server Port:** Binds to `0.0.0.0:3000` (currently a fixed port, not yet read from `process.env.PORT`).
+- **Backend:** Python / FastAPI (`backend/app/`), layered into routers, services and repositories. It is the only backend and also serves the built frontend.
+- **Database Layer:** SQLite (`capability-hub.db`), built and upgraded by versioned migrations and seeded on first boot.
+- **AI Integration:** Google Gemini (`google-genai`, `gemini-3.6-flash`), called server-side only, with a bounded timeout and a marked fallback when no key is set.
+- **Network & Server Port:** Binds to `0.0.0.0:$PORT` (default 8000).
+
+`ARCHITECTURE.md` is the detailed, source-checked description of how the system works.
 
 ## Core AI Copilots & Key Agents
 
@@ -64,7 +66,7 @@ Deployment Agent    Agent               Agent               Agent               
 ### 4. Manager GROW Coach Agent
 - **Team Capability & Growth Planning:** Supports structured coaching conversations using the GROW framework (Goal, Reality, Options, Will).
 - **Post-Training GROW Readiness Assessment:** Generates a recalculated readiness narrative after Learning Concierge training.
-  > **Note:** this assessment is generated on demand and returned to the manager — it is not currently written back to the database, so there's no historical record of past GROW assessments to review later.
+  > Each assessment is stored (`post_assessments`) and awaits a manager's sign-off as *cleared* or *not ready*; a cleared sign-off is one of the conditions for generating a client resume.
 
 ### 5. Capability Analytics (Skill-vs-Will Matrix)
 - **Skill-vs-Will Matrix (2×2 Quadrant Model):**
@@ -73,87 +75,46 @@ Deployment Agent    Agent               Agent               Agent               
   - **Retain & Coach** (High Skill, Low Will)
   - **Intervention Required** (Low Skill, Low Will)
 
-## Key Metrics — What's Actually Computed Today
+## Key Metrics — What's Computed Today
 
-- **Capability Readiness Score (CRS):** A real, implemented metric — the percentage of an employee's target-role required skills currently met at the required proficiency level. This drives the readiness gauge on the employee dashboard.
-- **Match Score (Project Demand):** A weighted score combining skill match and capability readiness, used to rank candidates against a project demand.
+Every score is computed from stored records; `ARCHITECTURE.md` (section 8) gives each formula.
 
-> **What is *not* yet implemented:** an earlier draft of this document described a composite "Enterprise Readiness Index (ERI)" built from 8 weighted vectors (skill proficiency, certification health, deployment availability, etc.), plus 30/60/90-day predictive workforce forecasting, 8 workforce risk vectors, and learning-ROI quantification. None of these exist in the current codebase — the "48% → 84%" Enterprise Readiness figure shown on the Leadership dashboard today is static illustrative copy, not a live calculation. These are strong roadmap items, but this document previously presented them as shipped capability, which would set the wrong expectation with stakeholders.
+- **Capability Readiness Score (CRS):** how close an employee's current levels are to what their target role requires, plus up to 15 points for manager-approved evidence. Drives the readiness gauge on the employee dashboard.
+- **Skill and Will:** the two axes of the Skill-vs-Will matrix. Skill comes from skill levels and approved evidence; Will from learning follow-through, evidence initiative, goal progress and goal commitment.
+- **Match Score (Project Demand):** 45% technical + 20% domain + 15% experience + 20% capability readiness, used to rank candidates against a demand.
+- **Enterprise Readiness Index (ERI):** the eight-component composite, computed over the components that have stored data. Two components (Level-1 interview assessments and certification health) have none yet, so the index covers 60% of its weight and reports that share. Its trend line is built from one real reading per day.
+- **Supply against demand:** for each skill an open demand requires, the people ready now (level 3+) and those working toward it.
 
-## Server API Reference (`server.ts`) — Verified Against Source
+## Server API
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/auth/login` | POST | Logs a user in by ID. |
-| `/api/users` / `/api/users/:id` | GET | Lists users / fetches a single user profile. |
-| `/api/users/:id/capability` | GET | Returns CRS and skill-gap breakdown for a user. |
-| `/api/users/:id/learning-plan` | GET | Fetches the active learning plan for an employee. |
-| `/api/users/:id/target-role` | POST | Sets/updates an employee's target role. |
-| `/api/skills` / `/api/roles` / `/api/courses` | GET | Reference data: skills taxonomy, target roles, course catalog. |
-| `/api/evidence` | GET / POST | Lists / submits workplace evidence. |
-| `/api/validation` | POST | Manager approval/rejection of submitted evidence. |
-| `/api/agent/generate-jd-assessment` | POST | Generates the MCQ + spoken-scenario assessment for a target role/JD. |
-| `/api/agent/evaluate-interview-answer` | POST | Evaluates a transcribed spoken response against the JD rubric via Gemini. |
-| `/api/ai/orchestrator` | POST | Shared chat/copilot backend used across agent chat surfaces. |
-| `/api/manager/:id/team` | GET | Returns a manager's team with skill/will data (powers the Skill-vs-Will matrix). |
-| `/api/manager/insight` | POST | Generates AI-written manager insight/summary for a team member. |
-| `/api/manager/post-assessment` | POST | Generates the post-training GROW readiness narrative. |
-| `/api/project-demand/list` / `create` | GET / POST | Lists / creates client project demand entries. |
-| `/api/project-demand/parse-jd` | POST | Parses a raw client JD into structured requirements via Gemini. |
-| `/api/project-demand/match` | POST | Scores and ranks candidates against a demand, evaluating post-training completion status. |
-| `/api/project-demand/generate-client-resume` | POST | Generates an updated post-training candidate client resume (Restricted: Project Hiring Mode & Post-Training status only). |
-| `/api/project-demand/complete-post-training` | POST | Simulates or records post-training upskilling & post-assessment clearance to unlock client resume generation. |
-| `/api/project-demand/handoff-skillgap` | POST | Starts an upskilling handoff into the learning pipeline. |
-| `/api/learning-plan/assign` / `step` / `deadline` | POST | Manage learning plan milestones. |
-| `/api/reminders` | GET / POST | Manages agent/manager reminders. |
+The route map, with the access rule for every endpoint, is in `ARCHITECTURE.md`
+(section 7, "Route map"). Authority always comes from the signed-in session; a user id
+in a URL or body names the target of an action, never the caller.
 
-## Database Architecture (`capability-hub.db`)
+## Database
 
-Actual tables in `server-db.ts`:
-
-- `users` — Employee and manager profiles.
-- `skills` — Master taxonomy of technical/functional competencies.
-- `user_skills` — Individual proficiency ratings (1–5) and target levels.
-- `target_roles` / `target_role_skills` — Role definitions and required skill levels.
-- `evidences` — Submitted workplace evidence and approval status.
-- `project_demands` — Client demand listings.
-- `learning_plans` — Milestone steps, deadlines, completion status.
-- `courses` — Internal/external course catalog.
-- `reminders` — Agent/manager reminder records.
+The tables and their relationships are in `ARCHITECTURE.md` (section 6, "Tables").
+The schema is versioned: `backend/app/migrations.py` builds a fresh database and
+upgrades older ones in place.
 
 ## Development & Operations Guide
 
 **Prerequisites**
-- Node.js (v18+)
-- Google Gemini API Key (`GEMINI_API_KEY`)
+- Python 3.12
+- Node.js 20+ (to build the frontend only)
+- A Google Gemini API key (`GEMINI_API_KEY`) to enable the copilots; optional
 
-**Running Locally**
+**Running locally**
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Set environment variables in .env
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# 3. Start development server (port 3000)
-npm run dev
-
-# 4. Verify code quality
-npm run lint
+./setup.sh                      # dependencies, virtualenv, first build, tests
+scripts\dev-python.cmd          # Windows: API + built app on http://localhost:8000
+npm run dev                     # optional: hot-reloading frontend on http://localhost:5173
 ```
 
-**Production Build & Launch**
-```bash
-npm run build   # vite build -> dist/ (frontend), esbuild bundle -> build/server.cjs
-npm run start
-```
+**Production**: see `DEPLOY.md` (Docker image or any Python host).
 
 ---
 
-## Known Limitations & Hardening Roadmap
+## Known Limitations
 
-1. **No real authentication:** Login accepts a user ID with no verified password/session.
-2. **Data persistence:** SQLite lives on local container disk.
-3. **API Rate Limiting:** Gemini endpoints do not currently enforce rate-limiting.
-4. **Assessment Persistence:** GROW assessments and manager insights are generated dynamically per request.
-5. **Roadmap Capabilities:** The multi-vector Enterprise Readiness Index, 30/60/90-day predictive workforce forecasting, and automated risk-vector calculations represent planned future milestones.
+The current list is kept in one place: `ARCHITECTURE.md`, section 15.

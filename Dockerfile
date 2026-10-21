@@ -11,7 +11,7 @@ WORKDIR /build
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build:web        # -> /build/dist (frontend only - no server bundle)
+RUN npm run build            # -> /build/dist
 
 # ---- Stage 2: Python runtime ----
 FROM python:3.12-slim-bookworm AS runtime

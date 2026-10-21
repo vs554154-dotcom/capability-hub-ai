@@ -6,10 +6,10 @@
 Capability Hub AI (CyBridge) is a full-stack enterprise workforce intelligence platform: a React 19 + TypeScript frontend, a Python/FastAPI backend, SQLite, and Google Gemini (model `gemini-3.6-flash`).
 
 ## Core Architecture & Rules
-1. **Live backend is Python**:
+1. **One backend: Python**:
    - Backend work goes in `backend/app/`: `routers/` (HTTP only), `services/` (business rules), `repositories/` (SQL only). See `ARCHITECTURE.md`.
-   - The backend owns its schema (`backend/app/schema_sql.py`) and seed (`backend/seed/seed.json`), and serves the built frontend from `dist/`.
-   - `server.ts` / `server-db.ts` (Node) is frozen — kept only so the Google AI Studio applet, which cannot run Python, keeps working.
+   - The backend owns its schema (versioned migrations in `backend/app/migrations.py`) and seed (`backend/seed/seed.json`), and serves the built frontend from `dist/`.
+   - Node is used only to build the frontend; there is no Node server.
 2. **Server-Side AI Proxy**:
    - All Gemini API calls **MUST** remain server-side, in `backend/app/ai.py`.
    - Never expose `GEMINI_API_KEY` to the client/browser code.
@@ -23,7 +23,7 @@ Capability Hub AI (CyBridge) is a full-stack enterprise workforce intelligence p
    - Ensure fallback handling for cases where camera or microphone access is denied.
 6. **Build & Run**:
    - Frontend build: `npm run build` → `dist/`.
-   - Dev server: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`).
+   - Dev server: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`); `npm run dev` adds hot-reloading frontend on `:5173`, proxying `/api` to it.
    - Production: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`, or the `Dockerfile`.
    - Frontend verification: `npm run lint` (`tsc --noEmit`).
 
@@ -33,4 +33,5 @@ Capability Hub AI (CyBridge) is a full-stack enterprise workforce intelligence p
 - `POST /api/ai/orchestrator`: Copilot chat router (`skill_gap`, `concierge`, `coach`, `analytics`).
 - `GET /api/manager/{id}/team`: Per-report Skill, Will and Engagement scores that drive the Skill-vs-Will 2×2 matrix.
 - `GET /api/analytics/workforce`: Organisation-wide readiness, evidence and skill-gap metrics.
+- `GET /api/analytics/eri`, `GET /api/analytics/leadership`: The computed Enterprise Readiness Index with its daily trend, and the leadership overview.
 - `GET /api/health`: Liveness probe for hosting platforms.

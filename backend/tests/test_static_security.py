@@ -99,6 +99,8 @@ class TestRepositoryLayout:
         assert (REPO_ROOT / "private" / "capability_hub_ai_source.zip").exists()
 
     def test_server_bundle_is_not_built_into_the_web_root(self):
+        # A server bundle was once written into dist/, publishing server source. The
+        # build is now Vite alone; no script may bundle anything else.
         scripts = json.loads((REPO_ROOT / "package.json").read_text("utf-8"))["scripts"]
-        assert "--outfile=dist/" not in scripts["build"]
-        assert "dist/" not in scripts["start"]
+        assert scripts["build"] == "vite build"
+        assert not any("esbuild" in cmd or "--outfile" in cmd for cmd in scripts.values())

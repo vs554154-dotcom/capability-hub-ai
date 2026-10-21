@@ -1,16 +1,15 @@
 {
-  "projectName": "Capability Hub AI",
+  "projectName": "CyBridge",
   "version": "1.0.0",
   "agentRules": "./instructions.md",
   "systemDoc": "../AGENTS.md",
   "devServer": {
-    "command": "npm run dev",
-    "port": 3000,
+    "command": "python -m uvicorn backend.app.main:app --reload --reload-dir backend/app --port 8000",
+    "port": 8000,
     "host": "0.0.0.0"
   },
   "buildCommand": "npm run build",
   "lintCommand": "npm run lint",
-  "requiredEnv": [
-    "GEMINI_API_KEY"
-  ]
+  "testCommand": "python -m pytest backend/tests",
+  "requiredEnv": []
 }

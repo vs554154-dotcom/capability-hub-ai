@@ -1,6 +1,0 @@
-{
-  "name": "CyBridge - Workforce Capability Agent",
-  "description": "An enterprise-grade AI Workforce Capability Intelligence Platform that transforms upskilling and career development through evidence-based capability validation and AI agents.",
-  "requestFramePermissions": ["camera", "microphone"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

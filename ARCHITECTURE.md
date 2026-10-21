@@ -56,13 +56,14 @@ Three properties follow from that shape and are relied on throughout:
 | `backend/scripts/` | Verification probes run against a live server | Live |
 | `dist/` | Built frontend — the **public web root** | Build output |
 | `private/` | Files served only through gated endpoints, never statically | Live |
-| `server.ts`, `server-db.ts` | Node/Express backend for the Google AI Studio applet | **Frozen** |
-| `scripts/dev-python.cmd` | Windows dev launcher for the backend | Tooling |
+| `scripts/dev-python.cmd`, `setup.sh` | Windows dev launcher for the backend; one-time local setup | Tooling |
+| `vite.config.ts`, `package.json` | Frontend build, and the dev server that proxies `/api` to the backend | Tooling |
 | `Dockerfile`, `DEPLOY.md` | Container image and deployment guide | Deployment |
 | `AGENTS.md` | Rules for AI coding agents working in this repo | Docs |
 
-The Node backend exists only because Google AI Studio's applet host cannot run
-Python. It receives no feature work; see `AGENTS.md` for the decision record.
+There is one backend. A Node/Express server that once lived alongside it was
+removed on 2026-10-21; `AGENTS.md` records the decision. Node now only builds the
+frontend.
 
 ---
 
@@ -394,8 +395,8 @@ flowchart TD
 - **Identifiers match exactly.** A name must match a person's full name; it is not a
   substring search. The first sign-in sets a password, so a loose match could claim
   the wrong person's account.
-- **bcrypt, cost factor 10.** Hashes are interchangeable with the Node path's
-  `bcryptjs`.
+- **bcrypt, cost factor 10.** Hashes written by the former Node server's
+  `bcryptjs` use the same format and still verify.
 - **`DEMO_MODE`** accepts a bare user id with no password. It is a full
   authentication bypass and is off unless explicitly enabled.
 - `/api/auth/change-password` requires the current password whenever one is set, so
@@ -547,6 +548,10 @@ contains only verified facts and instructs the model not to invent any.
   default sits well above normal generation time, because long reports have taken
   over 90 seconds. A timeout is logged as one, so a value cutting off real answers is
   visible and can be raised.
+- **OS trust store.** The client verifies Gemini's certificate against the
+  operating system's trust store (`truststore`), not the HTTP library's bundled
+  list. On a machine whose antivirus or proxy inspects TLS, its root certificate is
+  only in the OS store, and every call would otherwise fail certificate checks.
 - **Structured output.** `ai.generate_json()` strips Markdown fences and, if the
   model wrapped the JSON in prose, recovers the outermost `{...}` or `[...]` before
   parsing.
@@ -639,7 +644,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~15 s | 56 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 84 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index and leadership analytics; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 54 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
@@ -685,5 +690,3 @@ These are real and are not yet fixed:
    limits. Several *hosts* would need a networked database, because SQLite on a
    network filesystem is not safe. On a host with an ephemeral filesystem, mount a
    volume for `DATABASE_PATH` or the data resets on redeploy.
-4. **Two backends in the tree.** The frozen Node path exists only for AI Studio.
-   Changes to the API contract are not mirrored there.

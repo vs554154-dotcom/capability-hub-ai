@@ -12,7 +12,7 @@ Requires GEMINI_API_KEY in the repo-root .env, and a restart of whichever backen
 is being probed (the key is read at startup).
 
     python backend/scripts/verify_ai.py                       # defaults to :8000
-    python backend/scripts/verify_ai.py http://localhost:3000 # the Node server
+    python backend/scripts/verify_ai.py https://staging.example.com
 """
 from __future__ import annotations
 

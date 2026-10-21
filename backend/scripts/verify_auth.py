@@ -1,11 +1,10 @@
-"""Authorization parity probes.
+"""Authorization probes, run against a live server.
 
-Runs the same checks that were used to verify the Node backend's role hierarchy,
-against whichever backend is listening. The point is that authority comes from the
+Checks the role hierarchy. The point is that authority comes from the
 session cookie alone - never from an id in the URL or body.
 
     python backend/scripts/verify_auth.py                  # defaults to :8000
-    python backend/scripts/verify_auth.py http://localhost:3000   # the Node server
+    python backend/scripts/verify_auth.py https://staging.example.com
 
 Exits non-zero if any expectation fails.
 """

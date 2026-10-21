@@ -3,9 +3,6 @@
 The app is a single **Python/FastAPI** process (`backend/app`) that serves both the API
 and the built Vite frontend from `dist/`. One build, one start command, one port.
 
-> **Node path:** `server.ts` is retained only for the Google AI Studio applet host, which
-> runs Node and cannot run Python. Everywhere else, deploy the Python backend below.
-
 ## Environment variables
 
 | Variable | Required | Default | Purpose |
@@ -18,8 +15,9 @@ and the built Vite frontend from `dist/`. One build, one start command, one port
 | `DATABASE_PATH` | no | `capability-hub.db` (cwd) | Path to the SQLite file. Point it at a **mounted, persistent, writable volume** on hosts whose app dir is ephemeral or read-only (see the SQLite note below). |
 | `AUTH_RATE_LIMIT_MAX` | no | `30` | Login attempts allowed per IP per 15 minutes. |
 | `TRUST_PROXY` | no | `true` | Read the client IP from `X-Forwarded-For`. Set `false` if not behind a proxy. |
-| `COOKIE_SAMESITE` | no | `none` on HTTPS, else `lax` | Override the session-cookie SameSite policy. AI Studio embeds the app in an iframe and needs `none`; a **standalone** deployment can set `lax` for stricter CSRF protection. |
+| `COOKIE_SAMESITE` | no | `none` on HTTPS, else `lax` | Override the session-cookie SameSite policy. `none` lets the app work inside a cross-site iframe; a **standalone** deployment should set `lax` for stricter CSRF protection. |
 | `APP_URL` | no | — | Public HTTPS URL of the deploy. Used as an HTTPS signal for cookie flags and for self-referential links. |
+| `NODE_ENV` | no | — | `production` also marks the deploy as HTTPS (Secure cookies). The Docker image sets it, assuming the host terminates TLS. |
 
 ## Build and run (any host)
 
@@ -63,9 +61,6 @@ Node is present at runtime. The volume keeps the SQLite file across restarts.
   and `GEMINI_API_KEY` in the dashboard, and mount a volume at `/app/data` so the database
   survives redeploys. Not framed, so `COOKIE_SAMESITE=lax` is recommended.
 - **Plain VM** — the three commands under *Build and run*, behind nginx or Caddy.
-- **Google AI Studio** — **cannot run Python.** That host runs the Node path
-  (`server.ts`) only. It is the one target the Python backend does not serve; see the
-  Architecture Decision in `AGENTS.md`.
 
 ## SQLite persistence caveat
 
@@ -77,5 +72,6 @@ volume and point `DATABASE_PATH` at it, or migrate to a networked database.
 
 ## Not needed at runtime
 
-`server.ts`, `server-db.ts` and `node_modules/` are **not** in the runtime image. Node is
-used only to build the frontend; the container that ships runs Python alone.
+Node is used only to build the frontend; `node_modules/` is not in the runtime image,
+and the container that ships runs Python alone. Google AI Studio, which can only run
+Node, is not a deployment target (see the Architecture Decision in `AGENTS.md`).

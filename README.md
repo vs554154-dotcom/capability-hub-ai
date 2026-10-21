@@ -29,68 +29,68 @@ For full technical specifications, architecture details, API specs, and database
 
 5. **Capability Analytics AI & Skill-vs-Will Matrix**:
    - **Skill-vs-Will Matrix (2×2 Quadrant Model)**: Maps team members across Capability (Skill) and Interest/Drive (Will) into Deploy Now, Accelerate Learning, Retain & Coach, and Intervention Required quadrants.
-   - **Enterprise Readiness Index (ERI)**: Synthesizes multi-vector capability signals into a composite organizational readiness score (%).
-   - **Predictive Workforce Intelligence**: Forecasts 30/60/90-day capability supply & demand, estimates employee Time-to-Readiness (TTR), detects workforce risks, and quantifies learning ROI.
+   - **Enterprise Readiness Index (ERI)**: An eight-component composite computed from workforce records, with a daily trend. Components with no stored data are shown as not measured rather than estimated.
+   - **Leadership overview**: Skill-gap risk, capability supply against open client demand, the index if every open gap closed, and directives derived from those figures.
 
 ---
 
 ## 🛠️ Project Structure
 
 ```
-├── PROJECT_DOCUMENTATION.md             # Comprehensive technical, architectural, & API documentation
-├── AGENTS.md                            # System instructions & operational guidelines for AI Coding Agents
-├── docs/                                # Enterprise Architectural Specifications
-│   ├── CAPABILITY_ANALYTICS_AI_SPEC.md   # Capability Analytics AI PRD, ERI formula & 10-point framework
-│   └── PROJECT_DEMAND_TALENT_READINESS_SPEC.md # Demand & Talent Readiness Agent PRD & Schemas
-├── server.ts                            # Express server & Gemini API endpoints
-├── server-db.ts                         # Database service layer (SQLite interface)
-├── capability-hub.db                    # Enterprise SQLite database storage
-├── metadata.json                        # Platform metadata & permissions (camera, microphone)
-├── .env.example                         # Environment variables template
+├── ARCHITECTURE.md        # How the system works: layers, data, auth, metrics, limitations
+├── AGENTS.md              # Rules and decisions for AI coding agents
+├── DEPLOY.md              # Docker and host deployment, every environment variable
+├── PROJECT_DOCUMENTATION.md
+├── backend/
+│   ├── app/               # FastAPI: routers -> services -> repositories, migrations
+│   ├── seed/seed.json     # Data loaded into an empty database on first boot
+│   ├── tests/             # pytest suite (no server needed)
+│   └── scripts/           # Probes run against a live server (authorization gate)
 ├── src/
-│   ├── App.tsx                          # Main layout and role-based navigation
-│   ├── types.ts                         # Shared TypeScript types & interfaces
-│   ├── components/
-│   │   ├── AgentHub.tsx                 # AI Copilot navigation hub
-│   │   ├── SkillGapInterviewAgent.tsx   # Live video/audio JD interview scenario component
-│   │   ├── ProjectDemandAgent.tsx       # Talent Sourcing & Project Demand Agent component
-│   │   ├── SkillVsWillMatrix.tsx        # Skill-vs-Will 2x2 Matrix & Cohort Analytics
-│   │   ├── ManagerDashboard.tsx         # Team capability & GROW coaching dashboard
-│   │   ├── LeadershipDashboard.tsx      # Executive Workforce Capability & ERI Dashboard
-│   │   └── ...
+│   ├── App.tsx            # Session, role-based navigation, shared data
+│   ├── components/        # One workspace per role, plus the AI agents
+│   │   └── ui/            # Shared page header, section cards, meters, charts
+│   └── index.css          # Design tokens for the six themes, page primitives
+├── Dockerfile             # Builds the frontend with Node, runs Python only
+└── .env.example           # Every setting, with defaults
 ```
 
 ---
 
 ## ⚡ Running the Application
 
-1. **Install Dependencies**:
+The backend is Python (FastAPI); Node is used only to build the frontend.
+
+1. **Set up** (dependencies, virtualenv, first build, tests):
    ```bash
-   npm install
+   ./setup.sh
    ```
+   Then set `GEMINI_API_KEY` in `.env` to enable the AI copilots. Without it every
+   AI feature still works, with clearly marked deterministic answers.
 
-2. **Configure Environment Variables**:
-   Copy `.env.example` to `.env` and set your Gemini API key:
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
+2. **Run** the API and the built app on `http://localhost:8000`:
+   ```bash
+   python -m uvicorn backend.app.main:app --reload --reload-dir backend/app
    ```
+   On Windows, `scripts\dev-python.cmd` does the same.
 
-3. **Start Development Server**:
+3. **Frontend work with hot reload** (optional, proxies `/api` to the backend):
    ```bash
    npm run dev
    ```
-   The application will run on `http://localhost:3000`.
+   Open `http://localhost:5173`.
 
-4. **Verify Code & Build for Production**:
+4. **Verify**:
    ```bash
    npm run lint
-   npm run build
-   npm start
+   backend/.venv/Scripts/python -m pytest backend/tests
+   python backend/scripts/verify_authz_scenarios.py http://localhost:8000
    ```
 
+Deployment: see [DEPLOY.md](./DEPLOY.md).
 
 ---
 
 ## 🤖 Running with Kiro or AI Coding Assistants
 
-This repository contains an `AGENTS.md` file at the root directory. Kiro, Cursor, and AI Studio will automatically read `AGENTS.md` to understand the codebase structure, API routes, and architectural constraints.
+This repository contains an `AGENTS.md` file at the root directory. Kiro, Cursor and other coding agents read it to understand the codebase structure, API routes and architectural constraints. `ARCHITECTURE.md` describes how the system works in depth.

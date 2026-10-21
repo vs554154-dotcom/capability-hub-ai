@@ -14,14 +14,17 @@ capability-hub.db-wal
 capability-hub.db-shm
 cookie.txt
 
-# Frozen Python backend - not part of the Node runtime
-backend
+# Python: the local virtualenv and bytecode never belong in the image. The image
+# installs backend/requirements.txt itself and copies only backend/app, seed and
+# scripts (see Dockerfile).
+backend/.venv
+backend/tests
+**/__pycache__
+**/*.pyc
 
 # Build artifacts and tooling
 cybridge-changes-*.zip
 cybridge-python-backend.zip
 *.log
-**/__pycache__
 .claude
 .vscode
-assets/.aistudio

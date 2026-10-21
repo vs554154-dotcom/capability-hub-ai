@@ -4,8 +4,8 @@ Written against the brief's Priority 2 list. Each scenario asserts server-side
 enforcement only - the UI is never consulted, so a passing run proves the API
 holds even if every client-side guard were bypassed.
 
-    python backend/scripts/verify_authz_scenarios.py                       # :3000
-    python backend/scripts/verify_authz_scenarios.py http://localhost:3000
+    python backend/scripts/verify_authz_scenarios.py                       # :8000
+    python backend/scripts/verify_authz_scenarios.py https://staging.example.com
     python backend/scripts/verify_authz_scenarios.py <url> --expect-demo-hole
 
 --expect-demo-hole inverts scenario 5a, for demonstrating that DEMO_MODE=true
@@ -20,7 +20,7 @@ import urllib.error
 import urllib.request
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
-BASE = (args[0] if args else "http://localhost:3000").rstrip("/")
+BASE = (args[0] if args else "http://localhost:8000").rstrip("/")
 EXPECT_DEMO_HOLE = "--expect-demo-hole" in sys.argv
 
 EMPLOYEE = {"identifier": "E1000", "password": "demo123"}          # Aarav, reports to user_2
@@ -58,11 +58,11 @@ class Session:
             req.add_header("Content-Type", "application/json")
         if self.cookie:
             req.add_header("Cookie", self.cookie)
-        # server.ts sets `trust proxy` and, under NODE_ENV=production, issues the
-        # session cookie as Secure + SameSite=None. Over plain HTTP that cookie is
+        # On an HTTPS deploy (NODE_ENV=production or an https APP_URL) the server
+        # issues the session cookie as Secure + SameSite=None. Over plain HTTP that cookie is
         # never sent, so a production build tested locally would 401 on every call
-        # after login. AI Studio terminates TLS at its proxy and forwards this
-        # header; sending it here reproduces that, so the production bundle can be
+        # after login. A TLS-terminating proxy forwards this header; sending it
+        # here reproduces that, so the production bundle can be
         # exercised under production cookie policy. Harmless in dev (secure=false).
         req.add_header("X-Forwarded-Proto", "https")
         try:

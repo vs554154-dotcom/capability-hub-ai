@@ -36,7 +36,15 @@ def build_client(api_key: str, timeout_seconds: float, base_url: str | None = No
 
     `base_url` points the client at another endpoint; the tests use it to run the
     real SDK against a local stand-in for Gemini.
+
+    Certificates are verified against the operating system's trust store, as a
+    browser does, instead of the bundle shipped with the HTTP library. Machines whose
+    antivirus or proxy inspects TLS install their own root in the OS store only, and
+    there every call otherwise fails with CERTIFICATE_VERIFY_FAILED.
     """
+    import ssl
+
+    import truststore
     from google import genai
     from google.genai import types
 
@@ -44,6 +52,7 @@ def build_client(api_key: str, timeout_seconds: float, base_url: str | None = No
         timeout=int(timeout_seconds * 1000),  # the SDK takes milliseconds
         retry_options=types.HttpRetryOptions(attempts=1),
         base_url=base_url,
+        client_args={"verify": truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)},
     )
     return genai.Client(api_key=api_key, http_options=options)
 

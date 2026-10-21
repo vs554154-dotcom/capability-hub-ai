@@ -1,25 +1,33 @@
 #!/bin/bash
+# One-time local setup: frontend dependencies, the Python virtualenv, and a first
+# build so the backend has a web root to serve.
 set -e
 
-echo "=== Setting up Capability Hub AI for Kiro Environment ==="
+echo "=== Setting up CyBridge ==="
 
-# 1. Install dependencies
-echo "Installing npm dependencies..."
+echo "Installing frontend dependencies..."
 npm install
 
-# 2. Check for .env file
+echo "Installing the backend into backend/.venv..."
+# Created only when missing, so a rerun never rewrites a venv that a running server
+# has open.
+[ -d backend/.venv ] || python -m venv backend/.venv
+if [ -x backend/.venv/bin/python ]; then PY=backend/.venv/bin/python; else PY=backend/.venv/Scripts/python; fi
+"$PY" -m pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+
 if [ ! -f .env ]; then
-  echo "Creating .env from .env.example..."
+  echo "Creating .env from .env.example (set GEMINI_API_KEY there to enable the copilots)."
   cp .env.example .env
-  echo "⚠️ Please set your GEMINI_API_KEY in .env file."
 fi
 
-# 3. Verify TypeScript build
-echo "Verifying TypeScript types..."
+echo "Type-checking and building the frontend..."
 npm run lint
-
-# 4. Verify bundle build
-echo "Testing build pipeline..."
 npm run build
 
-echo "✅ Environment setup complete! Run 'npm run dev' to start the application."
+echo "Running the backend tests..."
+"$PY" -m pytest backend/tests -q
+
+echo
+echo "Done. Start the backend (API + built app on http://localhost:8000):"
+echo "  $PY -m uvicorn backend.app.main:app --reload --reload-dir backend/app"
+echo "For hot-reloading frontend work, also run: npm run dev  (http://localhost:5173)"
