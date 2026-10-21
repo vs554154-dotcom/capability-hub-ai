@@ -26,3 +26,7 @@ cookie.txt
 # Port bundles: build artifacts, regenerated on demand.
 cybridge-changes-*.zip
 cybridge-python-backend.zip
+
+# Claude Code per-machine settings (permission allowlists). launch.json is shared
+# project config and stays tracked; settings.local.json is local by design.
+.claude/settings.local.json
