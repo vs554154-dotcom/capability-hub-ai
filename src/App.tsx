@@ -5,6 +5,7 @@ import { EmployeeDashboard } from "./components/EmployeeDashboard";
 import { ManagerDashboard } from "./components/ManagerDashboard";
 import { LDDashboard } from "./components/LDDashboard";
 import { LeadershipDashboard } from "./components/LeadershipDashboard";
+import { GuidePage } from "./components/GuidePage";
 import { AgentHub } from "./components/AgentHub";
 import { ProjectDemandAgent } from "./components/ProjectDemandAgent";
 import { ResourceLoginPage } from "./components/ResourceLoginPage";
@@ -551,6 +552,8 @@ export default function App() {
   // Tabs reachable without a session. Anything else falls back to the landing page,
   // so a stale tab can never render someone else's workspace.
   const PUBLIC_TABS = ["home", "login"];
+  // Reachable signed out as well as signed in: the guide holds no one's data.
+  const OPEN_TABS = [...PUBLIC_TABS, "guide"];
 
   // The workspace each role lands on after signing in.
   const roleLandingTab = (role: UserRole) =>
@@ -564,7 +567,7 @@ export default function App() {
   // a browser restore) can't drop an authenticated person back onto the marketing page.
   const effectiveTab = isAuthenticated
     ? (PUBLIC_TABS.includes(activeTab) ? roleLandingTab(activeUser.role) : activeTab)
-    : (PUBLIC_TABS.includes(activeTab) ? activeTab : "home");
+    : (OPEN_TABS.includes(activeTab) ? activeTab : "home");
 
   // Screens that belong to people who manage others. An employee session never
   // reaches these, matching the requireRole guards on the server.
@@ -700,6 +703,10 @@ export default function App() {
           />
         )}
 
+        {effectiveTab === "guide" && (
+          <GuidePage currentUser={activeUser} onNavigate={setActiveTab} />
+        )}
+
         {effectiveTab === "ai_hub" && isAuthenticated && (
           <AgentHub
             currentUser={activeUser}
@@ -712,47 +719,42 @@ export default function App() {
         </div>
       </main>
 
-      {/* Landing & Platform Footer */}
-      <footer className="relative mt-10 bg-[#0B111E] border-t border-[#2A384C] text-[#94A3B8] py-8 text-xs font-mono overflow-hidden">
-        <div className="bg-circuit absolute inset-0 opacity-[0.05] pointer-events-none" aria-hidden="true" />
-        <div className="absolute inset-x-0 top-0 accent-rule" aria-hidden="true" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-[#1E293B] pb-6">
-            <div className="flex items-center gap-3">
-              <BrandMark size={42} />
-              <div>
-                <strong className="text-sm text-[#F0F4FF] block font-sans font-bold">CyBridge</strong>
-                <span className="text-[10px] text-[#4F8EF7] tracking-wider uppercase font-semibold">
-                  Enterprise AI Workforce Capability Intelligence Platform
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] stagger-children">
-              <span className="bg-[#141E30] px-2.5 py-1 rounded border border-[#2A384C] text-[#F0F4FF] hover-lift">
-                SkillGap-to-Growth Agent
-              </span>
-              <span className="bg-[#141E30] px-2.5 py-1 rounded border border-[#2A384C] text-[#10B981] hover-lift">
-                Learning Concierge AI
-              </span>
-              <span className="bg-[#141E30] px-2.5 py-1 rounded border border-[#2A384C] text-[#F59E0B] hover-lift">
-                Manager GROW Coach
-              </span>
-              <span className="bg-[#141E30] px-2.5 py-1 rounded border border-[#2A384C] text-[#A855F7] hover-lift">
-                9-Box Skill-vs-Will Analytics
-              </span>
+      {/* Footer: what the product is, the loop it runs, and the way into the guide.
+          No status claims - nothing here checks the system's health. */}
+      <footer className="app-footer mt-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-6 md:grid-cols-[1fr_1.6fr] items-start">
+          <div className="flex items-start gap-3">
+            <BrandMark size={38} />
+            <div>
+              <strong className="block text-[15px] font-bold" style={{ color: "var(--text)" }}>CyBridge</strong>
+              <p className="text-[12.5px] leading-relaxed mt-1" style={{ color: "var(--text-mute)" }}>
+                From business demand to workforce readiness. Scores are computed from workforce
+                records; the AI copilots run on Google Gemini, called from the server only.
+              </p>
             </div>
           </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#64748B] gap-2">
-            <p>© 2026 Capability Hub AI. All rights reserved.</p>
-            <p className="flex items-center gap-1.5">
-              <span className="status-dot h-2 w-2 rounded-full bg-[#10B981] inline-block" />
-              <span>All systems operational</span>
-              <span className="mx-1">•</span>
-              <span>AI-powered by Google Gemini</span>
-            </p>
+          <div>
+            <p className="stat-label mb-2">The loop</p>
+            <ol className="flex flex-wrap items-center gap-1.5 text-[12px]" aria-label="Demand to deployment">
+              {["Demand", "Match", "Hand off", "Learn", "Validate", "Present", "Readiness"].map((step, i, all) => (
+                <li key={step} className="flex items-center gap-1.5">
+                  <span className="tag">{step}</span>
+                  {i < all.length - 1 && <span aria-hidden="true" style={{ color: "var(--text-mute)" }}>→</span>}
+                </li>
+              ))}
+            </ol>
+            <button
+              type="button"
+              onClick={() => setActiveTab("guide")}
+              className="mt-3 text-[12.5px] font-semibold cursor-pointer"
+              style={{ color: "var(--accent)" }}
+            >
+              How it works →
+            </button>
           </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 text-[11.5px]" style={{ color: "var(--text-mute)" }}>
+          © 2026 CyBridge
         </div>
       </footer>
       </div>

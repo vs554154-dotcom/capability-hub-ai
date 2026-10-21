@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { User, UserRole } from "../types";
-import { Users, Shield, Sparkles, Building2, TrendingUp, LogOut, Palette } from "lucide-react";
+import {
+  BarChart3, BookOpen, Compass, GraduationCap, LayoutDashboard, LogIn, LogOut,
+  MessagesSquare, Palette, Sparkles, Target, TrendingUp, Users,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { BrandMark } from "./BrandLogo";
 
 interface RoleHeaderProps {
@@ -13,305 +17,168 @@ interface RoleHeaderProps {
   isShortlisted?: boolean;
 }
 
+interface NavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  /** Shown as a tooltip: what the page is for. */
+  hint: string;
+}
+
+// The pages each role can open, home first. Mirrors the role guards on the server:
+// a tab that is not listed here is also refused by the API.
+export const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
+  [UserRole.EMPLOYEE]: [
+    { id: "dashboard", label: "My readiness", icon: LayoutDashboard, hint: "Your capability score, learning plan, evidence and interview practice" },
+    { id: "ai_hub", label: "SkillGap agent", icon: Sparkles, hint: "Talk to the SkillGap-to-Growth agent and the Learning Concierge" },
+  ],
+  [UserRole.MANAGER]: [
+    { id: "manager_dash", label: "Team board", icon: Users, hint: "Your direct reports: Skill-vs-Will, evidence to review, coaching" },
+    { id: "project_demand", label: "Demand to deploy", icon: Target, hint: "Capture client demand, match people, hand off skill gaps" },
+    { id: "ai_hub", label: "GROW coach", icon: MessagesSquare, hint: "The Manager GROW Coach copilot" },
+  ],
+  [UserRole.LD]: [
+    { id: "ld_dash", label: "L&D insights", icon: GraduationCap, hint: "Workforce readiness, skill gaps, learning tracks and campaigns" },
+    { id: "project_demand", label: "Demand to deploy", icon: Target, hint: "Capture client demand, match people, hand off skill gaps" },
+    { id: "ai_hub", label: "Analytics AI", icon: BarChart3, hint: "The Capability Analytics copilot" },
+  ],
+  [UserRole.LEADERSHIP]: [
+    { id: "leadership_dash", label: "Readiness", icon: TrendingUp, hint: "The Enterprise Readiness Index, risk, and supply against demand" },
+    { id: "project_demand", label: "Demand to deploy", icon: Target, hint: "Capture client demand, match people, hand off skill gaps" },
+    { id: "ai_hub", label: "Strategy AI", icon: Compass, hint: "The Capability Analytics copilot for board briefings" },
+  ],
+};
+
+const GUIDE: NavItem = { id: "guide", label: "How it works", icon: BookOpen, hint: "The demand-to-deployment loop, the roles, the copilots and the numbers" };
+
+export const ROLE_LABEL: Record<UserRole, string> = {
+  [UserRole.EMPLOYEE]: "Employee",
+  [UserRole.MANAGER]: "Manager",
+  [UserRole.LD]: "L&D",
+  [UserRole.LEADERSHIP]: "Leadership",
+};
+
+const NavTabs: React.FC<{ items: NavItem[]; activeTab: string; onTabChange: (tab: string) => void; className?: string }> = ({
+  items, activeTab, onTabChange, className = "",
+}) => {
+  const nav = useRef<HTMLElement>(null);
+  // In the scrolling row on small screens, keep the current page's tab in view.
+  useEffect(() => {
+    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    const row = nav.current;
+    if (!active || !row || row.scrollWidth <= row.clientWidth) return;
+    row.scrollTo({ left: active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2, behavior: "smooth" });
+  }, [activeTab]);
+
+  return (
+  <nav ref={nav} aria-label="Workspace" className={className}>
+    {items.map(item => {
+      const active = item.id === activeTab;
+      const Icon = item.icon;
+      return (
+        <button
+          key={item.id}
+          id={`nav-${item.id}`}
+          type="button"
+          title={item.hint}
+          aria-current={active ? "page" : undefined}
+          data-active={active}
+          onClick={() => onTabChange(item.id)}
+          className="nav-link"
+        >
+          <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{item.label}</span>
+        </button>
+      );
+    })}
+  </nav>
+  );
+};
+
 export const RoleHeader: React.FC<RoleHeaderProps> = ({
   currentUser,
   activeTab,
   onTabChange,
   onLogout,
   onOpenThemeModal,
-  currentThemeName = "Enterprise Midnight",
-  isShortlisted = false,
 }) => {
-  // Unauthenticated or Home Landing Header
-  if (!currentUser || activeTab === "home") {
-    return (
-      <header className="app-header relative bg-[#0F1724] text-[#F0F4FF] sticky top-0 z-40 border-b border-[#2A384C] shadow-lg animate-fade-in-down">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between py-3.5 gap-4">
-
-            {/* Logo & Platform Name */}
-            <div className="flex items-center gap-3">
-              <BrandMark size={46} />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-lg sm:text-xl tracking-tight gradient-text">
-                    CyBridge - Workforce Capability Agent
-                  </h1>
-                  <span className="text-[10px] font-mono font-bold bg-[#10B981]/15 text-[#10B981] px-2 py-0.5 rounded border border-[#10B981]/30 hidden sm:inline-flex items-center gap-1.5">
-                    <span className="status-dot h-1.5 w-1.5 rounded-full bg-[#10B981] inline-block" />
-                    Live Data
-                  </span>
-                </div>
-                <p className="text-[10px] font-mono tracking-[0.12em] text-[#4F8EF7] uppercase font-semibold">
-                  From Demand to Workforce Readiness
-                </p>
-              </div>
-            </div>
-
-            {/* Landing Header Right Actions */}
-            <div className="flex items-center gap-2.5">
-              {onOpenThemeModal && (
-                <button
-                  id="header-theme-btn"
-                  onClick={onOpenThemeModal}
-                  title="Customize UI/UX Visual Theme"
-                  className="flex items-center gap-1.5 bg-[#141E30] hover:bg-[#1E293B] text-[#4F8EF7] hover:text-white border border-[#4F8EF7]/50 text-xs font-mono font-bold py-2 px-3 rounded-lg transition-all cursor-pointer shadow-sm"
-                >
-                  <Palette className="h-3.5 w-3.5 text-[#4F8EF7]" />
-                  <span className="hidden md:inline">Theme Options</span>
-                </button>
-              )}
-
-              {currentUser ? (
-                <button
-                  onClick={() => {
-                    if (currentUser.role === UserRole.EMPLOYEE) onTabChange("dashboard");
-                    else if (currentUser.role === UserRole.MANAGER) onTabChange("manager_dash");
-                    else if (currentUser.role === UserRole.LD) onTabChange("ld_dash");
-                    else onTabChange("leadership_dash");
-                  }}
-                  className="flex items-center gap-2 bg-[#4F8EF7] hover:bg-[#3B82F6] text-white text-xs font-mono font-bold py-2 px-4 rounded-lg transition-all cursor-pointer shadow-md"
-                >
-                  <Users className="h-3.5 w-3.5" />
-                  <span>Go to {currentUser.role === UserRole.EMPLOYEE ? "Employee Portal" : "Manager Cockpit"}</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => onTabChange("login")}
-                  className="flex items-center gap-2 bg-[#4F8EF7] hover:bg-[#3B82F6] text-white text-xs font-mono font-bold py-2 px-4 rounded-lg transition-all cursor-pointer shadow-md"
-                >
-                  <LogOut className="h-3.5 w-3.5 rotate-180" />
-                  <span>Log In to Portal</span>
-                </button>
-              )}
-            </div>
-
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  // Human-readable label for the signed-in role. There is deliberately no persona
-  // switcher: changing who you are requires signing out and authenticating again.
-  const roleLabel =
-    currentUser.role === UserRole.EMPLOYEE ? "Employee Portal" :
-    currentUser.role === UserRole.MANAGER ? "Manager Cockpit" :
-    currentUser.role === UserRole.LD ? "L&D Strategy Console" :
-    "Executive Console";
+  const items = currentUser ? [...NAV_BY_ROLE[currentUser.role], GUIDE] : [];
 
   return (
-    <header className="app-header relative bg-[#0F1724] text-[#F0F4FF] sticky top-0 z-40 border-b border-[#2A384C] shadow-lg animate-fade-in-down">
+    <header className="app-header sticky top-0 z-40 animate-fade-in-down">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between py-4 gap-4">
-
-          {/* Logo & Platform Name */}
-          <div className="flex items-center gap-3">
-            <BrandMark size={44} />
-            <div>
-              <h1 className="font-bold text-xl tracking-tight gradient-text">
-                CyBridge - Workforce Capability Agent
-              </h1>
-              <p className="text-[10px] font-mono tracking-[0.15em] text-[#4F8EF7] uppercase font-semibold">
-                Agentic Learning & Capability Intelligence Platform
-              </p>
-            </div>
-          </div>
-
-          {/* Role Header Center: Persona Switcher or Employee Badge */}
-          <div className="flex flex-wrap items-center gap-3">
-            
-            {/* Signed-in identity is fixed for the session. Switching accounts means
-                logging out and authenticating as someone else. */}
-            <div className="flex items-center gap-2.5 bg-[#141E30] py-1.5 px-3.5 rounded-md border border-[#2A384C]">
-              <Shield className="h-4 w-4 text-[#4F8EF7]" />
-              <span className="text-xs font-mono font-bold text-[#F0F4FF]">{roleLabel}</span>
-              <span className="text-[10px] font-mono font-bold bg-[#4F8EF7]/20 text-[#4F8EF7] px-2 py-0.5 rounded border border-[#4F8EF7]/30">
-                {currentUser.name}
+        <div className="flex items-center gap-4 h-16">
+          <button
+            type="button"
+            onClick={() => onTabChange(currentUser ? NAV_BY_ROLE[currentUser.role][0].id : "home")}
+            className="flex items-center gap-2.5 shrink-0 cursor-pointer"
+            aria-label="CyBridge home"
+          >
+            <BrandMark size={36} />
+            <span className="text-left leading-tight">
+              <span className="block font-extrabold text-[17px] tracking-tight gradient-text">CyBridge</span>
+              <span className="hidden sm:block text-[10px] font-mono uppercase tracking-[0.14em]" style={{ color: "var(--text-mute)" }}>
+                Workforce capability
               </span>
-            </div>
+            </span>
+          </button>
+
+          {currentUser && (
+            <NavTabs items={items} activeTab={activeTab} onTabChange={onTabChange} className="hidden lg:flex items-center gap-1 ml-4" />
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            {!currentUser && (
+              <button type="button" onClick={() => onTabChange("guide")} className="header-btn" aria-current={activeTab === "guide" ? "page" : undefined}>
+                <BookOpen className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">How it works</span>
+              </button>
+            )}
 
             {onOpenThemeModal && (
-              <button
-                id="header-theme-btn"
-                onClick={onOpenThemeModal}
-                title="Customize UI/UX Visual Theme"
-                className="flex items-center gap-1.5 bg-[#141E30] hover:bg-[#1E293B] text-[#4F8EF7] hover:text-white border border-[#4F8EF7]/50 text-xs font-mono font-bold py-2 px-3 rounded-md transition-all cursor-pointer shadow-sm"
-              >
-                <Palette className="h-3.5 w-3.5 text-[#4F8EF7]" />
-                <span className="hidden md:inline">Theme Options</span>
+              <button type="button" id="header-theme-btn" onClick={onOpenThemeModal} className="header-btn" title="Change the colour theme">
+                <Palette className="h-4 w-4" aria-hidden="true" />
+                <span className="sr-only">Theme</span>
               </button>
             )}
 
-            {onLogout && (
-              <button
-                id="header-logout-btn"
-                onClick={onLogout}
-                title="Log out to Resource Login Gateway"
-                className="flex items-center gap-1.5 bg-[#141E30] hover:bg-rose-500/20 text-[#94A3B8] hover:text-rose-400 border border-[#2A384C] hover:border-rose-500/40 text-xs font-mono font-semibold py-2 px-3 rounded-md transition-colors cursor-pointer"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Logout Portal</span>
+            {currentUser ? (
+              <>
+                <div className="flex items-center gap-2.5 pl-1">
+                  <img
+                    src={currentUser.avatar}
+                    alt=""
+                    className="h-8 w-8 rounded-full object-cover"
+                    style={{ border: "2px solid rgb(var(--accent-rgb) / 45%)" }}
+                  />
+                  <span className="hidden md:block leading-tight text-left">
+                    <span className="block text-[13px] font-semibold" style={{ color: "var(--text)" }}>{currentUser.name}</span>
+                    <span className="block text-[11px]" style={{ color: "var(--text-mute)" }}>
+                      {ROLE_LABEL[currentUser.role]} · {currentUser.title}
+                    </span>
+                  </span>
+                </div>
+                {onLogout && (
+                  <button type="button" id="header-logout-btn" onClick={onLogout} className="header-btn" title="Sign out">
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Sign out</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              <button type="button" onClick={() => onTabChange("login")} className="header-btn header-btn-primary">
+                <LogIn className="h-4 w-4" aria-hidden="true" />
+                <span>Sign in</span>
               </button>
             )}
-
           </div>
-
-          {/* User Profile Badge */}
-          <div className="flex items-center gap-3">
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="h-9 w-9 rounded-full border border-[#4F8EF7] bg-[#141E30] object-cover"
-            />
-            <div className="text-left hidden sm:block">
-              <p className="text-xs font-bold text-[#F0F4FF] leading-tight">{currentUser.name}</p>
-              <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-mono font-medium">{currentUser.title}</p>
-            </div>
-          </div>
-
         </div>
 
-        {/* Global Navigation Tabs.
-            No "Home Landing & Portal" tab here on purpose: that page is the signed-out
-            marketing/login surface. Once someone is authenticated the nav should offer
-            only the workspaces their role can actually use, plus Logout above - showing
-            a route back to the sales page is confusing and has no function post-login. */}
-        <div className="flex space-x-2 border-t border-[#2A384C]/80 overflow-x-auto pt-2 pb-0.5">
-          {/* DEMAND-TO-DEPLOYMENT AGENT — talent sourcing, so managers and above only */}
-          {currentUser.role !== UserRole.EMPLOYEE && (
-          <button
-            id="tab-btn-project-demand"
-            onClick={() => onTabChange("project_demand")}
-            className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-              activeTab === "project_demand"
-                ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-            Demand-to-Deployment Agent
-          </button>
-          )}
-
-          {/* EMPLOYEE VIEWS - FULL ACCESS TO SKILLGAP AGENT & LEARNING PORTAL */}
-          {currentUser.role === UserRole.EMPLOYEE && (
-            <>
-              <button
-                id="tab-btn-emp-ai"
-                onClick={() => onTabChange("ai_hub")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "ai_hub"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                SkillGap Agent: Interactive Intake
-              </button>
-              <button
-                id="tab-btn-emp-dash"
-                onClick={() => onTabChange("dashboard")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "dashboard"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Shield className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-                SkillGap Agent: Learning Plan & Assessment
-              </button>
-            </>
-          )}
-
-          {currentUser.role === UserRole.MANAGER && (
-            <>
-              <button
-                id="tab-btn-mgr-dash"
-                onClick={() => onTabChange("manager_dash")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "manager_dash"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Shield className="h-3.5 w-3.5 shrink-0" />
-                Manager Capability Board
-              </button>
-              <button
-                id="tab-btn-mgr-ai"
-                onClick={() => onTabChange("ai_hub")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "ai_hub"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-                Manager GROW Coach AI
-              </button>
-            </>
-          )}
-
-          {currentUser.role === UserRole.LD && (
-            <>
-              <button
-                id="tab-btn-ld-dash"
-                onClick={() => onTabChange("ld_dash")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "ld_dash"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Building2 className="h-3.5 w-3.5 shrink-0" />
-                L&D Strategy & Insights
-              </button>
-              <button
-                id="tab-btn-ld-ai"
-                onClick={() => onTabChange("ai_hub")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "ai_hub"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-                Capability Analytics AI
-              </button>
-            </>
-          )}
-
-          {currentUser.role === UserRole.LEADERSHIP && (
-            <>
-              <button
-                id="tab-btn-exec-dash"
-                onClick={() => onTabChange("leadership_dash")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "leadership_dash"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                Executive Capability Trends
-              </button>
-              <button
-                id="tab-btn-exec-ai"
-                onClick={() => onTabChange("ai_hub")}
-                className={`nav-tab flex items-center gap-2 px-4 py-2.5 text-xs uppercase font-mono font-bold rounded-t-lg border-b-2 cursor-pointer shrink-0 ${
-                  activeTab === "ai_hub"
-                    ? "bg-[#141E30] text-[#4F8EF7] border-[#4F8EF7]"
-                    : "text-[#94A3B8] border-transparent hover:text-white hover:border-[#2A384C]"
-                }`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#4F8EF7] shrink-0" />
-                Strategic AI Orchestrator
-              </button>
-            </>
-          )}
-        </div>
+        {currentUser && (
+          <NavTabs items={items} activeTab={activeTab} onTabChange={onTabChange} className="lg:hidden relative flex items-center gap-1 overflow-x-auto pb-2 -mx-1 px-1" />
+        )}
       </div>
     </header>
   );
 };
+

@@ -31,7 +31,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ eyebrow, icon: Icon, tit
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
     {steps && steps.length > 0 && (
-      <ol className="page-steps" aria-label="How to use this page">
+      <ol className="page-steps" data-count={steps.length} aria-label="How to use this page">
         {steps.map((step, i) => (
           <li key={i} className="page-step">
             <span>{step}</span>
