@@ -1,17 +1,30 @@
 /**
- * Utility for parsing text from uploaded Resume & Job Description documents
- * Supports PDF (.pdf), Word (.docx, .doc), Text (.txt, .rtf, .md, .json)
+ * Text extraction for uploaded résumés and job descriptions, done in the browser.
+ *
+ *   .txt .md .csv .json .rtf   read as text (RTF control words are stripped)
+ *   .docx                      unzipped; the text runs of word/document.xml
+ *   .pdf                       pdf.js, loaded only when a PDF is chosen
+ *
+ * A file that yields no readable text raises UnreadableFileError with a message the
+ * page shows. Nothing is ever filled in: the previous version sent compressed bytes,
+ * or an invented "key qualifications ... referenced in the submission" paragraph, to
+ * the AI as if it were the document.
  */
 
 export interface ParsedFileInfo {
   fileName: string;
   fileSizeFormatted: string;
-  fileType: "pdf" | "docx" | "doc" | "txt" | "unknown";
+  fileType: "pdf" | "docx" | "txt";
   extractedText: string;
   wordCount: number;
   uploadDate: string;
   rawFile?: File;
 }
+
+export class UnreadableFileError extends Error {}
+
+const TEXT_EXTENSIONS = ["txt", "md", "csv", "json", "rtf"];
+const MAX_PDF_PAGES = 30;
 
 export function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return "0 Bytes";
@@ -23,155 +36,144 @@ export function formatBytes(bytes: number, decimals = 1): string {
 }
 
 export async function parseUploadedFile(file: File): Promise<ParsedFileInfo> {
-  const fileName = file.name;
-  const fileSize = file.size;
-  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
 
-  let fileType: ParsedFileInfo["fileType"] = "unknown";
-  if (ext === "pdf") fileType = "pdf";
-  else if (ext === "docx") fileType = "docx";
-  else if (ext === "doc") fileType = "doc";
-  else if (["txt", "md", "rtf", "json", "csv"].includes(ext)) fileType = "txt";
-
-  let extractedText = "";
-
-  try {
-    if (fileType === "txt" || ext === "txt" || ext === "md" || ext === "json" || ext === "csv") {
-      extractedText = await readAsPlainText(file);
-    } else if (fileType === "docx" || fileType === "doc") {
-      extractedText = await parseDocxOrDoc(file);
-    } else if (fileType === "pdf") {
-      extractedText = await parsePdfFile(file);
-    } else {
-      // Fallback try text read
-      extractedText = await readAsPlainText(file);
-    }
-  } catch (err) {
-    console.warn("File text extraction warning:", err);
-    extractedText = `Document Content (${fileName}): [Extracted file content attached]`;
+  let fileType: ParsedFileInfo["fileType"];
+  let text: string;
+  if (TEXT_EXTENSIONS.includes(ext)) {
+    fileType = "txt";
+    text = await file.text();
+    if (ext === "rtf") text = stripRtf(text);
+  } else if (ext === "docx") {
+    fileType = "docx";
+    text = await extractDocx(await file.arrayBuffer());
+  } else if (ext === "pdf") {
+    fileType = "pdf";
+    text = await extractPdf(await file.arrayBuffer());
+  } else if (ext === "doc") {
+    throw new UnreadableFileError("Older .doc files cannot be read here. Save it as .docx or PDF, or paste the text.");
+  } else {
+    throw new UnreadableFileError(`.${ext || "?"} files are not supported. Use PDF, DOCX or a text file.`);
   }
 
-  // Clean text whitespace
-  extractedText = cleanExtractedText(extractedText);
-
-  // Fallback if empty
-  if (!extractedText || extractedText.trim().length < 10) {
-    extractedText = `Candidate Resume / Experience Document (${fileName}) - ${formatBytes(fileSize)}\n\nExtracted content from file: ${fileName}.\nKey qualifications, technical stack, career experience, and project history referenced in candidate's submission.`;
+  const extractedText = cleanExtractedText(text);
+  const words = extractedText.split(/\s+/).filter(w => /[A-Za-z]{2,}/.test(w));
+  if (words.length < 5) {
+    throw new UnreadableFileError(
+      `No readable text was found in ${file.name}. If it is a scanned image, paste the text instead.`,
+    );
   }
-
-  const wordCount = extractedText.trim().split(/\s+/).filter(Boolean).length;
 
   return {
-    fileName,
-    fileSizeFormatted: formatBytes(fileSize),
+    fileName: file.name,
+    fileSizeFormatted: formatBytes(file.size),
     fileType,
     extractedText,
-    wordCount,
-    uploadDate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    wordCount: extractedText.split(/\s+/).filter(Boolean).length,
+    uploadDate: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     rawFile: file,
   };
 }
 
-function readAsPlainText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve((e.target?.result as string) || "");
-    reader.onerror = (e) => reject(e);
-    reader.readAsText(file);
-  });
+// --- DOCX: a ZIP archive whose body is word/document.xml --------------------------
+
+async function inflateRaw(data: Uint8Array): Promise<string> {
+  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Response(stream).text();
 }
 
-async function parseDocxOrDoc(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        const decoder = new TextDecoder("utf-8", { fatal: false });
-        const text = decoder.decode(buffer);
+export async function extractDocx(buffer: ArrayBuffer): Promise<string> {
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+  const notWord = new UnreadableFileError("This .docx file is damaged or is not a Word document.");
 
-        // Extract text between XML tags <w:t>...</w:t> or <w:t ...>...</w:t>
-        const matches = text.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
-        if (matches && matches.length > 0) {
-          const extracted = matches
-            .map((m) => m.replace(/<[^>]+>/g, ""))
-            .filter((t) => t.trim().length > 0)
-            .join(" ");
-          if (extracted.trim().length > 30) {
-            return resolve(extracted);
-          }
-        }
+  // The end-of-central-directory record sits in the last 64 KB.
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw notWord;
 
-        // Fallback: strip binary noise and non-printable characters
-        const clean = text
-          .replace(/[^\x20-\x7E\n\r\t]/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+  const entries = view.getUint16(eocd + 10, true);
+  let p = view.getUint32(eocd + 16, true);
+  for (let n = 0; n < entries && p + 46 <= bytes.length; n++) {
+    if (view.getUint32(p, true) !== 0x02014b50) break;
+    const method = view.getUint16(p + 10, true);
+    const size = view.getUint32(p + 20, true);
+    const nameLen = view.getUint16(p + 28, true);
+    const extraLen = view.getUint16(p + 30, true);
+    const commentLen = view.getUint16(p + 32, true);
+    const local = view.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
 
-        resolve(clean.slice(0, 8000));
-      } catch (err) {
-        resolve(`Word Document (${file.name}): Extracted text content.`);
-      }
-    };
-    reader.onerror = () => resolve(`Word Document (${file.name})`);
-    reader.readAsArrayBuffer(file);
-  });
+    if (name === "word/document.xml") {
+      const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+      const data = bytes.subarray(start, start + size);
+      if (method === 0) return docxXmlToText(new TextDecoder().decode(data));
+      if (method === 8) return docxXmlToText(await inflateRaw(data));
+      throw notWord;
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  throw notWord;
 }
 
-async function parsePdfFile(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        const decoder = new TextDecoder("latin1"); // latin1 preserves text streams better for raw pdf
-        const rawPdf = decoder.decode(buffer);
+function docxXmlToText(xml: string): string {
+  return xml
+    .split(/<\/w:p>/)
+    .map(paragraph => {
+      const runs = paragraph
+        .replace(/<w:tab\/>/g, "<w:t>\t</w:t>")
+        .replace(/<w:br[^>]*\/>/g, "<w:t>\n</w:t>");
+      return [...runs.matchAll(/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g)].map(m => m[1]).join("");
+    })
+    .join("\n")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+}
 
-        // Match PDF text strings: (Text)Tj or [(Text)]TJ or stream blocks
-        const tjMatches = rawPdf.match(/\(([^()]{2,})\)\s*T[jJ]/g) || [];
-        const arrayTjMatches = rawPdf.match(/\[(.*?)\]\s*TJ/g) || [];
+// --- PDF: pdf.js, imported on first use so it adds nothing to page load -----------
 
-        let extractedLines: string[] = [];
+async function extractPdf(buffer: ArrayBuffer): Promise<string> {
+  const pdfjs = await import("pdfjs-dist");
+  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
 
-        for (const match of tjMatches) {
-          const clean = match
-            .replace(/\\\\/g, "\\")
-            .replace(/\\\(/g, "(")
-            .replace(/\\\)/g, ")")
-            .replace(/^\(/, "")
-            .replace(/\)\s*T[jJ]$/, "")
-            .trim();
-          if (clean.length > 1) extractedLines.push(clean);
-        }
+  const task = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+  try {
+    let doc;
+    try {
+      doc = await task.promise;
+    } catch {
+      throw new UnreadableFileError("This PDF could not be opened. It may be damaged or password-protected.");
+    }
+    const pages: string[] = [];
+    for (let i = 1; i <= Math.min(doc.numPages, MAX_PDF_PAGES); i++) {
+      const content = await (await doc.getPage(i)).getTextContent();
+      pages.push(
+        content.items
+          .map(item => ("str" in item ? item.str + (item.hasEOL ? "\n" : " ") : ""))
+          .join(""),
+      );
+    }
+    return pages.join("\n\n");
+  } finally {
+    // Frees the worker's copy of the document.
+    await task.destroy();
+  }
+}
 
-        for (const match of arrayTjMatches) {
-          const innerStrings = match.match(/\(([^()]+)\)/g);
-          if (innerStrings) {
-            const joined = innerStrings.map(s => s.slice(1, -1)).join("");
-            if (joined.trim().length > 1) extractedLines.push(joined.trim());
-          }
-        }
+// --- Plain text -------------------------------------------------------------------
 
-        let fullText = extractedLines.join(" ");
-
-        if (!fullText || fullText.trim().length < 30) {
-          // Fallback regex to capture ASCII word streams in PDF
-          const asciiWords = rawPdf
-            .replace(/[^\x20-\x7E\n\r\t]/g, " ")
-            .split(/\s+/)
-            .filter(w => w.length > 2 && !w.startsWith("/") && !w.includes("obj") && !w.includes("endobj") && !w.includes("stream"))
-            .join(" ");
-          fullText = asciiWords;
-        }
-
-        resolve(fullText.slice(0, 10000));
-      } catch (err) {
-        resolve(`PDF Resume Document (${file.name})`);
-      }
-    };
-    reader.onerror = () => resolve(`PDF Document (${file.name})`);
-    reader.readAsArrayBuffer(file);
-  });
+function stripRtf(rtf: string): string {
+  return rtf
+    .replace(/\\par[d]?/g, "\n")
+    .replace(/\{\\\*[^{}]*\}/g, "")
+    .replace(/\\[a-z]+-?\d* ?/gi, "")
+    .replace(/[{}]/g, "");
 }
 
 function cleanExtractedText(text: string): string {

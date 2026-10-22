@@ -859,7 +859,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <input
                     type="file"
                     ref={jdInputRef}
-                    accept=".pdf,.docx,.doc,.txt,.rtf,.md,.json"
+                    accept=".pdf,.docx,.txt,.rtf,.md,.json,.csv"
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
                         handleJdFileChange(e.target.files[0]);
@@ -981,7 +981,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
           <input
             type="file"
             ref={resumeInputRef}
-            accept=".pdf,.docx,.doc,.txt,.rtf,.md,.json"
+            accept=".pdf,.docx,.txt,.rtf,.md,.json,.csv"
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
                 handleResumeFileChange(e.target.files[0]);

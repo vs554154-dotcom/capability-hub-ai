@@ -73,6 +73,7 @@ export const AgentHub: React.FC<AgentHubProps> = ({
   // Chat Document Upload State
   const [attachedDoc, setAttachedDoc] = useState<ParsedFileInfo | null>(null);
   const [isParsingChatDoc, setIsParsingChatDoc] = useState(false);
+  const [chatDocError, setChatDocError] = useState<string | null>(null);
   const chatFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Set default agent based on user role
@@ -92,14 +93,16 @@ export const AgentHub: React.FC<AgentHubProps> = ({
   const handleChatFileChange = async (file: File) => {
     if (!file) return;
     setIsParsingChatDoc(true);
+    setChatDocError(null);
     try {
       const parsed = await parseUploadedFile(file);
       setAttachedDoc(parsed);
       if (!inputText.trim()) {
         setInputText(`I am attaching my profile/resume document (${parsed.fileName}). Please analyze my background and evaluate my technical capabilities.`);
       }
-    } catch (err) {
-      console.error("Chat file parsing error:", err);
+    } catch (err: any) {
+      // Say why, rather than attaching nothing silently.
+      setChatDocError(err?.message || "The document could not be read.");
     } finally {
       setIsParsingChatDoc(false);
     }
@@ -446,6 +449,15 @@ export const AgentHub: React.FC<AgentHubProps> = ({
               ))}
             </div>
 
+            {chatDocError && (
+              <div role="alert" className="px-6 py-2 border-t border-[#2A384C] text-xs text-rose-400 flex items-center justify-between gap-3">
+                <span>{chatDocError}</span>
+                <button type="button" onClick={() => setChatDocError(null)} className="cursor-pointer" aria-label="Dismiss">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Attached Document Banner */}
             {attachedDoc && (
               <div className="px-6 py-2 bg-[#0F1724] border-t border-[#2A384C] flex items-center justify-between text-xs">
@@ -481,7 +493,7 @@ export const AgentHub: React.FC<AgentHubProps> = ({
               <input
                 type="file"
                 ref={chatFileInputRef}
-                accept=".pdf,.docx,.doc,.txt,.rtf,.md,.json"
+                accept=".pdf,.docx,.txt,.rtf,.md,.json,.csv"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
                     handleChatFileChange(e.target.files[0]);

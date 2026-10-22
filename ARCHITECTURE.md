@@ -676,6 +676,14 @@ The React app is unchanged by the backend architecture and relies on it as follo
   in `src/components/`, one per role-specific workspace.
 - After sign-in, each role lands on its own workspace. The signed-out landing page
   is not reachable from a signed-in session.
+- Every workspace opens with a `PageHeader` (what the page is for, and numbered steps)
+  and is built from the primitives in `src/components/ui/` on the theme tokens in
+  `index.css`, so all six themes apply. Navigation lives in `components/navigation.ts`;
+  the "How it works" guide explains the whole loop and is reachable signed out.
+- Uploaded résumés and job descriptions are read in the browser
+  (`utils/fileParser.ts`): text files, DOCX (unzipped with the browser's own
+  `DecompressionStream`) and PDF (pdf.js, loaded only when a PDF is chosen). A file
+  with no readable text is reported to the user; nothing is filled in.
 
 ---
 
