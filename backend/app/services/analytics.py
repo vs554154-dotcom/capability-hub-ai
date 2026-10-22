@@ -435,6 +435,25 @@ def launch_campaign(skill_id: str, launched_by: dict[str, Any]) -> dict[str, Any
     return {"success": True, "skillName": skill["name"], "reminded": len(reminded), "employeeIds": reminded}
 
 
+def escalate_to_ld(manager: dict[str, Any], employee_id: str) -> dict[str, Any]:
+    """Ask L&D for help with one employee's skill gaps. The message is written here
+    from the signed-in manager and the stored gap count, never taken from the request,
+    so an escalation on the L&D page is always what it says it is."""
+    with transaction():
+        employee = users.get_user_by_id(employee_id)
+        if not employee or employee["role"] != "employee":
+            raise NotFound("Employee not found")
+        below = sum(
+            1 for s in user_skills.get_user_skills(employee_id) if s["currentLevel"] < s["targetLevel"]
+        )
+        return reminders.create_reminder(
+            employee_id, "Employee", "ld_escalation",
+            f"Escalated to L&D: {employee['name']}",
+            f"{manager['name']} asked L&D for help with {employee['name']}'s skill gaps "
+            f"({below} skill{'' if below == 1 else 's'} below target).",
+        )
+
+
 def org_context() -> str:
     """The organisation-level figures, as plain text for the analytics copilot."""
     index = readiness_index()

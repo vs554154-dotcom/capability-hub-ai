@@ -9,6 +9,7 @@ import { SectionCard, Tag, Tone } from "./ui/Page";
 const KIND: Record<AgentReminder["type"], { label: string; tone?: Tone }> = {
   escalation: { label: "Project handoff", tone: "warn" },
   campaign: { label: "L&D campaign", tone: "accent" },
+  ld_escalation: { label: "Escalated to L&D", tone: "warn" },
   weekly_reminder: { label: "Reminder" },
   checkpoint: { label: "Check-in" },
   manager_notice: { label: "From your manager" },

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { LearningCourse, TargetRole } from "../types";
+import { AgentReminder, LearningCourse, TargetRole } from "../types";
 import {
   AlertTriangle, BellRing, BookOpen, CheckCircle2, Cpu, FileText, GraduationCap, Grid3x3, Info,
-  RefreshCw, Sparkles,
+  LifeBuoy, RefreshCw, Sparkles,
 } from "lucide-react";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
 import { PageHeader, SectionCard, StatTile, Tag } from "./ui/Page";
@@ -58,6 +58,7 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
   const [metrics, setMetrics] = useState<WorkforceMetrics | null>(null);
   const [overview, setOverview] = useState<LDOverview | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [escalations, setEscalations] = useState<AgentReminder[] | null>(null);
   const [cohortId, setCohortId] = useState("");
   const [campaignState, setCampaignState] = useState<
     { kind: "idle" } | { kind: "sending" } | { kind: "done"; text: string } | { kind: "error"; text: string }
@@ -65,6 +66,12 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
 
   useEffect(() => {
     let cancelled = false;
+    // Managers' requests for L&D help, newest first.
+    fetch("/api/reminders")
+      .then(res => (res.ok ? res.json() : []))
+      .then((rows: AgentReminder[]) => !cancelled && setEscalations(rows.filter(r => r.type === "ld_escalation")))
+      .catch(() => !cancelled && setEscalations([]));
+
     Promise.all([fetch("/api/analytics/workforce"), fetch("/api/analytics/ld")])
       .then(async ([m, o]) => {
         if (!m.ok || !o.ok) throw new Error(`analytics answered ${m.status} / ${o.status}`);
@@ -242,6 +249,31 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
                   <p role="alert"><Tag tone="risk"><AlertTriangle className="h-3 w-3" aria-hidden="true" />{campaignState.text}</Tag></p>
                 )}
               </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="Escalations from managers"
+            subtitle="Reports a manager has asked L&D to help with, from their Team board."
+            icon={LifeBuoy}
+            aside={escalations && escalations.length > 0 ? <Tag tone="warn">{escalations.length}</Tag> : undefined}
+          >
+            {escalations === null ? (
+              <div className="skeleton h-16" />
+            ) : escalations.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--text-dim)" }}>No escalations yet.</p>
+            ) : (
+              <ul className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {escalations.map(e => (
+                  <li key={e.id} className="stat-tile" style={{ padding: "10px 12px" }}>
+                    <span className="text-[12.5px] font-semibold block" style={{ color: "var(--text)" }}>{e.title}</span>
+                    <span className="text-[11.5px] block mt-0.5" style={{ color: "var(--text-dim)" }}>{e.message}</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-mute)" }}>
+                      {new Date(e.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </SectionCard>
 

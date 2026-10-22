@@ -289,6 +289,8 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   const [isMicOn, setIsMicOn] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [spokenTranscript, setSpokenTranscript] = useState("");
+  // Shown when speech cannot be transcribed, so the candidate knows to type instead.
+  const [transcriptHint, setTranscriptHint] = useState("");
   const [isSpeechSpeaking, setIsSpeechSpeaking] = useState(false);
   const [evaluations, setEvaluations] = useState<Record<string, AnswerEvaluation>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -416,6 +418,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   // Speech-to-Text Recording logic
   const startRecording = () => {
     setSpokenTranscript("");
+    setTranscriptHint("");
     setIsRecording(true);
 
     if (!isCameraOn) {
@@ -455,16 +458,25 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
       }
     }
 
-    // Fallback Simulated Recording updates if browser speech recognition is silent
-    setTimeout(() => {
-      setSpokenTranscript(prev => {
-        if (!prev) {
-          return "In response to this scenario, I would architect the backend using an Event-Driven Architecture with an Event Bus like Kafka and an outbox pattern. For failure domain isolation, I would implement rate limiting, circuit breakers via Resilience4j or API Gateway policies, and ensure strict zero-trust secret management using KMS.";
-        }
-        return prev;
-      });
-    }, 3000);
+    if (!SpeechRecognition) {
+      setTranscriptHint("This browser cannot transcribe speech. Type your answer in the box below instead.");
+    }
+    // If recognition stays silent, the effect below says so. (This used to fill in a
+    // ready-made expert answer as the candidate's transcript - and score it.)
   };
+
+  useEffect(() => {
+    if (spokenTranscript) {
+      setTranscriptHint("");
+      return;
+    }
+    if (!isRecording) return;
+    const timer = setTimeout(
+      () => setTranscriptHint("Nothing heard yet. Check that the microphone is allowed, or type your answer below."),
+      6000,
+    );
+    return () => clearTimeout(timer);
+  }, [isRecording, spokenTranscript]);
 
   const stopRecording = () => {
     setIsRecording(false);
@@ -1647,8 +1659,11 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 {/* Live Transcript Field */}
                 <div>
                   <label className="text-[10px] font-mono text-[#94A3B8] block mb-1">
-                    Transcribed Answer Text (AI Evaluated):
+                    Your answer (transcribed from speech, or typed) - this text is what gets evaluated:
                   </label>
+                  {transcriptHint && (
+                    <p role="status" className="text-[11px] text-amber-400 mb-1">{transcriptHint}</p>
+                  )}
                   <textarea
                     rows={4}
                     value={spokenTranscript}

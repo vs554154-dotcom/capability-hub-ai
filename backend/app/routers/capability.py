@@ -18,7 +18,7 @@ from ..deps import (
     visible_user_ids,
 )
 from ..repositories import evidence, reminders
-from ..services import capability, learning, talent
+from ..services import analytics, capability, learning, talent
 
 router = APIRouter(prefix="/api", tags=["capability"])
 
@@ -192,12 +192,31 @@ def list_reminders(userId: str | None = None, session_user: dict = Depends(requi
     return rows if visible is None else [r for r in rows if r["userId"] in visible]
 
 
+# Written only by the server, from records: a project handoff, an L&D campaign, a
+# manager's escalation. Accepting them here would let any caller who may post a
+# reminder for themselves forge one.
+SYSTEM_REMINDER_TYPES = {"escalation", "campaign", "ld_escalation"}
+
+
+@router.post("/manager/escalate", status_code=201)
+def escalate_to_ld(
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_manager_or_above)
+) -> dict[str, Any]:
+    employee_id = body.get("employeeId")
+    if not employee_id:
+        raise HTTPException(status_code=400, detail="employeeId is required.")
+    ensure_may_access(session_user, employee_id)
+    return {"success": True, "reminder": analytics.escalate_to_ld(session_user, employee_id)}
+
+
 @router.post("/reminders", status_code=201)
 def create_reminder(
     body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_self_or_elevated_body)
 ) -> dict[str, Any]:
     if not all(body.get(f) for f in ("userId", "title", "message")):
         raise HTTPException(status_code=400, detail="Missing required reminder parameters")
+    if body.get("type") in SYSTEM_REMINDER_TYPES:
+        raise HTTPException(status_code=400, detail="This kind of reminder is created by the system, not posted.")
     reminder = reminders.create_reminder(
         body["userId"], body.get("targetRole") or "Employee",
         body.get("type") or "weekly_reminder", body["title"], body["message"],

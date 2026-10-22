@@ -31,7 +31,7 @@ interface EmployeeDashboardProps {
     description: string;
     evidenceText: string;
     documentUrl?: string;
-  }) => void;
+  }) => Promise<string | null>;
   onRefresh: () => void;
   isShortlisted?: boolean;
   shortlistDemand?: any;
@@ -57,6 +57,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const [evidenceText, setEvidenceText] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [activeSkillFilter, setActiveSkillFilter] = useState<string | null>(null);
 
   // Flexible Learning Roadmap State
@@ -148,19 +149,26 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSkillForEvidence || !evidenceTitle || !evidenceDesc || !evidenceText) return;
 
-    onSubmitEvidence({
+    // Report the real outcome. This used to announce success - and that the manager
+    // "has been notified" - before the request had even returned.
+    const failure = await onSubmitEvidence({
       skillId: selectedSkillForEvidence,
       title: evidenceTitle,
       description: evidenceDesc,
       evidenceText,
       documentUrl: evidenceUrl || undefined,
     });
+    if (failure) {
+      setErrorMsg(`Not submitted: ${failure}`);
+      return;
+    }
 
-    setSuccessMsg("Evidence logged successfully! Manager has been notified for verification.");
+    setErrorMsg("");
+    setSuccessMsg("Submitted. It is now in your manager's review queue; an approval raises that skill one level.");
     setEvidenceTitle("");
     setEvidenceDesc("");
     setEvidenceText("");
@@ -948,8 +956,13 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           {/* Submit form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {successMsg && (
-              <div className="p-3 bg-[#10B981]/10 border border-[#10B981]/40 text-[#10B981] font-mono text-xs rounded-md">
+              <div role="status" className="p-3 bg-[#10B981]/10 border border-[#10B981]/40 text-[#10B981] font-mono text-xs rounded-md">
                 {successMsg}
+              </div>
+            )}
+            {errorMsg && (
+              <div role="alert" className="p-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 font-mono text-xs rounded-md">
+                {errorMsg}
               </div>
             )}
 

@@ -45,13 +45,6 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   const [loadingPostAssessment, setLoadingPostAssessment] = useState<{ [userId: string]: boolean }>({});
   const [isSigningOffAssessment, setIsSigningOffAssessment] = useState(false);
 
-  // Manager Will Validation Modal State
-  const [activeWillValidationUser, setActiveWillValidationUser] = useState<TeamMemberCapability | null>(null);
-  const [mWillQ1, setMWillQ1] = useState(4);
-  const [mWillQ2, setMWillQ2] = useState(5);
-  const [mWillQ3, setMWillQ3] = useState(4);
-  const [mWillQ4, setMWillQ4] = useState("Yes");
-
   const handleRunPostAssessment = async (member: TeamMemberCapability) => {
     try {
       setLoadingPostAssessment(prev => ({ ...prev, [member.userId]: true }));
@@ -64,7 +57,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         const data = await res.json();
         setPostAssessmentData({
           memberName: data.employeeName || member.userName,
-          targetRole: data.targetRole || "Automation Tester",
+          targetRole: data.targetRole || member.targetRoleTitle || "No target role chosen",
           report: data.postAssessmentReport,
           assessmentId: data.assessment?.id || null,
           status: data.assessment?.status || null
@@ -151,14 +144,14 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: member.userId,
-          targetRole: (member as any).targetRoleTitle || "Automation Tester",
+          targetRole: "Employee",
           type: "weekly_reminder",
-          title: `Weekly Capability Milestone Reminder for ${member.userName}`,
-          message: `Hi ${member.userName}, please complete your pending weekly upskilling milestone to maintain target readiness.`
+          title: `Reminder from ${currentUser.name}`,
+          message: `Hi ${member.userName.split(" ")[0]}, please complete this week's step in your learning plan.`
         })
       });
       if (res.ok) {
-        setActionFeedback(`Agentic reminder sent to ${member.userName}!`);
+        setActionFeedback(`Reminder sent to ${member.userName}'s inbox.`);
         setTimeout(() => setActionFeedback(""), 4000);
       }
     } catch (err) {
@@ -167,22 +160,19 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   };
 
   const handleEscalateLD = async (member: TeamMemberCapability) => {
+    // The server writes the escalation from the signed-in manager and the stored gap
+    // count, so what L&D reads cannot be forged from the browser.
     try {
-      const res = await fetch("/api/reminders", {
+      const res = await fetch("/api/manager/escalate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: member.userId,
-          targetRole: (member as any).targetRoleTitle || "Automation Tester",
-          type: "escalation",
-          title: `L&D Skill Gap Escalation: ${member.userName}`,
-          message: `Manager Marcus Sterling escalated skill gap bottlenecks for ${member.userName} (${member.gapCount} gaps) to L&D Director Sarah Jenkins.`
-        })
+        body: JSON.stringify({ employeeId: member.userId }),
       });
-      if (res.ok) {
-        setActionFeedback(`Escalation alert sent to L&D Director Sarah Jenkins for ${member.userName}.`);
-        setTimeout(() => setActionFeedback(""), 4000);
-      }
+      const data = await res.json().catch(() => ({}));
+      setActionFeedback(res.ok
+        ? `Escalated ${member.userName} to L&D. It is listed on the L&D insights page.`
+        : `Not escalated: ${data.error || `the server answered ${res.status}`}.`);
+      setTimeout(() => setActionFeedback(""), 4000);
     } catch (err) {
       console.error(err);
     }
@@ -198,14 +188,14 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: activeCheckpointUser.userId,
-          targetRole: (activeCheckpointUser as any).targetRoleTitle || "Automation Tester",
+          targetRole: "Employee",
           type: "checkpoint",
-          title: `1-on-1 Checkpoint Scheduled: ${checkpointTopic}`,
-          message: `Scheduled meeting with Marcus Sterling for ${checkpointDate || "Friday at 3:00 PM"}. Topic: ${checkpointTopic}`
+          title: `1-on-1 with ${currentUser.name}: ${checkpointTopic}`,
+          message: `${currentUser.name} has scheduled a 1-on-1 ${checkpointDate ? `for ${checkpointDate}` : "(date to be agreed)"}. Topic: ${checkpointTopic}`
         })
       });
       if (res.ok) {
-        setActionFeedback(`1-on-1 Checkpoint scheduled with ${activeCheckpointUser.userName}!`);
+        setActionFeedback(`1-on-1 sent to ${activeCheckpointUser.userName}'s inbox.`);
         setActiveCheckpointUser(null);
         setTimeout(() => setActionFeedback(""), 4000);
       }
@@ -317,11 +307,13 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
             </thead>
             <tbody className="divide-y divide-[#2A384C]">
               {teamMembers.map((member) => {
-                const targetRole = (member as any).targetRoleTitle || "Automation Tester";
-                const skillScore = (member as any).skillScore || member.overallScore;
-                const willScore = (member as any).willScore || (member.userId === "user_5" ? 88 : 92);
-                const engagement = (member as any).engagementScore || (member as any).learningProgressPercent || 65;
-                const risk = (member as any).riskStatus || (member.gapCount >= 4 ? "High" : "Medium");
+                // `??`, not `||`: a real score of 0 must show as 0. With `||` a report with
+                // no learning activity appeared at 65% engagement and 92 Will.
+                const targetRole = member.targetRoleTitle || "No target role chosen";
+                const skillScore = member.skillScore ?? member.overallScore;
+                const willScore = member.willScore ?? 0;
+                const engagement = member.engagementScore ?? member.learningProgressPercent ?? 0;
+                const risk = member.riskStatus ?? (member.gapCount >= 4 ? "High" : member.gapCount >= 2 ? "Medium" : "Low");
                 const insightText = memberInsights[member.userId];
                 const isInsightLoading = loadingInsights[member.userId];
 
@@ -430,13 +422,6 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                               Post-Training GROW Assessment
                             </>
                           )}
-                        </button>
-                        <button
-                          onClick={() => setActiveWillValidationUser(member)}
-                          className="px-2.5 py-1 bg-[#A855F7]/15 hover:bg-[#A855F7]/25 border border-[#A855F7]/40 text-[#A855F7] hover:text-[#F0F4FF] rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
-                        >
-                          <Award className="h-3 w-3 text-[#A855F7]" />
-                          Validate Will (Observable Behavior)
                         </button>
                         <button
                           onClick={() => handleSendReminder(member)}
@@ -761,158 +746,6 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         </div>
       )}
 
-      {/* Manager Validation of Observable Behaviour (Will Assessment) Modal */}
-      {activeWillValidationUser && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-xl p-6 max-w-xl w-full shadow-2xl space-y-5 animate-fade-in">
-            
-            <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#A855F7]/20 border border-[#A855F7]/40 text-[#A855F7] rounded-lg">
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#F0F4FF]">
-                    Manager Validation — Observable Behavior
-                  </h3>
-                  <p className="text-xs text-[#94A3B8] font-mono">
-                    Direct Report: <strong className="text-[#A855F7]">{activeWillValidationUser.userName}</strong> ({activeWillValidationUser.title})
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveWillValidationUser(null)}
-                className="text-[#94A3B8] hover:text-white cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[#94A3B8]">
-              Evaluate observable workplace behavior (not opinions) to validate the employee's Will Index score.
-            </p>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setActionFeedback(`Manager Will Validation recorded for ${activeWillValidationUser.userName}! Score updated in Skill-vs-Will Matrix.`);
-                setActiveWillValidationUser(null);
-                setTimeout(() => setActionFeedback(""), 4000);
-              }}
-              className="space-y-4 text-xs"
-            >
-              {/* Q1 */}
-              <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C] space-y-2">
-                <label className="text-xs font-bold text-[#F0F4FF] block">
-                  Q1. Does the employee proactively seek opportunities to learn new technologies?
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((scale) => (
-                    <button
-                      key={scale}
-                      type="button"
-                      onClick={() => setMWillQ1(scale)}
-                      className={`flex-1 py-1.5 rounded text-xs font-mono font-bold border cursor-pointer ${
-                        mWillQ1 === scale
-                          ? "bg-[#A855F7] text-white border-[#A855F7]"
-                          : "bg-[#141E30] text-[#94A3B8] border-[#2A384C] hover:border-[#A855F7]/40"
-                      }`}
-                    >
-                      {scale}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q2 */}
-              <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C] space-y-2">
-                <label className="text-xs font-bold text-[#F0F4FF] block">
-                  Q2. Has the employee demonstrated adaptability when assigned unfamiliar work?
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((scale) => (
-                    <button
-                      key={scale}
-                      type="button"
-                      onClick={() => setMWillQ2(scale)}
-                      className={`flex-1 py-1.5 rounded text-xs font-mono font-bold border cursor-pointer ${
-                        mWillQ2 === scale
-                          ? "bg-[#A855F7] text-white border-[#A855F7]"
-                          : "bg-[#141E30] text-[#94A3B8] border-[#2A384C] hover:border-[#A855F7]/40"
-                      }`}
-                    >
-                      {scale}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q3 */}
-              <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C] space-y-2">
-                <label className="text-xs font-bold text-[#F0F4FF] block">
-                  Q3. Does the employee consistently complete learning or development commitments?
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((scale) => (
-                    <button
-                      key={scale}
-                      type="button"
-                      onClick={() => setMWillQ3(scale)}
-                      className={`flex-1 py-1.5 rounded text-xs font-mono font-bold border cursor-pointer ${
-                        mWillQ3 === scale
-                          ? "bg-[#A855F7] text-white border-[#A855F7]"
-                          : "bg-[#141E30] text-[#94A3B8] border-[#2A384C] hover:border-[#A855F7]/40"
-                      }`}
-                    >
-                      {scale}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q4 */}
-              <div className="bg-[#0F1724] p-3 rounded-lg border border-[#2A384C] space-y-2">
-                <label className="text-xs font-bold text-[#F0F4FF] block">
-                  Q4. Would you recommend this employee for a stretch assignment?
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Yes", "Maybe", "Not Yet"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setMWillQ4(opt)}
-                      className={`py-2 rounded text-xs font-mono font-bold border cursor-pointer ${
-                        mWillQ4 === opt
-                          ? "bg-[#10B981]/20 border-[#10B981] text-[#10B981]"
-                          : "bg-[#141E30] text-[#94A3B8] border-[#2A384C] hover:border-[#10B981]/40"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A384C]">
-                <button
-                  type="button"
-                  onClick={() => setActiveWillValidationUser(null)}
-                  className="px-4 py-2 border border-[#2A384C] text-[#94A3B8] hover:text-white rounded-md font-mono text-xs cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#A855F7] hover:bg-[#9333EA] text-[#F0F4FF] font-mono font-bold text-xs rounded-md cursor-pointer transition-all flex items-center gap-2 shadow-lg shadow-[#A855F7]/20"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Save Manager Will Validation</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );

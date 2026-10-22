@@ -323,8 +323,9 @@ export default function App() {
     description: string;
     evidenceText: string;
     documentUrl?: string;
-  }) => {
-    if (!currentUser) return;
+  }): Promise<string | null> => {
+    // Resolves to null on success, or the reason it failed - the form shows which.
+    if (!currentUser) return "You are not signed in.";
     try {
       const res = await fetch("/api/evidence", {
         method: "POST",
@@ -342,9 +343,13 @@ export default function App() {
         // Refresh score
         const capRes = await fetch(`/api/users/${currentUser.id}/capability`);
         if (capRes.ok) setCapabilityData(await capRes.json());
+        return null;
       }
+      const data = await res.json().catch(() => ({}));
+      return data.error || `The server answered ${res.status}.`;
     } catch (err) {
       console.error(err);
+      return "The server could not be reached.";
     }
   };
 

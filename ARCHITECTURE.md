@@ -328,7 +328,7 @@ erDiagram
 | `evidences` | Workplace proof a person submits for a skill, and a manager's verdict on it. |
 | `learning_plans` | The ordered steps of a learning track, with progress, quiz score and time spent. `demandId` + `purpose = project_hiring` tie a track to a client demand. |
 | `courses` | The course catalogue the copilots recommend from. |
-| `reminders` | Nudges, check-ins, campaign notices and project-handoff escalations, shown in the employee's inbox on My readiness. |
+| `reminders` | Nudges, check-ins, campaign notices, project-handoff escalations and escalations to L&D, shown in the employee's inbox on My readiness. The types `escalation`, `campaign` and `ld_escalation` are written only by the server; `POST /api/reminders` refuses them, so they cannot be forged. |
 | `project_demands` | Open client requisitions: required skills, experience band, interview date. |
 | `skill_baselines` | Levels captured at the moment of handoff, the "before" that growth is measured against. |
 | `sessions` | Sign-in sessions: who, when it expires, and whether it was ended (section 7). Added by migration 2. |
@@ -462,7 +462,7 @@ graph:
 | GET | `/api/learning-tracker/resources`, `/api/analytics/workforce`, `/api/analytics/eri`, `/api/analytics/leadership`, `/api/analytics/ld` | manager-or-above (tracker scoped) |
 | POST | `/api/analytics/campaign` | L&D or leadership: it reminds employees across the organisation |
 | POST | `/api/validation`, `/api/learning-plan/assign` | manager-or-above + `ensure_may_access` |
-| POST | `/api/manager/insight`, `/post-assessment`, `/post-assessment/{id}/signoff` | manager-or-above + `ensure_may_access` |
+| POST | `/api/manager/insight`, `/post-assessment`, `/post-assessment/{id}/signoff`, `/escalate` | manager-or-above + `ensure_may_access` |
 | POST | `/api/project-demand/create`, `/match`, `/parse-jd`, `/handoff-skillgap`, `/generate-client-resume` | manager-or-above (organisation-wide) |
 | GET | `/api/project-demand/{demandId}/resume-eligibility/{employeeId}` | manager-or-above (organisation-wide) |
 | GET | `/api/download-app-zip` | Leadership only |
@@ -486,6 +486,7 @@ place.
 | **Enterprise Readiness Index** | weighted mean of the eight `AGENTS.md` components, over the **measured** ones only (see below) | `analytics.readiness_index` |
 | **Readiness by department** (L&D heatmap) | per skill and department: the employees working toward the skill, average of current ÷ target level (capped at 1) | `analytics.ld_overview` |
 | **Campaign** | one reminder to every employee below target on the chosen skill, stating their own current and target level | `analytics.launch_campaign` |
+| **Escalation to L&D** | a reminder written by the server from the signed-in manager and the employee's stored gap count; listed on the L&D page | `analytics.escalate_to_ld` |
 | **Supply against demand** | per skill named by an open demand: ready = employees at level 3+ (the level matching treats as verified), developing = below 3 with a target of 3+ | `analytics.leadership_overview` |
 
 A demand names skills by text. `talent.find_skill` resolves a name to the catalogue
@@ -649,8 +650,8 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 93 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, and campaigns; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
-| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 57 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 96 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 59 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
 isolated database and a controlled file tree, including a decoy secret file beside

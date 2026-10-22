@@ -151,6 +151,8 @@ expect("employee -> parse JD", emp.call("POST", "/api/project-demand/parse-jd",
 expect("employee -> download source zip", emp.call("GET", "/api/download-app-zip")[0], 403)
 expect("employee -> readiness index", emp.call("GET", "/api/analytics/eri")[0], 403)
 expect("employee -> leadership overview", emp.call("GET", "/api/analytics/leadership")[0], 403)
+expect("employee -> escalate to L&D", emp.call("POST", "/api/manager/escalate",
+                                               {"employeeId": EMP_ID})[0], 403)
 expect("employee -> launch an L&D campaign", emp.call("POST", "/api/analytics/campaign",
                                                      {"skillId": "sk_20"})[0], 403)
 
@@ -215,6 +217,8 @@ for path in ["/api/skills", "/api/roles", "/api/courses",
     expect("anonymous -> " + path, none.call("GET", path)[0], 401)
 expect("anonymous -> manager team", none.call("GET", "/api/manager/" + MGR_ID + "/team")[0],
        [401, 403])
+expect("anonymous -> escalate to L&D", none.call("POST", "/api/manager/escalate",
+                                                {"employeeId": EMP_ID})[0], 401)
 expect("anonymous -> launch an L&D campaign", none.call("POST", "/api/analytics/campaign",
                                                           {"skillId": "sk_20"})[0], 401)
 expect("anonymous -> AI orchestrator", none.call("POST", "/api/ai/orchestrator",

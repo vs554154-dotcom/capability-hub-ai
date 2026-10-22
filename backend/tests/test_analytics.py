@@ -263,3 +263,40 @@ def test_no_target_role_is_reported_as_none(monkeypatch):
     ])
     row = next(r for r in capability.team_rollup("user_2") if r["userId"] == "E1000")
     assert row["targetRoleTitle"] is None
+
+
+# --------------------------------------------------------------------------- #
+# Escalations to L&D
+# --------------------------------------------------------------------------- #
+
+def test_a_manager_escalates_their_own_report_with_a_server_written_message(manager, ld):
+    response = manager.post("/api/manager/escalate", json={"employeeId": "E1005"})
+    assert response.status_code == 201
+    message = response.json()["reminder"]["message"]
+    below = query_one(
+        "SELECT COUNT(*) FROM user_skills WHERE userId = 'E1005' AND currentLevel < targetLevel"
+    )[0]
+    assert message.startswith("Marcus Sterling asked L&D")
+    assert f"({below} skill" in message
+
+    on_ld_page = [r for r in ld.get("/api/reminders").json() if r["type"] == "ld_escalation"]
+    assert any(r["id"] == response.json()["reminder"]["id"] for r in on_ld_page)
+
+
+def test_escalation_is_limited_to_a_managers_own_reports(manager, employee):
+    assert manager.post("/api/manager/escalate", json={"employeeId": "E1001"}).status_code == 403
+    assert employee.post("/api/manager/escalate", json={"employeeId": "E1000"}).status_code == 403
+    assert manager.post("/api/manager/escalate", json={}).status_code == 400
+
+
+def test_system_reminder_types_cannot_be_posted(employee):
+    for kind in ("ld_escalation", "campaign", "escalation"):
+        response = employee.post("/api/reminders", json={
+            "userId": "E1000", "type": kind, "title": "Escalated to L&D: me",
+            "message": "Your manager asked L&D for help.",
+        })
+        assert response.status_code == 400, kind
+    ordinary = employee.post("/api/reminders", json={
+        "userId": "E1000", "type": "weekly_reminder", "title": "Note to self", "message": "Study",
+    })
+    assert ordinary.status_code == 201
