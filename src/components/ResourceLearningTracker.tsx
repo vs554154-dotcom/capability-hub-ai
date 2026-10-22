@@ -11,6 +11,7 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
   const [resources, setResources] = useState<ResourceLearningProgress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [assignSuccessMsg, setAssignSuccessMsg] = useState("");
+  const [assignErrorMsg, setAssignErrorMsg] = useState("");
 
   // Assign Modal State
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -174,13 +175,19 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
       });
 
       if (res.ok) {
-        setAssignSuccessMsg(`Assigned new flexible learning track to ${selectedUserForAssign.userName}! Target deadline set to ${customDeadline}.`);
+        setAssignErrorMsg("");
+        setAssignSuccessMsg(`Assigned the track to ${selectedUserForAssign.userName}, due ${customDeadline}. It now shows in their learning plan.`);
         setShowAssignModal(false);
         fetchTrackerData();
         setTimeout(() => setAssignSuccessMsg(""), 6000);
+      } else {
+        // A refused assignment used to leave the dialog open with no explanation.
+        const data = await res.json().catch(() => ({}));
+        setAssignErrorMsg(`Not assigned: ${data.error || `the server answered ${res.status}`}.`);
       }
     } catch (err) {
       console.error(err);
+      setAssignErrorMsg("Not assigned: the server could not be reached.");
     }
   };
 
@@ -445,9 +452,15 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
               </div>
             </div>
 
+            {assignErrorMsg && (
+              <div role="alert" className="p-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 font-mono text-xs rounded-md">
+                {assignErrorMsg}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A384C]">
               <button
-                onClick={() => setShowAssignModal(false)}
+                onClick={() => { setShowAssignModal(false); setAssignErrorMsg(""); }}
                 className="px-4 py-2 bg-[#1E293B] text-[#94A3B8] text-xs font-mono font-bold rounded-md"
               >
                 Cancel

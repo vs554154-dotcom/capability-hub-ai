@@ -902,18 +902,26 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                 
                 {/* Rating, Viewership & 2026 Updated Syllabus Badges */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    {c.rating || 4.9} / 5.0
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded text-[10px] font-mono font-bold">
-                    <Users className="h-3 w-3 text-indigo-400" />
-                    {c.enrollmentCount || "180,000+ Learners"}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
-                    <Zap className="h-3 w-3 text-emerald-400" />
-                    {c.lastUpdated || "Updated June 2026"}
-                  </span>
+                  {/* Shown only when the catalogue records them - no stand-in rating or
+                      learner count when it does not. */}
+                  {c.rating != null && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      {c.rating} / 5.0
+                    </span>
+                  )}
+                  {c.enrollmentCount && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded text-[10px] font-mono font-bold">
+                      <Users className="h-3 w-3 text-indigo-400" />
+                      {c.enrollmentCount}
+                    </span>
+                  )}
+                  {c.lastUpdated && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
+                      <Zap className="h-3 w-3 text-emerald-400" />
+                      {c.lastUpdated}
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-[11px] text-[#94A3B8] mt-2 line-clamp-2 leading-relaxed">

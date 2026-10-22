@@ -103,6 +103,8 @@ interface Assessment {
   mcqs: MCQ[];
   videoQuestions: VideoQuestion[];
   practicalExercise?: PracticalExercise;
+  /** Set when no model was reachable: generic questions, not built from the JD. */
+  _fallback?: boolean;
 }
 
 // The gaps the evaluations actually returned, merged across answers. The final report
@@ -211,9 +213,21 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   );
 
   // Input State
-  const [targetRole, setTargetRole] = useState(
-    initialRoleTitle || currentUser.targetRoleId || "Senior GenAI Solutions Architect"
-  );
+  // Starts as the person's own target role, by title. (This used to show the role's
+  // internal id - "role_1" - or a made-up "Senior GenAI Solutions Architect".)
+  const [targetRole, setTargetRole] = useState(initialRoleTitle || "");
+  useEffect(() => {
+    if (initialRoleTitle || !currentUser.targetRoleId) return;
+    let cancelled = false;
+    fetch("/api/roles")
+      .then(res => (res.ok ? res.json() : []))
+      .then((roles: { id: string; title: string }[]) => {
+        const title = roles.find(r => r.id === currentUser.targetRoleId)?.title;
+        if (!cancelled && title) setTargetRole(prev => prev || title);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUser.targetRoleId, initialRoleTitle]);
   const [jobDescription, setJobDescription] = useState(
     initialJobDescription || PRESET_JDS[0].jd
   );
@@ -328,7 +342,9 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   }, []);
 
   // Handle Camera Toggle
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const startCameraStream = async () => {
+    setCameraError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -363,8 +379,15 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
       }
 
     } catch (err: any) {
-      console.warn("Unable to access camera/mic:", err?.message || err);
+      // Tell the candidate, and how to carry on, rather than only logging it.
       setIsCameraOn(false);
+      setCameraError(
+        err?.name === "NotAllowedError"
+          ? "Camera and microphone access is blocked. Allow it in the browser's address bar, or type your answers instead."
+          : err?.name === "NotFoundError"
+          ? "No camera or microphone was found. You can type your answers instead."
+          : "The camera or microphone could not be started. You can type your answers instead."
+      );
     }
   };
 
@@ -521,8 +544,8 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
         setAssessment(data.assessment);
         setStep("assessment");
         setActiveTab("mcq");
-        // Pre-activate camera for realistic interview feel
-        startCameraStream();
+        // The camera starts when the candidate records an answer or turns it on -
+        // not as soon as the questions appear.
       } else {
         throw new Error(data.error || "Failed to generate assessment.");
       }
@@ -1168,6 +1191,13 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
 
               <h2 className="text-sm font-bold text-[#F0F4FF]">{assessment.roleTitle}</h2>
             </div>
+
+            {assessment._fallback && (
+              <p role="status" className="mt-2 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
+                The AI model was unavailable, so these are generic practice questions, not questions
+                built from your job description. Treat the scores as a rough practice signal only.
+              </p>
+            )}
             
             <div className="flex items-center gap-2 mt-1 text-xs text-[#94A3B8] font-mono flex-wrap">
               <span>Current Role: <strong>{assessment.currentDesignation || currentDesignation}</strong></span>
@@ -1500,7 +1530,10 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   {!isCameraOn && (
                     <div className="text-center p-4">
                       <VideoOff className="h-10 w-10 text-[#2A384C] mx-auto mb-2" />
-                      <p className="text-xs font-bold text-[#94A3B8]">Camera Feed Inactive / Optional</p>
+                      <p className="text-xs font-bold text-[#94A3B8]">Camera off (optional)</p>
+                      {cameraError && (
+                        <p role="alert" className="mt-1 text-[11px] text-amber-400 max-w-xs mx-auto">{cameraError}</p>
+                      )}
                       <button
                         onClick={startCameraStream}
                         className="mt-2 text-[10px] font-mono text-[#4F8EF7] underline cursor-pointer"
