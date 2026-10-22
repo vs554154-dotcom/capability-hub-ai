@@ -930,6 +930,12 @@ input:focus, textarea:focus, select:focus {
     background-color: var(--bg);
   }
   html .bg-\[\#0A0A0A\]\/80 { background-color: rgb(var(--bg-rgb) / 80%); }
+  html .bg-\[\#0A0A0A\]\/60 { background-color: rgb(var(--bg-rgb) / 60%); }
+  /* Translucent dark surfaces still in use; unmapped, they painted dark blocks on the
+     light palette (unselected requisition cards looked disabled). */
+  html .bg-\[\#141E30\]\/60 { background-color: rgb(var(--surface-2-rgb) / 65%); }
+  html .bg-\[\#141E30\]\/40 { background-color: rgb(var(--surface-2-rgb) / 45%); }
+  html .bg-\[\#0F1724\]\/40 { background-color: rgb(var(--surface-rgb) / 45%); }
 
   /* --- Cards --- */
   html .bg-\[\#0F1724\],
