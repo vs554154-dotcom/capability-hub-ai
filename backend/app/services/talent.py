@@ -295,8 +295,9 @@ def handoff(
     client_interview_date: str | None,
 ) -> dict[str, Any]:
     """Hand a matched candidate to the SkillGap agent: snapshot their current levels
-    as the baseline growth will be measured against, and send them an escalation
-    with their upskilling track. Both commit together."""
+    as the baseline growth will be measured against, and tell them which skills are
+    missing and what length of track fits the time to the interview. Both commit
+    together. No track is assigned here; a manager or L&D assigns one."""
     with transaction():
         emp = users.get_user_by_id(employee_id)
         if not emp:
@@ -326,16 +327,16 @@ def handoff(
             demand.get("projectName") or "Project Opportunity",
             "escalation",
             f"SkillGap Handoff: Upskilling Required for {customer} Interview",
-            f"You have been matched for '{project}'. Missing competencies identified: "
-            f"[{target_skills}]. Your {track} is prioritized for your client interview "
-            f"on {interview_formatted}.",
+            f"You have been matched for '{project}'. Missing competencies: "
+            f"[{target_skills}]. A {track} fits the time to your client interview on "
+            f"{interview_formatted}; your manager or L&D will assign your learning track.",
         )
 
     return {
         "success": True,
         "message": (
-            "Handoff payload delivered successfully to SkillGap-to-Growth Agent "
-            f"for {emp['name']}."
+            f"Handed to the SkillGap agent: {emp['name']}'s current levels are saved as "
+            "the baseline, and they have been told which skills are missing."
         ),
         "employeeId": emp["id"],
         "targetRole": project,

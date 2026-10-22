@@ -56,9 +56,11 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
       if (res.ok) {
         const data = await res.json();
         setPostAssessmentData({
-          memberName: data.employeeName || member.userName,
-          targetRole: data.targetRole || member.targetRoleTitle || "No target role chosen",
-          report: data.postAssessmentReport,
+          memberName: member.userName,
+          targetRole: member.targetRoleTitle || "No target role chosen",
+          // The endpoint returns the text as `narrative`; this read `postAssessmentReport`,
+          // so the assessment managers signed off on was never shown to them.
+          report: data.narrative,
           assessmentId: data.assessment?.id || null,
           status: data.assessment?.status || null
         });
@@ -688,10 +690,13 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
               <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-[#10B981]" />
-                  <span className="text-xs font-mono font-bold text-[#F0F4FF] uppercase tracking-wider">Verified Post-Assessment Report</span>
+                  <span className="text-xs font-mono font-bold text-[#F0F4FF] uppercase tracking-wider">Post-training assessment</span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded border border-[#10B981]/30">
-                  Readiness Check Complete
+                {/* The status is the manager's decision, not something the report concludes. */}
+                <span className={`tag ${postAssessmentData.status === "cleared" ? "tone-ok" : postAssessmentData.status === "not_ready" ? "tone-warn" : "tone-accent"}`}>
+                  {postAssessmentData.status === "cleared" ? "Cleared"
+                    : postAssessmentData.status === "not_ready" ? "Not ready"
+                    : "Awaiting your sign-off"}
                 </span>
               </div>
 
@@ -703,7 +708,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
             {/* Modal Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-[#2A384C]">
               <span className="text-[11px] text-[#94A3B8] font-mono italic">
-                Post-assessment confirms skill gap closure post Learning Concierge training.
+                Your decision is recorded and decides whether a client resume can be generated.
               </span>
               <div className="flex gap-3 w-full sm:w-auto">
                 <button

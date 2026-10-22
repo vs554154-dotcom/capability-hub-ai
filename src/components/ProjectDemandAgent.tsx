@@ -924,12 +924,15 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                 {clientResumeMarkdown && (
                   <div className="flex items-center justify-between pt-2 border-t border-[#2A384C]">
                     <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified, zero-hallucination client resume generated.
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Written from verified records only. Review it before sending.
                     </span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(clientResumeMarkdown);
-                        alert("Client resume copied to clipboard!");
+                        // Say whether the copy worked; it can be refused by the browser.
+                        navigator.clipboard.writeText(clientResumeMarkdown).then(
+                          () => alert("Client resume copied to the clipboard."),
+                          () => alert("The browser did not allow copying. Select the resume text and copy it instead."),
+                        );
                       }}
                       className="bg-[#4F8EF7] hover:bg-[#3B82F6] text-[#0F1724] font-bold text-xs py-2 px-4 rounded-lg font-mono uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
                     >
@@ -948,7 +951,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
         <div className="fixed bottom-6 right-6 z-50 bg-[#0F1724] border-2 border-amber-500 rounded-xl p-5 max-w-md shadow-2xl space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-400 font-mono uppercase flex items-center gap-1.5">
-              <Send className="h-4 w-4" /> Multi-Agent Payload Handoff Delivered
+              <Send className="h-4 w-4" /> Handed off to the SkillGap agent
             </span>
             <button
               onClick={() => setHandoffStatus(null)}
@@ -969,7 +972,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
           </div>
 
           <p className="text-[10px] font-mono text-emerald-400 italic">
-            → SkillGap-to-Growth Agent has dynamically scheduled a flexible, adaptive upskilling roadmap prioritized for this client interview date.
+            Next: assign a project learning track from the Team board or the L&D page, so growth can be measured against this baseline.
           </p>
         </div>
       )}

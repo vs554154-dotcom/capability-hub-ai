@@ -300,3 +300,30 @@ def test_system_reminder_types_cannot_be_posted(employee):
         "userId": "E1000", "type": "weekly_reminder", "title": "Note to self", "message": "Study",
     })
     assert ordinary.status_code == 201
+
+
+# --------------------------------------------------------------------------- #
+# Summaries written without a model state the record, not a stock judgement
+# --------------------------------------------------------------------------- #
+
+def test_the_insight_without_a_model_states_the_employees_record(manager):
+    text = manager.post("/api/manager/insight", json={"employeeId": "E1005"}).json()["insight"]
+    strongest = query_one(
+        "SELECT s.name, us.currentLevel FROM user_skills us JOIN skills s ON s.id = us.skillId "
+        "WHERE us.userId = 'E1005' ORDER BY us.currentLevel DESC LIMIT 1"
+    )
+    assert text.startswith("(computed from records")
+    assert f"at level {strongest['currentLevel']} of 5" in text
+    assert "core proficiency" not in text
+
+
+def test_the_post_assessment_without_a_model_states_real_progress(manager):
+    result = manager.post("/api/manager/post-assessment", json={"employeeId": "E1015"}).json()
+    narrative = result["narrative"]
+    done = query_one(
+        "SELECT COUNT(*) FROM learning_plans WHERE userId = 'E1015' AND status = 'completed'"
+    )[0]
+    total = query_one("SELECT COUNT(*) FROM learning_plans WHERE userId = 'E1015'")[0]
+    assert f"{done} of {total} learning step" in narrative
+    assert "training track completed" not in narrative
+    assert result["assessment"]["narrative"] == narrative

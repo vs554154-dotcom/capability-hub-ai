@@ -11,7 +11,7 @@ from typing import Any
 from .. import ai
 from ..database import transaction
 from ..errors import NotFound
-from ..repositories import assessments, catalog, evidence, user_skills, users
+from ..repositories import assessments, catalog, evidence, learning, user_skills, users
 from .analytics import org_context
 
 PERSONAS = {
@@ -66,6 +66,37 @@ def evidence_lines(user_id: str) -> str:
         + ("✅ Approved Evidence" if e["status"] == "approved" else "⏳ Pending Review")
         for e in items
     )
+
+
+COMPUTED = "(computed from records; the AI model was unavailable)"
+
+
+def record_facts(user_id: str) -> dict[str, Any]:
+    """What the records say about one person, for summaries written without a model:
+    strongest skill, gaps largest first, approved evidence, learning-plan progress."""
+    names = {s["id"]: s["name"] for s in catalog.get_skills()}
+    levels = user_skills.get_user_skills(user_id)
+    gaps = sorted(
+        (
+            {"skill": names.get(s["skillId"], s["skillId"]), "current": s["currentLevel"], "target": s["targetLevel"]}
+            for s in levels if s["currentLevel"] < s["targetLevel"]
+        ),
+        key=lambda g: (g["current"] - g["target"], g["skill"]),
+    )
+    strongest = max(levels, key=lambda s: s["currentLevel"], default=None)
+    plan = learning.get_learning_plan(user_id)
+    return {
+        "strongest": (names.get(strongest["skillId"], strongest["skillId"]), strongest["currentLevel"])
+        if strongest else None,
+        "gaps": gaps,
+        "approved": sum(1 for e in evidence.get_for_user(user_id) if e["status"] == "approved"),
+        "steps_done": sum(1 for p in plan if p["status"] == "completed"),
+        "steps_total": len(plan),
+    }
+
+
+def _plural(n: int, word: str) -> str:
+    return f"{n} {word}{'' if n == 1 else 's'}"
 
 
 def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool = False) -> str:
@@ -169,6 +200,7 @@ def manager_insight(employee_id: str) -> str:
             raise NotFound("Employee not found")
         skills_text = skill_lines(emp["id"])
         evidence_text = evidence_lines(emp["id"])
+        facts = record_facts(emp["id"])
 
     prompt = (
         f"Employee: {emp['name']} ({emp['title']})\n"
@@ -179,12 +211,30 @@ def manager_insight(employee_id: str) -> str:
         "2. Primary skill bottleneck & recommended course/practice\n"
         "3. Recommended 1-on-1 coaching question using the GROW framework."
     )
-    return ai.generate(prompt, temperature=0.7) or (
-        f"• Strength: {emp['name']} has demonstrated core proficiency in key "
-        "skills with verified workplace evidence.\n"
-        "• Bottleneck: Capability gap in target role requirements.\n"
-        '• Coaching Question (GROW): "What specific real-world task will you '
-        'complete first to validate your target competency level?"'
+    text = ai.generate(prompt, temperature=0.7)
+    if text:
+        return text
+
+    strongest = facts["strongest"]
+    gap = facts["gaps"][0] if facts["gaps"] else None
+    strength = (
+        f"{strongest[0]} at level {strongest[1]} of 5; {_plural(facts['approved'], 'approved piece')} of evidence."
+        if strongest else "No skill records yet."
+    )
+    bottleneck = (
+        f"{gap['skill']}: level {gap['current']} against a target of {gap['target']}"
+        + (f", and {_plural(len(facts['gaps']) - 1, 'other gap')}." if len(facts["gaps"]) > 1 else ".")
+        if gap else "No skill is below target."
+    )
+    question = (
+        f'"What piece of real work could show {gap["skill"]} at level {gap["target"]}?"'
+        if gap else '"Which client-facing work would stretch you next?"'
+    )
+    return (
+        f"{COMPUTED}\n"
+        f"• Strength: {strength}\n"
+        f"• Bottleneck: {bottleneck}\n"
+        f"• Coaching question (GROW): {question}"
     )
 
 
@@ -201,6 +251,7 @@ def post_assessment(employee_id: str, demand_id: str | None, manager_id: str) ->
         )
         skills_text = skill_lines(emp["id"])
         evidence_text = evidence_lines(emp["id"])
+        facts = record_facts(emp["id"])
 
     prompt = (
         "Conduct a Post-Training GROW Readiness Assessment for an employee who has "
@@ -212,12 +263,23 @@ def post_assessment(employee_id: str, demand_id: str | None, manager_id: str) ->
         "Assess readiness against the GROW framework and state clearly whether the "
         "employee is client-interview ready."
     )
+    gaps = facts["gaps"]
     narrative = ai.generate(prompt, temperature=0.7) or (
-        f"Post-Training GROW Readiness Assessment for {emp['name']}\n\n"
-        "• Goal: reach target competency for the assigned role.\n"
-        "• Reality: training track completed; skill levels recorded against baseline.\n"
-        "• Options: proceed to client interview, or extend practice on weakest skill.\n"
-        "• Will: manager sign-off required before a client resume can be generated."
+        f"Post-Training GROW Readiness Assessment for {emp['name']} {COMPUTED}\n\n"
+        f"• Goal: {role['title'] if role else 'the target role'}.\n"
+        f"• Reality: {facts['steps_done']} of {_plural(facts['steps_total'], 'learning step')} completed; "
+        + (
+            f"{_plural(len(gaps), 'skill')} still below target "
+            f"({', '.join(f'{g["skill"]} {g["current"]}/{g["target"]}' for g in gaps[:3])}"
+            + (", ..." if len(gaps) > 3 else "") + "); "
+            if gaps else "no skill below target; "
+        )
+        + f"{_plural(facts['approved'], 'approved piece')} of evidence.\n"
+        + (
+            f"• Options: extend practice on {gaps[0]['skill']} before the client interview, or proceed and accept the gap.\n"
+            if gaps else "• Options: proceed to the client interview.\n"
+        )
+        + "• Will: the manager's sign-off, as cleared or not ready, decides whether a client resume can be generated."
     )
     assessment = assessments.create_post_assessment(emp["id"], demand_id, manager_id, narrative)
     return {"assessment": assessment, "narrative": narrative}

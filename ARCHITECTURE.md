@@ -546,7 +546,10 @@ contains only verified facts and instructs the model not to invent any.
   the product works without a model.
 - **Never raises.** `ai.generate()` returns `None` on any failure and the caller
   substitutes its fallback. Fallbacks are recognisable: structured responses carry
-  `"_fallback": true`, and text fallbacks have a fixed form.
+  `"_fallback": true`, and text fallbacks have a fixed form. A fallback about a person
+  (manager insight, post-training assessment) is written from that person's records -
+  strongest skill, gaps, evidence, learning progress - and starts by saying it was
+  computed without the model; it never states a judgement the records don't support.
 - **Bounded, never retried.** Every call is limited to `GEMINI_TIMEOUT_SECONDS`
   (default 120) and makes exactly one attempt, so the worst case for a request is that
   long and no longer. Retries are switched off explicitly: the SDK's retry policy
@@ -650,7 +653,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 96 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 98 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 59 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
