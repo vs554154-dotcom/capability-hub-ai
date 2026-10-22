@@ -12,6 +12,9 @@ This document provides system instructions, architectural specs, and operational
 While the **SkillGap-to-Growth Agent** focuses on identifying individual capability gaps, the **Learning Concierge Agent** provides personalized learning guidance, and the **Manager GROW Coach** supports workforce growth planning and coaching conversations, **Capability Analytics AI** serves as the strategic intelligence layer of CyBridge. It transforms workforce capability data, workplace evidence, learning outcomes, deployment readiness signals, and organizational capability metrics into actionable enterprise intelligence that enables leadership teams to forecast capability supply, mitigate workforce risks, optimize learning investments, improve deployment readiness, and build a future-ready workforce aligned with evolving business demands.
 
 ### Key Capabilities & Copilots
+
+This section describes the product's intent. `ARCHITECTURE.md` describes what is built, and its section 15 lists what is not yet.
+
 - **Demand-to-Deployment Agent**: Drives project demand intake, parses client JDs, matches internal talent with explainable fitment ("Why This Candidate?"), calculates Signature Metrics (Time-to-Readiness - TTR, Time-to-Deployment - TTD, Evidence Provenance), and generates post-training client resumes with zero-hallucination guardrails.
 - **SkillGap-to-Growth Agent**: Analyzes career experience, creates flexible/adaptive capability roadmaps (ranging from 1-week emergency sprints to multi-week tracks depending on interview dates), runs interactive Job Description (JD) video/audio interview scenarios with MCQ validation and spoken response AI evaluation, and automatically redirects identified skill gaps to the Learning Concierge for hands-on assignments.
 - **Learning Concierge Agent**: Functions as a 1-on-1 AI Technical Mentor to clear employee doubts and clarify complex software concepts/patterns, while curating verified course recommendations, certification pathways, bite-sized learning modules, and hands-on practice assignments tailored to skill gaps.
@@ -106,7 +109,7 @@ not lost.
 
 ## 4. Key Metrics & Terminology Standards
 
-- **Skill-vs-Will Matrix (2×2 Quadrant Model)**: Categorizes workforce across Deploy Now (High Skill/High Will), Accelerate Learning (Low Skill/High Will), Retain & Coach (High Skill/Low Will), and Intervention Required (Low Skill/Low Will). (An optional 3×3 9-Box grid is supported for 9-cell classification).
+- **Skill-vs-Will Matrix (2×2 Quadrant Model)**: Categorizes workforce across Deploy Now (High Skill/High Will), Accelerate Learning (Low Skill/High Will), Retain & Coach (High Skill/Low Will), and Intervention Required (Low Skill/Low Will), split at 60 on both axes. (A 3×3 9-Box grid is not implemented.)
 - **Enterprise Readiness Index (ERI)**: Composite organizational capability metric (%) synthesized from Skill Proficiency (25%), Level-1 Video/MCQ Assessments (20%), Workplace Evidence Validation (15%), Certification Health (15%), Capability Readiness Index - CRI (10%), Deployment Availability (5%), Learning Engagement Velocity (5%), and Manager GROW Validation (5%). Computed in `backend/app/services/analytics.py` over the components that have stored data; the rest are reported as not measured, never estimated (`ARCHITECTURE.md`, section 8).
 - **Manager GROW Coach Positioning**: Focused strictly on team capability development, growth planning, and coaching conversations (avoiding administrative appraisal terminology).
 - **Bird's-Eye Intelligence**: Always written with correct possessive punctuation (`bird's-eye`).
