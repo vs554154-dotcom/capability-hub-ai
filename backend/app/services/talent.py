@@ -13,7 +13,7 @@ from ..errors import Invalid, NotFound
 from ..numeric import js_round
 from ..repositories import assessments, catalog, demands, evidence, learning, reminders, user_skills, users
 from .matching import (
-    VERIFIED_LEVEL, catalogue_names, find_skill, mentioned_skills, named_exactly, requirement_status,
+    VERIFIED_LEVEL, catalogue_names, find_skill, mentioned_skills, named_exactly, requirement_status, weight,
 )
 
 # --------------------------------------------------------------------------- #
@@ -108,7 +108,8 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
     explanation and recommended next actions for each.
 
     overall = 45% technical + 20% domain + 15% experience + 20% capability readiness,
-    capped at 99. Below 80 the candidate needs upskilling before the interview.
+    capped at 99. Technical is the share of the required skills met, by weight: a general
+    skill counts half (see matching.weight). Below 80 the candidate needs upskilling before the interview.
     """
     with transaction():
         employees = [u for u in users.get_users() if u["role"] == "employee"]
@@ -141,7 +142,8 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
         for r in status:
             holders[r["name"]] += r["met"]
         matched = len(status) - len(missing)
-        technical = js_round(matched / len(required) * 100)
+        weights = [weight(r["skillName"], demand.get("projectName") or "") for r in status]
+        technical = js_round(sum(w for w, r in zip(weights, status) if r["met"]) / sum(weights) * 100)
 
         dept = emp["department"].lower()
         emp_domain = (emp.get("domain") or emp["department"]).lower()
@@ -189,7 +191,7 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
             f"{emp['name']} scored {overall}% overall match for "
             f"'{demand.get('projectName')}'. Technical Match is {technical}% "
             f"based on {matched} of {len(required)} required competencies "
-            f"verified. Verified Workplace Evidence: {len(approved)} approved "
+            f"verified{', specialist ones counting double' if len(set(weights)) > 1 else ''}. Verified Workplace Evidence: {len(approved)} approved "
             f"artifacts. {gap_text}"
         )
         if handoff_required:

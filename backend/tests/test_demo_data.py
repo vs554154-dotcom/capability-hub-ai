@@ -267,7 +267,7 @@ def assert_ladder(name, demand, low_rung=65):
     assert len(people) >= 6, (name, places)
     assert 75 <= places[0] < 99, (name, places)                    # someone close to ready, nobody perfect
     assert len(set(places[:6])) >= 4, (name, places)               # different percentages at the top
-    assert sum(65 <= p < 80 for p in places) >= 1, (name, places)  # some nearly there
+    assert sum(60 <= p < 80 for p in places) >= 1, (name, places)  # the Partial band on screen
     assert places[-1] < low_rung, (name, places)                   # some who need training
     assert people[-1]["missingSkills"], name
 
@@ -289,6 +289,36 @@ def test_every_job_description_file_has_several_people_with_different_fitment(de
 @pytest.mark.parametrize("name, text, needed, titles", UNSEEN, ids=[u[0] for u in UNSEEN])
 def test_an_unseen_job_description_has_several_people_with_different_fitment(demo, name, text, needed, titles):
     assert_ladder(name, {**talent.parse_job_description(text), "projectName": name}, low_rung=75)
+
+
+def test_specialist_skills_count_twice_as_much_as_general_ones(demo):
+    required = ["Apex", "Lightning Web Components", "REST APIs", "Git & Version Control"]
+    people = {m["employeeId"]: m for m in talent.match_candidates({"projectName": "CRM", "requiredSkills": required})["matches"]}
+    general = next(m for m in people.values() if set(m["missingSkills"]) == {"Apex", "Lightning Web Components"})
+    special = next(m for m in people.values() if set(m["missingSkills"]) == {"REST APIs", "Git & Version Control"})
+    assert (general["technicalMatchPct"], special["technicalMatchPct"]) == (33, 67)      # 1 of 3, 2 of 3
+    assert "specialist ones counting double" in general["matchExplanation"]
+    # An opening named after a general skill counts it in full.
+    assert matching.weight("SQL") == 0.5 and matching.weight("SQL", "SQL Developer") == 1 and matching.weight("Apex") == 1
+    assert all(matching.named_exactly(s, catalog.get_skills()) for s in matching.GENERAL_SKILLS)
+
+
+def test_people_of_another_trade_do_not_crowd_the_top(demo):
+    """Among the best five for each opening, those from an unrelated role are rare."""
+    related = {}
+    for line in (config.REPO_ROOT / "backend" / "seed" / "source" / "related_roles.txt").read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            role, near = line.split(":")
+            related[role.strip()] = {n.strip() for n in near.split(",")}
+    odd = places = 0
+    for f in sorted((config.REPO_ROOT / "sample-data" / "job-descriptions").glob("*.txt")):
+        text = f.read_text(encoding="utf-8")
+        role = text.splitlines()[0].split(":", 1)[1].strip()
+        kin = {role, *related[role], *(r for r, near in related.items() if role in near)}
+        best = ladder({**talent.parse_job_description(text), "projectName": role})[:5]
+        odd += sum(m["primaryRole"] not in kin for m in best)
+        places += len(best)
+    assert odd / places < 0.04, f"{odd} of {places}"
 
 
 def test_the_first_people_of_the_base_data_keep_their_place(demo):

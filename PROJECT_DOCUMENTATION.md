@@ -81,7 +81,7 @@ Every score is computed from stored records; `ARCHITECTURE.md` (section 8) gives
 
 - **Capability Readiness Score (CRS):** how close an employee's current levels are to what their target role requires, plus up to 15 points for manager-approved evidence. Drives the readiness gauge on the employee dashboard.
 - **Skill and Will:** the two axes of the Skill-vs-Will matrix. Skill comes from skill levels and approved evidence; Will from learning follow-through, evidence initiative, goal progress and goal commitment.
-- **Match Score (Project Demand):** 45% technical + 20% domain + 15% experience + 20% capability readiness, used to rank candidates against a demand.
+- **Match Score (Project Demand):** 45% technical + 20% domain + 15% experience + 20% capability readiness, used to rank candidates against a demand. Specialist skills count twice as much as general ones such as Git or SQL.
 - **Enterprise Readiness Index (ERI):** the eight-component composite, computed over the components that have stored data. Two components (Level-1 interview assessments and certification health) have none yet, so the index covers 60% of its weight and reports that share. Its trend line is built from one real reading per day.
 - **Supply against demand:** for each skill an open demand requires, the people ready now (level 3+) and those working toward it.
 

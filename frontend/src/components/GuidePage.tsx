@@ -36,7 +36,7 @@ const LOOP: Step[] = [
   {
     title: "Match the bench", icon: Search, who: STAFF,
     where: "project_demand", whereLabel: "Demand to deploy",
-    what: "Every employee is scored against the demand: 45% technical, 20% domain, 15% experience, 20% readiness, with a written \"why this candidate\".",
+    what: "Every employee is scored against the demand: 45% technical (specialist skills count double), 20% domain, 15% experience, 20% readiness, with a written \"why this candidate\".",
     recorded: "Nothing until you act - matching is read-only",
   },
   {
@@ -106,7 +106,7 @@ const NUMBERS: { name: string; means: string }[] = [
   { name: "Will", means: "Behaviour, not a survey: 40% learning follow-through, 30% evidence initiative, 20% goal progress, 10% having chosen a target role." },
   { name: "Skill-vs-Will quadrant", means: "Skill and Will both 60+ is Deploy Now; high Will only, Accelerate Learning; high Skill only, Retain & Coach; neither, Intervention Required." },
   { name: "Capability Readiness Score", means: "How close current levels are to what the target role requires, plus up to 15 points for approved evidence." },
-  { name: "Match score", means: "How well a person fits a demand: 45% technical, 20% domain, 15% experience, 20% readiness." },
+  { name: "Match score", means: "How well a person fits a demand: 45% technical, 20% domain, 15% experience, 20% readiness. Skills almost everyone in IT has, such as Git or SQL, count half as much as specialist ones." },
   { name: "Enterprise Readiness Index", means: "Eight weighted components. Those with no stored data (certifications, and interview assessments until someone finishes one) are shown as not measured and left out, never estimated." },
 ];
 

@@ -13,6 +13,7 @@ backend/scripts/load_demo_data.py. Every person and client is made up.
 """
 from __future__ import annotations
 
+import ast
 import json
 import random
 import re
@@ -678,6 +679,55 @@ for u in newcomers[settled:]:
     u["managerId"] = squad[0]["managerId"]
     squad.append(u)
 users += newcomers[settled:]
+records(settled)
+
+# General skills count half in a match (services/matching.py), so the rungs are checked once
+# more by that measure, and filled where one is empty.
+depth = random.Random(20261127)
+settled = len(newcomers)
+GENERAL = set(ast.literal_eval(re.search(
+    r"GENERAL_SKILLS = frozenset\((\{.*?\})\)", (ROOT / "backend/app/services/matching.py").read_text(encoding="utf-8"), re.S).group(1)))
+
+
+def weighted(u: dict[str, Any], r: dict[str, Any]) -> float:
+    title = r["demand"][0] if "demand" in r else r["title"]
+    weights = {s: 0.5 if s in GENERAL and not names_it(s, title) else 1.0 for s in r["skills"]}
+    return sum(w for s, w in weights.items() if share(u, [s])) / sum(weights.values()) * 100
+
+
+def places(r: dict[str, Any]) -> list[int]:
+    """The fitment of everyone who meets two in five of the role's skills, by weight."""
+    result = []
+    for u in staff:
+        w = half_up(weighted(u, r))
+        if w >= 40:
+            result.append(half_up(fitment(u, r) + (w - half_up(share(u, r["skills"]))) * 0.45))
+    return result
+
+
+for r in roles:
+    for _ in range(6):
+        now = places(r)
+        if not any(p <= 62 for p in now):
+            done = newcomer(r, 40, 50) or newcomer(r, 50, 65)
+        elif not any(66 <= p <= 78 for p in now):
+            done = newcomer(r, 65, 85)
+        elif len(now) < 8:
+            done = newcomer(r, 50, 65)
+        else:
+            break
+        if not done:
+            break
+for u in newcomers[settled:]:
+    first = u["name"].split()[0]
+    squad = next((q for q in teams[u["department"]] if len(q) < 16 and first not in {x["name"].split()[0] for x in q}), None)
+    if squad is None:
+        stop(f"no team has room for {u['name']} in {u['department']}")
+    u["managerId"] = squad[0]["managerId"]
+    squad.append(u)
+users += newcomers[settled:]
+for u in newcomers[settled:]:
+    proof.setdefault(u["id"], [])
 records(settled)
 
 # --------------------------------------------------------------------------- #

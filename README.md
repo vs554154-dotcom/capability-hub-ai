@@ -92,7 +92,7 @@ The backend is Python (FastAPI); Node is used only to build the frontend.
    python backend/scripts/verify_authz_scenarios.py http://localhost:8000
    ```
 
-5. **Demo data**: a new database starts with a made-up company of 375 employees, 205
+5. **Demo data**: a new database starts with a made-up company of 401 employees, 205
    technologies and 49 client demands. To add it to a database you already have, or to
    move its passed interview dates ahead before a demo:
    ```bash

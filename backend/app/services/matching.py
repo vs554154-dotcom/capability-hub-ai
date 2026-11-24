@@ -21,6 +21,19 @@ from ..config import SKILL_ALIASES_PATH
 # The skill level the matching engine treats as verified competency in a requirement.
 VERIFIED_LEVEL = 3
 
+# Skills found in almost any IT profile. They count half in a match: counted in full, a
+# Ruby engineer who knows Git and REST looked like two thirds of a Salesforce developer.
+GENERAL_SKILLS = frozenset({
+    "Agile", "Git & Version Control", "HTML & CSS", "Jira", "Microsoft Excel", "REST APIs", "SQL",
+    "Stakeholder Management",
+})
+
+
+def weight(skill_name: str, opening: str = "") -> float:
+    """What a required skill counts in a match: half for a general one, unless the
+    opening is named after it ("SQL Developer")."""
+    return 0.5 if skill_name in GENERAL_SKILLS and not names_word(skill_name, opening) else 1.0
+
 
 @lru_cache(maxsize=8192)
 def _phrase(text: str) -> re.Pattern[str]:

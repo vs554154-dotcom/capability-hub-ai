@@ -67,7 +67,7 @@ python backend/scripts/verify_auth.py http://localhost:8000                 # 14
 python backend/scripts/verify_ai.py http://localhost:8000                   # AI endpoints
 ```
 
-**`pytest`** — 240 tests, in-process against an isolated database: the demo data, the five
+**`pytest`** — 242 tests, in-process against an isolated database: the demo data, the five
 agents alone and as one flow, object-level authorization, path traversal, migrations, sessions, rate limits, the readiness
 index, and Gemini through the real SDK against a local stand-in.
 

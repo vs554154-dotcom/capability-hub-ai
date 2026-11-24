@@ -292,7 +292,7 @@ test fingerprints the file and fails if it changes.
 ### Seed data
 
 `seed/seed.json` holds 306 rows: the base people, skills and demands. `seed/demo_seed.json`
-adds a made-up company for demos: 355 employees and 35 managers in 11 practices, 166
+adds a made-up company for demos: 381 employees and 35 managers in 11 practices, 166
 technologies, 75 job roles and 34 client demands with full job descriptions. Every opening
 ranks at least six people who meet two in five of its skills, from close to ready down to
 needing training (`tests/test_demo_data.py` checks each demand and job description). Dates in it
@@ -508,7 +508,7 @@ place.
 | **Level-1 result** | multiple choice 40% + spoken 60%, or 30 / 40 / 30 with a practical; over the parts taken, unanswered questions in a part count as 0, provisional grades are not counted | `skillgap.finish` |
 | **Knowledge check** | right answers ÷ questions asked; a pass completes the step | `learning.submit_quiz` |
 | **Project readiness** | share of a demand's required skills met, now against the handoff baseline | `talent.project_readiness` |
-| **Match** | 45% technical + 20% domain + 15% experience + 20% capability readiness, capped at 99; below 80 needs upskilling | `talent.match_candidates` |
+| **Match** | 45% technical + 20% domain + 15% experience + 20% capability readiness, capped at 99; below 80 needs upskilling. Technical is the weighted share of required skills met: a general skill (`matching.GENERAL_SKILLS`, such as Git or SQL) counts half unless the opening is named after it | `talent.match_candidates` |
 | **Resume eligibility** | project-hiring track complete **and** assessment signed off as cleared **and** at least one skill above its handoff baseline | `talent.resume_eligibility` |
 | **Enterprise Readiness Index** | weighted mean of the eight `AGENTS.md` components, over the **measured** ones only (see below) | `analytics.readiness_index` |
 | **Readiness by department** (L&D heatmap) | per skill and department: the employees working toward the skill, average of current ÷ target level (capped at 1) | `analytics.ld_overview` |
@@ -731,7 +731,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 240 tests: the demo data, the fitment ladder of every opening and eighteen job descriptions it was not made for; each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 242 tests: the demo data, the fitment ladder of every opening and eighteen job descriptions it was not made for; each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 65 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
