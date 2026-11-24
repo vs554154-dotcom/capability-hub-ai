@@ -10,6 +10,7 @@ and the built Vite frontend from `frontend/dist/`. One build, one start command,
 | `PORT` | no | `8000` | Port to listen on. **Injected by most hosts** (Cloud Run, Render, Railway, Fly, Heroku, Replit); the app reads it automatically. |
 | `SESSION_SECRET` | **yes in prod** | insecure dev default | Signs the session cookie. Set a long random string, or anyone who knows the default can forge sessions. The server logs a warning if it's missing on an HTTPS deploy. |
 | `DEMO_MODE` | no | `false` (off) | When `true`, a bare `userId` is accepted as login (no password). **Leave off/unset in any shared environment** — it is a full authentication bypass. |
+| `SEED_DEMO_DATA` | no | `true` | Whether a database that starts empty also gets the made-up demo company. Set `false` for a real organisation. |
 | `GEMINI_API_KEY` | no | — | Enables the real Gemini AI copilots. Without it, AI endpoints return deterministic fallbacks. Never commit it; set it in the host's secrets. |
 | `GEMINI_TIMEOUT_SECONDS` | no | `120` | Upper bound on one answer, over every model tried; no model is asked twice. Raise it if long reports are being cut off (each timeout is logged). Zero, negative or non-numeric values stop startup. |
 | `GEMINI_MODEL` | no | `gemini-3.6-flash` | The model the agents use. |

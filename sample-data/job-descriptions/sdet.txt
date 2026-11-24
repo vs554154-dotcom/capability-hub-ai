@@ -1,0 +1,33 @@
+Job title: SDET
+Project: Test Automation Factory
+Client: FinEdge Cloud
+Business unit: Quality Engineering Services
+Domain: Banking
+Location: Hybrid / Chennai
+Experience: 3-7 years
+Openings: 2
+
+About the role
+Builds test automation. You will work on Test Automation Factory for FinEdge Cloud.
+
+What you will do
+- Build test frameworks
+- Automate UI and API tests
+- Run tests in CI
+- Report quality
+
+Must have
+- Playwright
+- Selenium Automation Framework
+- Java
+- Postman & REST API Testing
+- CI/CD Test Automation Pipelines
+- Cucumber & BDD
+- Enterprise TypeScript Development
+
+Good to have
+- Cypress
+- Docker
+
+How we interview
+A technical discussion, then a short practical task.

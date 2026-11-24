@@ -1,0 +1,33 @@
+Job title: Android Engineer
+Project: Retail Banking Mobile App
+Client: Cresta Bank
+Business unit: Banking & Financial Services
+Domain: Banking
+Location: Hybrid / Mumbai
+Experience: 3-6 years
+Openings: 2
+
+About the role
+Builds native Android applications. You will work on Retail Banking Mobile App for Cresta Bank.
+
+What you will do
+- Build screens in Jetpack Compose
+- Work offline and sync later
+- Test on real devices
+- Publish to the store
+
+Must have
+- Android Development
+- Kotlin
+- REST APIs
+- GraphQL
+- Git & Version Control
+- JUnit & Mockito
+
+Good to have
+- Flutter
+- UI Design
+- Appium
+
+How we interview
+A technical discussion, then a short practical task.

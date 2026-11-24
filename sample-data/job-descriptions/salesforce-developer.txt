@@ -1,0 +1,32 @@
+Job title: Salesforce Developer
+Project: Service Cloud Rollout
+Client: Vantel Communications
+Business unit: SaaS & CRM Services
+Domain: Telecom
+Location: Hybrid / Gurugram
+Experience: 3-8 years
+Openings: 3
+
+About the role
+Builds on the Salesforce platform. You will work on Service Cloud Rollout for Vantel Communications.
+
+What you will do
+- Write bulk-safe Apex
+- Build Lightning Web Components
+- Integrate other systems
+- Release with source control
+
+Must have
+- Apex
+- Lightning Web Components
+- Salesforce Administration
+- JavaScript
+- REST APIs
+- Git & Version Control
+
+Good to have
+- MuleSoft
+- Agile
+
+How we interview
+A technical discussion, then a short practical task.

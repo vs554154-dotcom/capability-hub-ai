@@ -1,0 +1,28 @@
+Job title: Telecom OSS/BSS Engineer
+Domain: Telecom
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds and runs telecom operations and billing systems.
+
+What you will do
+- Integrate ordering and billing
+- Automate provisioning
+- Process usage records
+- Support releases
+
+Must have
+- Telecom OSS & BSS
+- Java
+- Oracle Database
+- Apache Kafka
+- Linux Administration
+
+Good to have
+- Microservices
+- API Management
+
+How we interview
+A technical discussion, then a short practical task.

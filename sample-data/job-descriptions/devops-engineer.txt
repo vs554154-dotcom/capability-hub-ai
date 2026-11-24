@@ -1,0 +1,35 @@
+Job title: DevOps Engineer
+Project: Omnichannel Release Platform
+Client: Brightlane Retail
+Business unit: Retail & E-Commerce Infrastructure
+Domain: Retail
+Location: Remote
+Experience: 4-8 years
+Openings: 2
+
+About the role
+Automates building, testing and releasing software. You will work on Omnichannel Release Platform for Brightlane Retail.
+
+What you will do
+- Build CI/CD pipelines
+- Automate infrastructure
+- Run container platforms
+- Improve release safety
+
+Must have
+- CI/CD
+- Docker
+- Kubernetes
+- Jenkins
+- Ansible
+- Terraform
+- Shell Scripting
+- Git & Version Control
+
+Good to have
+- GitHub Actions
+- Helm
+- Observability
+
+How we interview
+A technical discussion, then a short practical task.

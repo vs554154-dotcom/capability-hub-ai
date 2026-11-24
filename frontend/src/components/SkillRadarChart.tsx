@@ -76,7 +76,8 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({ skills }) => {
           // Label offset
           const labelDist = radius + 18;
           const labelX = cx + labelDist * Math.cos(angle);
-          const labelY = cy + labelDist * Math.sin(angle);
+          // Neighbouring names at the bottom are side by side: put every second one lower.
+          const labelY = cy + labelDist * Math.sin(angle) + (Math.sin(angle) > 0.6 && i % 2 ? 12 : 0);
 
           // Truncate long names
           const shortName = s.name.length > 18 ? s.name.substring(0, 16) + "..." : s.name;

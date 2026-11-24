@@ -1,0 +1,29 @@
+Job title: AEM Developer
+Domain: Retail
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds content and commerce experiences.
+
+What you will do
+- Build AEM components
+- Support authors
+- Connect commerce
+- Cache for speed
+
+Must have
+- Adobe Experience Manager
+- Java
+- HTML & CSS
+- JavaScript
+- E-Commerce Platforms
+- REST APIs
+
+Good to have
+- React
+- CMS Development
+
+How we interview
+A technical discussion, then a short practical task.

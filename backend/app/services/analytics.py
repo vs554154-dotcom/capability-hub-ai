@@ -82,12 +82,15 @@ def _measure_people() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     with transaction():
         employees = [u for u in users.get_users() if u["role"] == "employee"]
         all_evidence = evidence.get_evidences()
+        skills, roles = catalog.get_skills(), catalog.get_target_roles()
+        approved_by: dict[str, int] = {}
+        for e in all_evidence:
+            if e["status"] == "approved":
+                approved_by[e["userId"]] = approved_by.get(e["userId"], 0) + 1
         people = []
         for emp in employees:
             levels = user_skills.get_user_skills(emp["id"])
-            approved = sum(
-                1 for e in all_evidence if e["userId"] == emp["id"] and e["status"] == "approved"
-            )
+            approved = approved_by.get(emp["id"], 0)
             motivation = compute_motivation_scores(emp["id"])
             people.append({
                 "id": emp["id"],
@@ -97,7 +100,7 @@ def _measure_people() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
                 "skill": skill_score(levels, approved),
                 "will": motivation["willScore"],
                 "engagement": motivation["engagementScore"],
-                "crs": capability_report(emp["id"])["overallScore"],
+                "crs": capability_report(emp["id"], skills, roles)["overallScore"],
             })
     return people, all_evidence
 

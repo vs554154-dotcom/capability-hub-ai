@@ -55,7 +55,10 @@ Three properties follow from that shape and are relied on throughout:
 | `frontend/assets/` | Source artwork for the brand images; not part of the build | Reference |
 | `backend/app/` | Python/FastAPI backend — **the** backend | Live |
 | `backend/seed/seed.json` | Seed data loaded into empty tables on first boot | Live |
+| `backend/seed/demo_seed.json` | A larger, made-up company for demos, built from `backend/seed/source/` by `backend/scripts/build_demo_seed.py` | Live |
+| `backend/seed/skill_aliases.json` | Other names a job description may use for a skill; built by the same script | Live |
 | `backend/seed/question_bank.json` | Three multiple-choice questions per catalogue skill, for assessments and knowledge checks | Live |
+| `sample-data/job-descriptions/` | One job description per demo role, to paste or upload; built by the same script | Reference |
 | `backend/tests/` | In-process test suite (pytest) | Live |
 | `backend/scripts/` | Verification probes run against a live server | Live |
 | `frontend/dist/` | Built frontend — the **public web root** | Build output |
@@ -101,6 +104,7 @@ backend/app/
 │   ├── demands.py  reminders.py  assessments.py  skillgap.py  sessions.py
 │   └── _common.py       clock, id generation, JSON-shape helpers
 ├── database.py        connections, transactions, startup (migrate, then seed)
+├── seed_data.py       the rows a database starts with, and loading the demo data
 ├── migrations.py      versioned schema migrations
 ├── schema_sql.py      the frozen version-1 baseline: DDL for all 12 tables
 ├── errors.py          domain errors (NotFound, Invalid)
@@ -287,7 +291,15 @@ test fingerprints the file and fails if it changes.
 
 ### Seed data
 
-`seed/seed.json` holds 306 rows. On startup, each table that is **still empty** is
+`seed/seed.json` holds 306 rows: the base people, skills and demands. `seed/demo_seed.json`
+adds a made-up company for demos: 355 employees and 35 managers in 11 practices, 166
+technologies, 75 job roles and 34 client demands with full job descriptions. Every opening
+ranks at least six people who meet two in five of its skills, from close to ready down to
+needing training (`tests/test_demo_data.py` checks each demand and job description). Dates in it
+are relative to the day it is loaded, so its interviews are ahead. A database that starts
+from nothing gets both, unless `SEED_DEMO_DATA=false`; one that already has people gets the
+demo rows only from `backend/scripts/load_demo_data.py`, which backs the database up, adds
+what is missing and never changes a row that is there. On startup, each table that is **still empty** is
 seeded, under the write lock so concurrent starts cannot both fill it; a table with
 rows is never touched. A fresh deployment therefore builds itself, and a running one
 keeps its data across restarts. Password hashes are
@@ -505,9 +517,23 @@ place.
 | **Supply against demand** | per skill named by an open demand: ready = employees at level 3+ (the level matching treats as verified), developing = below 3, with a target of 3+ or the skill on their learning plan | `analytics.leadership_overview` |
 
 A demand names skills by text. `matching.find_skill` resolves a name to the catalogue
-skill of exactly that name, ignoring case, and only falls back to containment when
-there is none. Containment first would resolve "Java" to "Java Core & OOP Principles".
-Containment is by whole words, so Java does not satisfy JavaScript.
+skill of exactly that name or other name (`seed/skill_aliases.json`: "K8s" is Kubernetes),
+ignoring case, and only falls back to containment when there is none, the longest name
+inside it first. Containment first would resolve "Java" to "Java Core & OOP Principles".
+Containment is by whole words, so Java does not satisfy JavaScript, and two catalogue
+skills are never taken for one another: knowing SQL is not knowing SQL Server. An other
+name that is also a word counts only as a whole skill name ("Go") or with its capitals
+("SAFe").
+
+**Reading a job description.** A model's wording is turned into catalogue names, so
+Pinecone, pgvector and "vector stores" are one requirement. Without a model the text is
+read by rules: labelled lines, required and optional sections apart, years, dates, openings
+and industry. A listed technology the catalogue lacks stays a requirement. The model gets
+40 seconds, because the rules are a good answer and someone is waiting.
+
+**A ranking always has a first place.** The match response therefore lists
+`uncoveredSkills`, the requirements nobody meets, and the demand page says so and calls the
+first person a closest profile rather than a best fit.
 
 ### The Enterprise Readiness Index
 
@@ -682,6 +708,7 @@ Every setting comes from the environment, read once by `config.py`:
 | `GEMINI_TIMEOUT_SECONDS` | `120` | Upper bound on one answer, over every model tried; invalid values stop startup |
 | `GEMINI_MODEL`, `GEMINI_BACKUP_MODELS` | `gemini-3.6-flash`; `gemini-3.5-flash,gemini-flash-lite-latest,gemini-3.1-flash-lite` | The model, and those tried when it is busy |
 | `DEMO_MODE` | `false` | Password-free sign-in. **Keep off** anywhere shared |
+| `SEED_DEMO_DATA` | `true` | Whether a database that starts empty also gets the demo company |
 | `DATABASE_PATH` | `capability-hub.db` in repo root | Point at a persistent volume in production |
 | `COOKIE_SAMESITE` | `none` on HTTPS, else `lax` | Session cookie SameSite policy |
 | `AUTH_RATE_LIMIT_MAX` | `30` | Sign-in attempts per IP per 15 minutes |
@@ -704,7 +731,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 159 tests: each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 240 tests: the demo data, the fitment ladder of every opening and eighteen job descriptions it was not made for; each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 65 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,

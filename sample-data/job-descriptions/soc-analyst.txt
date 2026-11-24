@@ -1,0 +1,32 @@
+Job title: SOC Analyst
+Project: 24x7 Security Operations Centre
+Client: Meridian Payments
+Business unit: Cyber Defence Services
+Domain: Banking
+Location: Onsite / Bengaluru
+Experience: 2-6 years
+Openings: 4
+
+About the role
+Watches for attacks and responds to them. You will work on 24x7 Security Operations Centre for Meridian Payments.
+
+What you will do
+- Triage alerts in the SIEM
+- Investigate and contain incidents
+- Hunt for hidden attackers
+- Improve detection rules
+
+Must have
+- Security Operations
+- SIEM
+- Incident Response
+- Threat Hunting
+- Endpoint Security
+- Network Security
+
+Good to have
+- Python
+- Cloud Security
+
+How we interview
+A technical discussion, then a short practical task.

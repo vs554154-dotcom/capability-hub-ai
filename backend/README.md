@@ -67,7 +67,7 @@ python backend/scripts/verify_auth.py http://localhost:8000                 # 14
 python backend/scripts/verify_ai.py http://localhost:8000                   # AI endpoints
 ```
 
-**`pytest`** — 159 tests, in-process against an isolated database: the five
+**`pytest`** — 240 tests, in-process against an isolated database: the demo data, the five
 agents alone and as one flow, object-level authorization, path traversal, migrations, sessions, rate limits, the readiness
 index, and Gemini through the real SDK against a local stand-in.
 
@@ -128,6 +128,8 @@ backend/
     ai.py  security.py  ratelimit.py  config.py  errors.py  numeric.py
   seed/seed.json         rows loaded into empty tables on first boot
   seed/question_bank.json  multiple-choice questions per skill
+  seed/demo_seed.json    the demo company (built from seed/source/)
+  seed/skill_aliases.json  other names for skills (built from seed/source/)
   tests/                 pytest suite - in-process, isolated database
   scripts/               probes run against a live server
   requirements.txt  requirements-dev.txt

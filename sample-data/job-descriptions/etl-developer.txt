@@ -1,0 +1,32 @@
+Job title: ETL Developer
+Project: Regulatory Reporting Data Hub
+Client: Harbour Trust Bank
+Business unit: Banking & Financial Services
+Domain: Banking
+Location: Onsite / Mumbai
+Experience: 4-9 years
+Openings: 2
+
+About the role
+Moves and shapes enterprise data. You will work on Regulatory Reporting Data Hub for Harbour Trust Bank.
+
+What you will do
+- Build and schedule mappings
+- Load incrementally
+- Reconcile results
+- Document lineage
+
+Must have
+- Informatica
+- ETL Development
+- Oracle Database
+- SQL
+- Shell Scripting
+- Data Governance
+
+Good to have
+- Snowflake
+- Azure Data Factory
+
+How we interview
+A technical discussion, then a short practical task.

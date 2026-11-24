@@ -1,0 +1,28 @@
+Job title: Guidewire Developer
+Domain: Insurance
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds insurance systems on Guidewire.
+
+What you will do
+- Configure ClaimCenter and PolicyCenter
+- Write Gosu rules
+- Integrate partners
+- Support upgrades
+
+Must have
+- Guidewire
+- Java
+- SQL
+- REST APIs
+- Agile
+
+Good to have
+- Pega
+- Business Analysis
+
+How we interview
+A technical discussion, then a short practical task.

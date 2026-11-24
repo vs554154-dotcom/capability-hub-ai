@@ -1,0 +1,28 @@
+Job title: GRC Consultant
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Keeps security governed, measured and compliant.
+
+What you will do
+- Run risk assessments
+- Prepare for audits
+- Write policies people follow
+- Track actions to closure
+
+Must have
+- GRC & Compliance
+- Vulnerability Management
+- Stakeholder Management
+- Technical Writing
+- Change Management
+
+Good to have
+- Cloud Security
+- Data Governance
+
+How we interview
+A technical discussion, then a short practical task.

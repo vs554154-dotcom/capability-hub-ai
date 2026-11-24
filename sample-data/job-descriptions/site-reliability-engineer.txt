@@ -1,0 +1,31 @@
+Job title: Site Reliability Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Keeps services reliable through engineering.
+
+What you will do
+- Define SLOs and alerts
+- Automate routine work
+- Lead incident reviews
+- Plan capacity
+
+Must have
+- Site Reliability Engineering
+- Prometheus & Grafana
+- Observability
+- Kubernetes
+- Go (Golang)
+- Linux Administration
+- Incident Response
+
+Good to have
+- Terraform
+- Python
+- AWS
+
+How we interview
+A technical discussion, then a short practical task.

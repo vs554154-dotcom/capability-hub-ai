@@ -1,0 +1,34 @@
+Job title: .NET Full Stack Developer
+Project: Loan Origination Modernisation
+Client: Harbour Trust Bank
+Business unit: Banking & Financial Services
+Domain: Banking
+Location: Hybrid / Pune
+Experience: 4-8 years
+Openings: 3
+
+About the role
+Builds enterprise web applications on Microsoft's stack, from database to browser. You will work on Loan Origination Modernisation for Harbour Trust Bank.
+
+What you will do
+- Design and build web APIs in ASP.NET Core
+- Build responsive screens in Angular
+- Tune SQL Server queries and data models
+- Deploy to Azure through automated pipelines
+
+Must have
+- C#
+- ASP.NET Core
+- SQL Server
+- Entity Framework
+- Angular
+- REST APIs
+- Azure
+
+Good to have
+- Docker
+- Azure DevOps
+- Enterprise TypeScript Development
+
+How we interview
+A technical discussion, then a short practical task.

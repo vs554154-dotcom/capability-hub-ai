@@ -1,0 +1,29 @@
+Job title: Blockchain Developer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds smart contracts and the applications around them.
+
+What you will do
+- Write and test smart contracts
+- Build services that use them
+- Review contracts for security
+- Explain trade-offs to the business
+
+Must have
+- Blockchain Development
+- JavaScript
+- Node.js
+- Cryptography
+- REST APIs
+- Application Security
+
+Good to have
+- Rust
+- React
+
+How we interview
+A technical discussion, then a short practical task.

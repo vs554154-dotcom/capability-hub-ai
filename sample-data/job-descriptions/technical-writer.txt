@@ -1,0 +1,28 @@
+Job title: Technical Writer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Writes documentation people can follow.
+
+What you will do
+- Write guides and API docs
+- Work with engineers
+- Test instructions
+- Measure use
+
+Must have
+- Technical Writing
+- Git & Version Control
+- HTML & CSS
+- REST APIs
+- Jira
+
+Good to have
+- UX Design
+- Agile
+
+How we interview
+A technical discussion, then a short practical task.

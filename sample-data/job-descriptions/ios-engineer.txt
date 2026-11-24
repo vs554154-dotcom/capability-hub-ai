@@ -1,0 +1,29 @@
+Job title: iOS Engineer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds native iPhone and iPad applications.
+
+What you will do
+- Build interfaces in SwiftUI
+- Store data safely on the device
+- Support Dynamic Type and VoiceOver
+- Release through TestFlight
+
+Must have
+- iOS Development
+- REST APIs
+- GraphQL
+- UI Design
+- Git & Version Control
+- Web Accessibility
+
+Good to have
+- React Native
+- Unity Development
+
+How we interview
+A technical discussion, then a short practical task.

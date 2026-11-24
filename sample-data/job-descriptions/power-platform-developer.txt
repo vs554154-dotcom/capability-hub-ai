@@ -1,0 +1,29 @@
+Job title: Power Platform Developer
+Domain: Manufacturing
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds low-code apps and automation.
+
+What you will do
+- Build apps and flows
+- Govern environments
+- Integrate data
+- Coach business makers
+
+Must have
+- Power Platform
+- Microsoft Dynamics 365
+- SharePoint
+- SQL Server
+- Power BI
+- REST APIs
+
+Good to have
+- C#
+- Azure
+
+How we interview
+A technical discussion, then a short practical task.

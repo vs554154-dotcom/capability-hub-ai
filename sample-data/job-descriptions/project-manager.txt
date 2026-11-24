@@ -1,0 +1,32 @@
+Job title: Project Manager
+Project: Core Systems Programme Office
+Client: Harbour Trust Bank
+Business unit: Consulting Services
+Domain: Banking
+Location: Onsite / Mumbai
+Experience: 7-14 years
+Openings: 1
+
+About the role
+Delivers projects on time and on budget. You will work on Core Systems Programme Office for Harbour Trust Bank.
+
+What you will do
+- Plan and track delivery
+- Manage risks and scope
+- Report honestly
+- Lead the team
+
+Must have
+- Project Management
+- Agile
+- Jira
+- Stakeholder Management
+- Change Management
+- Business Analysis
+
+Good to have
+- Scrum
+- Program Management
+
+How we interview
+A technical discussion, then a short practical task.

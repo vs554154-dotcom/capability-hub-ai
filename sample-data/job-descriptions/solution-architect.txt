@@ -1,0 +1,33 @@
+Job title: Solution Architect
+Project: Open Banking Platform Design
+Client: Meridian Payments
+Business unit: Consulting Services
+Domain: Banking
+Location: Hybrid / Bengaluru
+Experience: 10-16 years
+Openings: 1
+
+About the role
+Designs whole solutions across systems. You will work on Open Banking Platform Design for Meridian Payments.
+
+What you will do
+- Design solutions
+- Record decisions
+- Review delivery
+- Present to clients
+
+Must have
+- Solution Architecture
+- Cloud Architecture
+- Microservices
+- System Design & Scalability
+- API Management
+- Technical Pre-Sales
+
+Good to have
+- AWS
+- Event-Driven Architecture
+- Stakeholder Management
+
+How we interview
+A technical discussion, then a short practical task.

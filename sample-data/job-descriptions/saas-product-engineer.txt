@@ -1,0 +1,33 @@
+Job title: SaaS Product Engineer
+Project: Multi-Tenant HR Platform
+Client: PeopleLoop SaaS
+Business unit: SaaS & CRM Services
+Domain: SaaS
+Location: Remote
+Experience: 4-8 years
+Openings: 2
+
+About the role
+Builds multi-tenant products. You will work on Multi-Tenant HR Platform for PeopleLoop SaaS.
+
+What you will do
+- Build features for many tenants
+- Meter usage
+- Protect tenant data
+- Release daily
+
+Must have
+- SaaS Architecture
+- Node.js
+- React
+- PostgreSQL & Vector Database Optimization
+- AWS
+- Enterprise TypeScript Development
+
+Good to have
+- GraphQL
+- Observability
+- Customer Success
+
+How we interview
+A technical discussion, then a short practical task.

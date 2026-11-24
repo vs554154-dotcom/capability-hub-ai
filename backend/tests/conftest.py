@@ -43,6 +43,7 @@ os.environ.update({
     "PRIVATE_DIR": str(PRIVATE_DIR),
     "SESSION_SECRET": "test-only-secret",
     "DEMO_MODE": "false",
+    "SEED_DEMO_DATA": "false",     # the base seed only; test_demo_data.py loads the rest
     "GEMINI_API_KEY": "",          # AI endpoints use their deterministic fallbacks
     "GEMINI_MODEL": "",            # the default, whatever the developer's .env says
     "GEMINI_BACKUP_MODELS": "",    # one model, unless a test says otherwise

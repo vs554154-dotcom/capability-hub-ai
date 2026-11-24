@@ -1,0 +1,34 @@
+Job title: AWS Cloud Engineer
+Project: Digital Claims on AWS
+Client: Suraksha Insurance
+Business unit: Insurance & Risk Management
+Domain: Insurance
+Location: Hybrid / Chennai
+Experience: 4-8 years
+Openings: 3
+
+About the role
+Builds and runs workloads on AWS. You will work on Digital Claims on AWS for Suraksha Insurance.
+
+What you will do
+- Build AWS infrastructure as code
+- Run serverless and container workloads
+- Control cost and access
+- Automate operations
+
+Must have
+- AWS
+- Terraform
+- AWS CloudFormation
+- Serverless Computing
+- Docker
+- Linux Administration
+- Python
+
+Good to have
+- Cloud Security
+- FinOps
+- Kubernetes
+
+How we interview
+A technical discussion, then a short practical task.

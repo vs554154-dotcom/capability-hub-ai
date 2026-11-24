@@ -1,0 +1,32 @@
+Job title: Embedded Software Engineer
+Project: Electric Drive Controller
+Client: Voltara Motors
+Business unit: Automotive & Telematics
+Domain: Automotive
+Location: Onsite / Pune
+Experience: 4-9 years
+Openings: 2
+
+About the role
+Writes firmware for vehicles and machines. You will work on Electric Drive Controller for Voltara Motors.
+
+What you will do
+- Write firmware in C
+- Configure AUTOSAR modules
+- Debug on hardware
+- Document timing and safety
+
+Must have
+- Embedded C
+- C++
+- AUTOSAR
+- Linux Administration
+- IoT Development
+- Git & Version Control
+
+Good to have
+- Python
+- Shell Scripting
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,29 @@
+Job title: C++ Systems Engineer
+Domain: Manufacturing
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds high-performance systems software.
+
+What you will do
+- Write performance-critical C++
+- Profile and remove bottlenecks
+- Build tooling on Linux
+- Review code for memory safety
+
+Must have
+- C++
+- Linux Administration
+- System Design & Scalability
+- Shell Scripting
+- Rust
+- Git & Version Control
+
+Good to have
+- Embedded C
+- Python
+
+How we interview
+A technical discussion, then a short practical task.

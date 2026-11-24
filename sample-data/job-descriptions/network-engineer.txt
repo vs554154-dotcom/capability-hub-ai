@@ -1,0 +1,28 @@
+Job title: Network Engineer
+Domain: Telecom
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Runs secure, reliable networks.
+
+What you will do
+- Design and run networks
+- Monitor and troubleshoot
+- Secure traffic
+- Document changes
+
+Must have
+- Network Administration
+- Network Security
+- Linux Administration
+- Shell Scripting
+- Observability
+
+Good to have
+- Zero Trust Architecture
+- Python
+
+How we interview
+A technical discussion, then a short practical task.

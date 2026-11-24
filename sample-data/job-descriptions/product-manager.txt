@@ -1,0 +1,32 @@
+Job title: Product Manager
+Project: Seller Growth Product
+Client: Cartwell Commerce
+Business unit: Product & Design Services
+Domain: Retail
+Location: Hybrid / Bengaluru
+Experience: 5-10 years
+Openings: 1
+
+About the role
+Decides what to build and why. You will work on Seller Growth Product for Cartwell Commerce.
+
+What you will do
+- Understand customers
+- Set outcomes and priorities
+- Work with design and engineering
+- Measure results
+
+Must have
+- Product Management
+- Agile
+- Stakeholder Management
+- UX Design
+- Business Analysis
+- Statistical Analysis
+
+Good to have
+- SaaS Architecture
+- Strategic AI Product Management
+
+How we interview
+A technical discussion, then a short practical task.

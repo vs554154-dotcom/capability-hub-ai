@@ -1,0 +1,30 @@
+Job title: Cloud Security Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Protects cloud accounts, workloads and data.
+
+What you will do
+- Find and fix misconfigurations
+- Design least-privilege access
+- Automate guard rails
+- Support audits
+
+Must have
+- Cloud Security
+- AWS
+- Azure
+- Identity & Access Management
+- Zero Trust Architecture
+- Terraform
+
+Good to have
+- Kubernetes
+- SIEM
+- GRC & Compliance
+
+How we interview
+A technical discussion, then a short practical task.

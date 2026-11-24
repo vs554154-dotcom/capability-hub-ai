@@ -1,0 +1,29 @@
+Job title: Database Administrator
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Keeps databases safe, fast and available.
+
+What you will do
+- Back up and restore
+- Tune queries and indexes
+- Manage access
+- Plan upgrades
+
+Must have
+- Database Administration
+- SQL Server
+- Oracle Database
+- MySQL
+- PowerShell
+- Linux Administration
+
+Good to have
+- PostgreSQL & Vector Database Optimization
+- Cloud Migration
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,33 @@
+Job title: BI Developer
+Project: Hospital Performance Insights
+Client: CareNova Hospitals
+Business unit: Healthcare & Life Sciences
+Domain: Healthcare
+Location: Hybrid / Chennai
+Experience: 3-7 years
+Openings: 2
+
+About the role
+Turns data into dashboards people use. You will work on Hospital Performance Insights for CareNova Hospitals.
+
+What you will do
+- Build semantic models and reports
+- Write clear DAX
+- Secure data by role
+- Train users
+
+Must have
+- Power BI
+- SQL
+- Data Modeling
+- Microsoft Excel
+- Microsoft Fabric
+- Stakeholder Management
+
+Good to have
+- Tableau
+- SQL Server
+- Azure Data Factory
+
+How we interview
+A technical discussion, then a short practical task.

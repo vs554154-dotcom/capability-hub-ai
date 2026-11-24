@@ -1,0 +1,32 @@
+Job title: ServiceNow Developer
+Project: Enterprise Service Portal
+Client: Harbour Trust Bank
+Business unit: Enterprise Applications
+Domain: Banking
+Location: Hybrid / Hyderabad
+Experience: 3-7 years
+Openings: 2
+
+About the role
+Builds workflows on ServiceNow. You will work on Enterprise Service Portal for Harbour Trust Bank.
+
+What you will do
+- Build workflows and portals
+- Integrate systems
+- Follow ITIL
+- Release update sets safely
+
+Must have
+- ServiceNow
+- JavaScript
+- ITIL
+- REST APIs
+- Agile
+- Business Analysis
+
+Good to have
+- Power Platform
+- SIEM
+
+How we interview
+A technical discussion, then a short practical task.

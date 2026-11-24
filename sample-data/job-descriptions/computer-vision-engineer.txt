@@ -1,0 +1,33 @@
+Job title: Computer Vision Engineer
+Project: Visual Quality Inspection
+Client: Orion Steel
+Business unit: Manufacturing & Industrial AI
+Domain: Manufacturing
+Location: Onsite / Pune
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds systems that understand images. You will work on Visual Quality Inspection for Orion Steel.
+
+What you will do
+- Collect and label data
+- Train detection models
+- Deploy to the edge
+- Watch accuracy over time
+
+Must have
+- Computer Vision
+- PyTorch
+- Deep Learning
+- Python
+- Machine Learning
+- TensorFlow
+- Docker
+
+Good to have
+- IoT Development
+- MLOps
+
+How we interview
+A technical discussion, then a short practical task.

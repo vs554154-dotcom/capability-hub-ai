@@ -1,0 +1,32 @@
+Job title: Flutter Developer
+Project: Field Delivery App
+Client: Northway Logistics
+Business unit: Logistics & Supply Chain
+Domain: Logistics
+Location: Remote
+Experience: 2-5 years
+Openings: 2
+
+About the role
+Builds one mobile codebase for Android and iOS. You will work on Field Delivery App for Northway Logistics.
+
+What you will do
+- Build Flutter screens and state
+- Call REST services
+- Test widgets
+- Release to both stores
+
+Must have
+- Flutter
+- REST APIs
+- Android Development
+- iOS Development
+- Git & Version Control
+- UI Design
+
+Good to have
+- GraphQL
+- IoT Development
+
+How we interview
+A technical discussion, then a short practical task.

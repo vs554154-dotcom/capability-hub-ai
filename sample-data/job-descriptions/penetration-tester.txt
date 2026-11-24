@@ -1,0 +1,32 @@
+Job title: Penetration Tester
+Project: Application Security Testing
+Client: Cartwell Commerce
+Business unit: Cyber Defence Services
+Domain: Retail
+Location: Remote
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Finds weaknesses before attackers do. You will work on Application Security Testing for Cartwell Commerce.
+
+What you will do
+- Test web, API and network targets
+- Report findings clearly
+- Help teams fix them
+- Retest
+
+Must have
+- Penetration Testing
+- Application Security
+- Network Security
+- Vulnerability Management
+- Python
+- Linux Administration
+
+Good to have
+- Cloud Security
+- Cryptography
+
+How we interview
+A technical discussion, then a short practical task.

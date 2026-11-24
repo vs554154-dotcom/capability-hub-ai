@@ -1,0 +1,33 @@
+Job title: Snowflake Data Engineer
+Project: Unified Customer Data Platform
+Client: Brightlane Retail
+Business unit: Data & Analytics Services
+Domain: Retail
+Location: Hybrid / Hyderabad
+Experience: 3-8 years
+Openings: 3
+
+About the role
+Builds modern data platforms on Snowflake. You will work on Unified Customer Data Platform for Brightlane Retail.
+
+What you will do
+- Build tested models in dbt
+- Orchestrate with Airflow
+- Tune warehouses and cost
+- Document data for analysts
+
+Must have
+- Snowflake
+- SQL
+- dbt
+- Apache Airflow
+- Python
+- Data Modeling
+
+Good to have
+- Amazon Redshift
+- AWS
+- Data Governance
+
+How we interview
+A technical discussion, then a short practical task.

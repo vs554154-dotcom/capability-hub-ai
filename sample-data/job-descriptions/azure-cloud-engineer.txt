@@ -1,0 +1,33 @@
+Job title: Azure Cloud Engineer
+Project: Citizen Services Cloud
+Client: Civica Digital Authority
+Business unit: Public Sector
+Domain: Public Sector
+Location: Hybrid / New Delhi
+Experience: 4-9 years
+Openings: 2
+
+About the role
+Builds and runs workloads on Microsoft Azure. You will work on Citizen Services Cloud for Civica Digital Authority.
+
+What you will do
+- Build Azure landing zones
+- Automate with Terraform and PowerShell
+- Run AKS clusters
+- Manage identity and monitoring
+
+Must have
+- Azure
+- Azure DevOps
+- Terraform
+- PowerShell
+- Kubernetes
+- Identity & Access Management
+- Observability
+
+Good to have
+- Cloud Security
+- Azure Data Factory
+
+How we interview
+A technical discussion, then a short practical task.

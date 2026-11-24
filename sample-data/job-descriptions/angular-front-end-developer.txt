@@ -1,0 +1,30 @@
+Job title: Angular Front End Developer
+Domain: Insurance
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds accessible enterprise interfaces in Angular.
+
+What you will do
+- Build modular Angular screens
+- Meet WCAG standards
+- Cover key journeys with Cypress
+- Work with designers on a shared component library
+
+Must have
+- Angular
+- Enterprise TypeScript Development
+- HTML & CSS
+- REST APIs
+- Web Accessibility
+- Cypress
+- Git & Version Control
+
+Good to have
+- Redux
+- UI Design
+
+How we interview
+A technical discussion, then a short practical task.

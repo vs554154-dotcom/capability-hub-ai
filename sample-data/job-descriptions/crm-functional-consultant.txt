@@ -1,0 +1,28 @@
+Job title: CRM Functional Consultant
+Domain: Insurance
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Shapes sales and service processes in CRM.
+
+What you will do
+- Map processes
+- Configure CRM
+- Run workshops
+- Support adoption
+
+Must have
+- Salesforce Administration
+- Microsoft Dynamics 365
+- Business Analysis
+- Stakeholder Management
+- Customer Success
+
+Good to have
+- Power Platform
+- Change Management
+
+How we interview
+A technical discussion, then a short practical task.

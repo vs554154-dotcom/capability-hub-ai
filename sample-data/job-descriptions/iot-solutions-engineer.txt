@@ -1,0 +1,30 @@
+Job title: IoT Solutions Engineer
+Domain: Manufacturing
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Connects devices to the cloud and uses their data.
+
+What you will do
+- Connect devices over MQTT
+- Process data at the edge and in the cloud
+- Secure every device's identity
+- Build alerts
+
+Must have
+- IoT Development
+- Python
+- AWS
+- Embedded C
+- Apache Kafka
+- Serverless Computing
+
+Good to have
+- Azure
+- Time Series Forecasting
+- Power BI
+
+How we interview
+A technical discussion, then a short practical task.

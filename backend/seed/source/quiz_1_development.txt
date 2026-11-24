@@ -1,0 +1,131 @@
+# Three questions per technology: question | right answer | wrong | wrong | wrong | why
+# The right answer comes first here and is shuffled when shown.
+
+## JavaScript
+What does === compare? | Value and type | Value only | Type only | Memory size | Strict equality does not convert types before comparing.
+What does an async function return? | A Promise | A callback | A thread | A generator | Awaiting code receives the value the promise resolves to.
+Which keyword makes a block-scoped variable that can be reassigned? | let | var | const | static | var is function-scoped and const cannot be reassigned.
+## C#
+Which keyword releases a disposable object when a block ends? | using | lock | yield | fixed | using calls Dispose even if an exception is thrown.
+What does LINQ's Where method do? | Filters a sequence | Sorts a sequence | Groups a sequence | Joins two sequences | Where keeps the items that match a condition.
+What does await do to the calling thread? | Frees it until the task ends | Blocks it until the task ends | Starts a new process | Raises its priority | The rest of the method continues when the task completes.
+## ASP.NET Core
+Where are services registered for dependency injection? | In the service collection | In the routing table | In appsettings.json | In the middleware pipeline | builder.Services holds the registrations.
+What runs in order on each HTTP request? | Middleware | Migrations | Tag helpers | Data annotations | Each middleware can act before and after the next one.
+Which lifetime creates one instance per request? | Scoped | Singleton | Transient | Static | Scoped services are shared within a single request.
+## Entity Framework
+What tracks changes to loaded entities? | The DbContext | The DbSet name | The connection string | The migration file | SaveChanges writes what the context has tracked.
+Which call avoids tracking for read-only queries? | AsNoTracking | Include | Attach | FromSqlRaw | Untracked queries use less memory.
+What does Include do? | Loads related data | Adds an index | Opens a transaction | Skips filters | It loads navigation properties in the same query.
+## Node.js
+What handles many connections on one Node.js thread? | The event loop | A thread per request | A process per user | The garbage collector | Non-blocking I/O returns to the event loop.
+Which file lists a project's dependencies? | package.json | index.html | node.config | server.xml | npm reads package.json.
+What blocks the event loop? | A long CPU calculation | An awaited database call | A timer | A network read | Synchronous work stops other requests.
+## Express.js
+What does next() do in middleware? | Passes control onward | Ends the response | Restarts the server | Retries the request | Without it or a response, the request hangs.
+How many arguments does error-handling middleware take? | Four | One | Two | Three | err, req, res and next.
+Which object holds URL parameters such as /users/:id? | req.params | req.body | res.locals | app.settings | Query strings are in req.query.
+## Go (Golang)
+What starts a function concurrently? | The go keyword | The async keyword | A thread class | A promise | It starts a goroutine.
+How do goroutines usually exchange data? | Channels | Global files | Callbacks | Cookies | Channels pass values safely between goroutines.
+How are errors normally reported in Go? | As return values | By throwing exceptions | By global codes | By panics only | Callers check the returned error.
+## Rust
+What does ownership prevent? | Use after free | Slow compiles | Long names | Integer division | Each value has one owner, checked at compile time.
+What does the ? operator do? | Returns the error early | Ignores the error | Retries the call | Unwraps or stops the program | It passes an Err up to the caller.
+How many mutable references to a value may exist at once? | One | Two | Any number | None | This rule prevents data races.
+## PHP
+What does Composer manage? | Dependencies | Sessions | Templates | Web servers | It installs the packages listed in composer.json.
+Which prevents SQL injection in PDO? | Prepared statements | Output buffering | Longer passwords | Closing tags | Values are sent apart from the SQL text.
+Where is data sent by a POST form found? | $_POST | $_GET | $_SERVER | $_ENV | It holds the submitted fields.
+## Laravel
+What is Eloquent? | The ORM | The template engine | The test runner | The router | Eloquent models map to database tables.
+What do migrations describe? | Schema changes | User sessions | Page layouts | Queue workers | They version the database structure.
+Which file type holds Blade templates? | .blade.php | .twig | .phtml | .ejs | Blade compiles to plain PHP.
+## Ruby on Rails
+What does Active Record provide? | Object-relational mapping | Background jobs | Asset bundling | Rendering of templates as HTML pages | Models map to tables.
+Which principle asks you to follow defaults? | Convention over configuration | Configuration over code | Late binding | Explicit is better than implicit | Names and places follow known conventions.
+Where do routes live? | config/routes.rb | app/models | db/schema.rb | public/ | The file maps URLs to controller actions.
+## Scala
+What does a case class give you? | Equality by value | A new thread | A database table | Mutable fields only | It also gives pattern matching support.
+What does Option represent? | A value that may be absent | A list of choices | A command flag | A function with several results | It is Some or None instead of null.
+Which keyword defines an immutable value? | val | var | def | lazy | var can be reassigned.
+## Kotlin
+What does a ? after a type mean? | It may be null | It is generic | It is private | It is a lambda | Nullable types must be checked before use.
+What does suspend mark? | A function that can pause | A private field | A static class | A class that cannot be inherited | Suspend functions run in coroutines.
+Which class type is made to hold data? | data class | sealed class | inner class | open class | It generates equals, copy and toString.
+## C++
+What does RAII tie to an object's lifetime? | A resource | A thread name | A header file | A compiler flag | The destructor releases the resource.
+Which smart pointer has one owner? | unique_ptr | shared_ptr | weak_ptr | auto_ptr | It cannot be copied, only moved.
+What does const on a member function promise? | It does not change the object | It runs at compile time | It is private | It can be called only one time | The compiler checks the promise.
+## Django
+What does Django's ORM turn into SQL? | QuerySets | Templates | Middleware | Forms | A QuerySet runs when it is evaluated.
+What protects forms from cross-site request forgery? | The CSRF token | A longer URL | A static file | The admin page | The token proves the form came from the site.
+Which command applies schema changes? | migrate | runserver | collectstatic | shell | makemigrations writes them and migrate applies them.
+## FastAPI
+What validates request bodies? | Pydantic models | Jinja templates | Cookies | Celery tasks | Types declared in the model are checked.
+Where are the interactive docs served by default? | /docs | /admin | /home | /static | FastAPI generates them from OpenAPI.
+What does Depends declare? | A dependency | A database table | A background thread | A test case | FastAPI resolves it for each request.
+## GraphQL
+Who decides which fields a response contains? | The client | The database | The cache | The proxy | The query names the fields.
+What changes data in GraphQL? | A mutation | A fragment | A subscription | A directive | Queries only read.
+What problem can nested resolvers cause? | N+1 queries | Type errors | Cookie loss | Duplicate IDs | Batching with a data loader avoids it.
+## Apache Kafka
+What keeps order in Kafka? | A partition | A topic | A broker | A cluster | Messages are ordered inside one partition.
+What lets consumers share the work of a topic? | A consumer group | A replica set | A schema | A producer key | Each partition goes to one consumer in the group.
+What records how far a consumer has read? | The offset | The header | The broker id | The leader epoch | Committed offsets let it continue later.
+## RabbitMQ
+What routes messages to queues? | An exchange | A cursor | A consumer tag | A vhost | Bindings connect exchanges to queues.
+What tells RabbitMQ that a message was handled? | An acknowledgement | A heartbeat | A binding | A binding of the queue | Unacknowledged messages are delivered again.
+Where do rejected messages often go? | A dead-letter exchange | The default log | The producer | A new virtual host | They can be inspected there later.
+## Hibernate
+What is lazy loading? | Loading data on first use | Loading all data at start | Loading in a thread | Loading from disk only | Related data is fetched when it is accessed.
+Which annotation marks a persistent class? | @Entity | @Bean | @Service | @Test | It maps the class to a table.
+What is the first-level cache tied to? | The session | The whole server | The browser | The JDBC driver | Each session caches its own entities.
+## Event-Driven Architecture
+What does a producer know about its consumers? | Nothing | Their addresses | Their database | Their language | That is what keeps them loosely coupled.
+Why should handlers be idempotent? | Events may arrive twice | Events are encrypted | Events are small | Events never repeat | Handling twice must be harmless.
+What does event sourcing store? | Every change as an event | Only the latest state | Only errors | Only user logins | State is rebuilt from the events.
+## JUnit & Mockito
+Which annotation runs before each test in JUnit 5? | @BeforeEach | @BeforeAll | @Test | @Disabled | It prepares a fresh state.
+What does a mock replace? | A dependency | The class under test | The compiler | The test report | Its behaviour is defined in the test.
+What does verify check? | That a call was made | That a file exists | That code compiles | That memory is free | It can also check how many times.
+## Angular
+What connects a component class to its template? | Data binding | A cookie | A web worker | A build flag | Values and events flow through bindings.
+What are Angular services mainly for? | Shared logic and data | Page styling | Routing only | Templates and page styles | They are provided by dependency injection.
+Which library does Angular use for streams of values? | RxJS | Redux | Lodash | jQuery | HTTP calls return observables.
+## Vue.js
+What does ref() create? | A reactive value | A DOM event | A route | A component instance | Reading it in a template tracks changes.
+Which directive repeats an element? | v-for | v-if | v-bind | v-on | It renders one element per item.
+What does a computed property do? | Caches a derived value | Sends a request | Mounts a component | Validates a form | It recalculates when its sources change.
+## HTML & CSS
+Which element holds the main content of a page? | main | div | span | b | Semantic elements help assistive technology.
+Which layout suits a grid of rows and columns? | CSS Grid | Float | Inline | Table cells | Flexbox suits one direction.
+What do media queries adapt to? | The screen | The server | The database | The language | They apply styles by width and other features.
+## Tailwind CSS
+How is styling mostly written in Tailwind? | Utility classes | Inline scripts | One global file | Images | Classes such as p-4 are combined in markup.
+What does the md: prefix do? | Applies from a width up | Makes text medium | Adds margin down | Applies only on tablets | It is a responsive variant.
+What keeps the final CSS small? | Only used classes are built | Images are compressed | Comments are kept | Class names are made shorter | Unused classes are not generated.
+## Redux
+What describes a change in Redux? | An action | A selector | A component | A hook | Reducers react to actions.
+What must a reducer be? | A pure function | A class | An async call | A singleton | Same input, same output, no side effects.
+Where is the application state kept? | In the store | In the URL | In cookies | In each button | There is one store.
+## Web Accessibility
+What gives an image meaning for a screen reader? | Alt text | A border | A file name | A large size | It describes the image's purpose.
+How must every control be usable? | By keyboard | By mouse only | By voice only | By touch only | Some people cannot use a pointer.
+What does the contrast ratio compare? | Text and background | Two fonts | Page widths | Headings and body text | Low contrast is hard to read.
+## Android Development
+What describes an app's components and permissions? | AndroidManifest.xml | build.gradle | strings.xml | settings.gradle.kts | The system reads the manifest.
+Which class survives a screen rotation? | ViewModel | Activity | Fragment view | Toast | It keeps UI data across configuration changes.
+Where must long work not run? | On the main thread | In a worker | In a coroutine | In a service thread | It would freeze the interface.
+## iOS Development
+What does ARC manage? | Memory | Networking | Screen layout | App signing | It counts references to objects.
+What does weak prevent in closures? | Retain cycles | Type errors | Slow scrolling | Crashes on launch | A weak reference does not keep the object alive.
+Which framework builds interfaces declaratively? | SwiftUI | Core Data | Combine | XCTest | Views describe the result, not the steps.
+## Flutter
+What is everything on screen made of? | Widgets | Pages | Activities | Views only | Widgets nest to build the interface.
+What does hot reload keep? | The app's state | The old code | The network cache | The device log | Changes appear without restarting.
+Which call rebuilds a stateful widget? | setState | initState | dispose | runApp | It marks the state as changed.
+## React Native
+What does React Native render? | Native components | A web page | Images only | A hidden browser page | JSX maps to platform views.
+Which component suits long lists? | FlatList | ScrollView | Text | Modal | It renders only the visible rows.
+Which file extension targets iOS only? | .ios.js | .web.js | .android.js | .native.css | The bundler picks the file by platform.

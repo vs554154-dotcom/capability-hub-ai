@@ -12,7 +12,9 @@ from ..database import transaction
 from ..errors import Invalid, NotFound
 from ..numeric import js_round
 from ..repositories import assessments, catalog, demands, evidence, learning, reminders, user_skills, users
-from .matching import VERIFIED_LEVEL, find_skill, mentioned_skills, requirement_status
+from .matching import (
+    VERIFIED_LEVEL, catalogue_names, find_skill, mentioned_skills, named_exactly, requirement_status,
+)
 
 # --------------------------------------------------------------------------- #
 # Adaptive upskilling timeline
@@ -121,16 +123,23 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
     timeline = track_for(days, _MATCH_TRACKS)
     interview_date = locale_date(demand.get("clientInterviewDate"))
     matches: list[dict[str, Any]] = []
+    holders = {name: 0 for name in required}
+    approved_by: dict[str, list[dict[str, Any]]] = {}
+    for e in all_evidence:
+        if e["status"] == "approved":
+            approved_by.setdefault(e["userId"], []).append(e)
 
     for emp in employees:
         levels = levels_by_user[emp["id"]]
-        approved = [e for e in all_evidence if e["userId"] == emp["id"] and e["status"] == "approved"]
+        approved = approved_by.get(emp["id"], [])
 
         # Technical: the requirements this person meets (see matching.py).
         status = requirement_status(
             emp, {u["skillId"]: u["currentLevel"] for u in levels}, required, all_skills
         )
         missing = [r["name"] for r in status if not r["met"]]
+        for r in status:
+            holders[r["name"]] += r["met"]
         matched = len(status) - len(missing)
         technical = js_round(matched / len(required) * 100)
 
@@ -155,7 +164,8 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
         experience = 85
         if years is None or years < exp_min:
             experience = 60
-        elif exp_min <= years <= exp_max:
+        elif years <= exp_max or exp_max <= exp_min:
+            # "5+ years" is stored as 5 to 5: there is no upper limit to be above.
             experience = 100
 
         total_levels = sum(u["currentLevel"] for u in levels)
@@ -220,8 +230,18 @@ def match_candidates(demand: dict[str, Any]) -> dict[str, Any]:
             "recommendedActions": actions,
         })
 
-    matches.sort(key=lambda m: m["overallMatchPct"], reverse=True)
-    return {"success": True, "demand": demand, "totalCandidatesEvaluated": len(matches), "matches": matches}
+    # Equal totals: more of the required skills first, then more proof.
+    matches.sort(
+        key=lambda m: (m["overallMatchPct"], m["technicalMatchPct"], m["verifiedEvidenceCount"]),
+        reverse=True,
+    )
+    return {
+        "success": True, "demand": demand, "totalCandidatesEvaluated": len(matches), "matches": matches,
+        # Skills nobody meets, and how many people meet each: a ranking always has a
+        # first place, and this says when that place is not a fit.
+        "skillCoverage": [{"name": name, "people": count} for name, count in holders.items()],
+        "uncoveredSkills": [name for name, count in holders.items() if not count],
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -290,11 +310,84 @@ def create_demand(body: dict[str, Any]) -> dict[str, Any]:
     return demands.create_project_demand(fields)
 
 
+# Headings a job description uses, and what the lines under them are.
+_OPTIONAL_HEADING = re.compile(
+    r"^\W*(nice[ -]to[ -]haves?|good[ -]to[ -]haves?|preferred|desirable|desired|bonus|optional|"
+    r"added advantages?|plus points|would be a plus)\b", re.I)
+_REQUIRED_HEADING = re.compile(
+    r"^\W*(must[ -]haves?|required|requirements?|mandatory|key skills|skills|technical skills|"
+    r"tech(nology)? stack|primary skills|what you (need|bring)|qualifications)\b", re.I)
+_OTHER_HEADING = re.compile(
+    r"^\W*(about|what you will do|responsibilit|roles? and|duties|benefits|perks|how we|interview|"
+    r"location|experience|openings|education|who we are|we offer)", re.I)
+_OPTIONAL_SENTENCE = re.compile(r"\b(is|are|as|would be) an? (plus|bonus|added advantage)|nice to have|good to have|preferred", re.I)
+_SENIORITY = re.compile(r"^(senior|sr\.?|junior|jr\.?|lead|principal|staff|associate|head|chief)\s+", re.I)
+_INDUSTRIES = (
+    ("Banking", r"banks?|banking|fintech|lending|payments"), ("Insurance", r"insurance|insurer|underwriting"),
+    ("Healthcare", r"healthcare|hospitals?|patients?|clinical|pharma"), ("Retail", r"retail(er)?|e-?commerce|stores"),
+    ("Telecom", r"telecom(munications?)?|5g"), ("Manufacturing", r"manufacturing|factor(y|ies)|plants?"),
+    ("Automotive", r"automotive|vehicles?"), ("Logistics", r"logistics|supply chain|freight|shipping"),
+    ("Energy", r"energy|utilities|power grid|oil and gas"), ("Public Sector", r"government|public sector|citizens?"),
+    ("Education", r"education|students|universit(y|ies)"), ("Travel", r"travel|airlines?|hotels?"),
+    ("Media", r"media|streaming|publishing"), ("SaaS", r"saas"),
+)
+
+
+def _labelled(text: str, *labels: str) -> str:
+    """The rest of a line such as "Location: Pune"."""
+    found = re.search(rf"^\W*(?:{'|'.join(labels)})\s*[:\-]\s*(.+)$", text, re.I | re.M)
+    return found.group(1).strip(" .*") if found else ""
+
+
+def _split_optional(text: str) -> tuple[str, str, list[str]]:
+    """A job description's required and optional parts, and the short entries of its
+    lists of required skills - those may name a technology the catalogue lacks."""
+    required, optional, entries = [], [], []
+    part = "other"
+    for line in text.splitlines():
+        stripped = line.strip()
+        heading = len(stripped) <= 70 and not stripped.endswith(".") and not re.match(r"^[-*\u2022\d]", stripped)
+        rest = ""
+        if heading and _OPTIONAL_HEADING.match(stripped):
+            part, rest = "optional", stripped.partition(":")[2]
+        elif heading and _REQUIRED_HEADING.match(stripped):
+            part, rest = "required", stripped.partition(":")[2]
+        elif heading and _OTHER_HEADING.match(stripped):
+            part = "other"
+        elif stripped and part == "required":
+            rest = stripped
+        for sentence in re.split(r"(?<=[.;])\s+", line):
+            (optional if part == "optional" or _OPTIONAL_SENTENCE.search(sentence) else required).append(sentence)
+        if part == "required":
+            for entry in re.split(r"[,;]", re.sub(r"^[-*\u2022\d.)\s]+", "", rest)):
+                entry = entry.strip(" .")
+                if entry and len(entry.split()) <= 4 and not re.search(r"\d|years?|degree|skills?$|experience", entry, re.I):
+                    entries.append(entry)
+    return "\n".join(required), "\n".join(optional), entries
+
+
 def _read_job_description(text: str) -> dict[str, Any]:
-    """What can be read from a job description without a model: catalogue skills it
-    names, a range of years, and an interview date. Everything else stays empty for
-    the manager to fill in."""
-    skills = [s["name"] for s in mentioned_skills(text, catalog.get_skills())]
+    """What can be read from a job description without a model: its labelled lines, the
+    skills it names - required and optional apart - years, dates and the industry it
+    speaks of most. Everything else stays empty for the manager to fill in."""
+    catalogue = catalog.get_skills()
+    must, may, entries = _split_optional(text)
+    required = [s["name"] for s in mentioned_skills(must, catalogue)]
+    # A listed technology the catalogue does not hold is still required: leaving it out
+    # would make people look like a better fit than they are.
+    required += [e for e in entries if not mentioned_skills(e, catalogue) and not find_skill(e, catalogue)]
+
+    first = next((l.strip(" #*") for l in text.splitlines() if l.strip()), "")
+    title = _labelled(text, "job title", "title", "role", "position", "designation") or (
+        first if len(first) <= 80 and not first.endswith(".") and ":" not in first else "")
+    title = role = re.split(r"\s[-\u2013|(]", title)[0].strip()
+    while _SENIORITY.match(role):
+        role = _SENIORITY.sub("", role)
+    by_title = named_exactly(role, catalogue)              # "Scrum Master", "Solution Architect"
+    if by_title and by_title["name"] not in required:
+        required.insert(0, by_title["name"])
+    preferred = [s["name"] for s in mentioned_skills(may, catalogue) if s["name"] not in required]
+
     years = re.search(r"(\d{1,2})\s*(?:-|\u2013|to)\s*(\d{1,2})\s*\+?\s*(?:years|yrs)", text, re.I)
     least = re.search(r"(\d{1,2})\s*\+?\s*(?:years|yrs)", text, re.I)
     low, high = (
@@ -302,14 +395,33 @@ def _read_job_description(text: str) -> dict[str, Any]:
         else (least.group(1), least.group(1)) if least else (0, 0)
     )
     date = re.search(r"interview\D{0,40}(\d{4}-\d{2}-\d{2})", text, re.I)
+    joining = re.search(r"join(?:ing)?\D{0,40}(\d{4}-\d{2}-\d{2})", text, re.I)
+    people = re.search(r"(?:openings?|positions?|vacanc(?:y|ies))\s*[:\-]\s*(\d{1,3})|(\d{1,3})\s+(?:openings|positions|vacancies)", text, re.I)
+    industry = max(
+        ((len(re.findall(rf"\b(?:{words})\b", text, re.I)), name) for name, words in _INDUSTRIES),
+        key=lambda found: found[0],
+    )
+    kind = next((k for k in ("Contract", "Part-Time", "Full-Time") if re.search(k.replace("-", "[- ]?"), text, re.I)), "")
     return {
+        "projectName": _labelled(text, "project", "project name") or title,
+        "customerName": _labelled(text, "client", "customer", "company"),
+        "businessUnit": _labelled(text, "business unit", "department", "practice"),
         "projectDescription": text[:600],
-        "requiredSkills": skills,
-        "technologyStack": skills,
+        "requiredSkills": required,
+        "preferredSkills": preferred,
+        "technologyStack": required,
         "experienceRangeMin": low,
         "experienceRangeMax": high,
+        "resourcesRequired": next((g for g in (people.groups() if people else ()) if g), 1),
         "clientInterviewDate": date.group(1) if date else "",
+        "expectedJoiningDate": joining.group(1) if joining else "",
+        "location": _labelled(text, "location", "work location", "job location"),
+        "domain": _labelled(text, "domain", "industry") or (industry[1] if industry[0] else ""),
+        "employmentType": kind,
     }
+
+
+JD_SECONDS = 40
 
 
 def parse_job_description(text: str) -> dict[str, Any]:
@@ -329,9 +441,16 @@ def parse_job_description(text: str) -> dict[str, Any]:
         '"expectedJoiningDate": "YYYY-MM-DD", "projectPriority": string, '
         '"location": string, "domain": string, "employmentType": string}'
     )
-    parsed = ai.generate_json(prompt, temperature=0.3)
+    # The reader below is good enough not to keep someone waiting two minutes for a model.
+    parsed = ai.generate_json(prompt, temperature=0.3, within=JD_SECONDS)
     if isinstance(parsed, dict):
-        return {**demand_fields(parsed), "rawJobDescription": text}
+        fields = demand_fields(parsed)
+        catalogue = catalog.get_skills()
+        fields["requiredSkills"] = catalogue_names(fields["requiredSkills"], catalogue)
+        fields["preferredSkills"] = [
+            s for s in catalogue_names(fields["preferredSkills"], catalogue) if s not in fields["requiredSkills"]
+        ]
+        return {**fields, "rawJobDescription": text}
     return {**demand_fields(_read_job_description(text)), "rawJobDescription": text, "_fallback": True}
 
 

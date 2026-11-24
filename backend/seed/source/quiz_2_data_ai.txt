@@ -1,0 +1,170 @@
+# Three questions per technology: question | right answer | wrong | wrong | wrong | why
+
+## Snowflake
+What is separated from storage in Snowflake? | Compute | Security | Metadata | Billing | Warehouses scale without moving data.
+What does Time Travel allow? | Querying past data | Faster loads | Free storage | Scheduling queries | Earlier versions are kept for a period.
+What does a virtual warehouse do when suspended? | Uses no credits | Deletes its tables | Locks the account | Keeps billing | It resumes when a query arrives.
+## Power BI
+What language defines measures? | DAX | M | Python | XML | Power Query uses M for shaping data.
+Which model shape is recommended? | Star schema | One flat table | Circular joins | Random links | Facts are surrounded by dimensions.
+What does row-level security restrict? | Which rows a user sees | File size | Refresh time | Which reports are refreshed | Roles filter the data.
+## Tableau
+What is a dimension usually used for? | Grouping data | Summing data | Storing files | Sending e-mail | Measures are aggregated by dimensions.
+What does an extract give? | A local data snapshot | A live view only | A new dashboard | A copy of the workbook | It can speed up slow sources.
+What lets one sheet filter another on a dashboard? | A filter action | A tooltip | A caption | A calculated field | Selecting marks passes the filter on.
+## Apache Airflow
+What is a DAG? | A graph of tasks | A database | A server log | A user role | Tasks run in order of their dependencies.
+What does the scheduler do? | Starts tasks that are due | Stores the results | Draws charts | Writes the code of each task | It checks dependencies and timing.
+Why should tasks be idempotent? | So a rerun is safe | So they run faster | So they need no logs | So they skip checks | Retries should not duplicate data.
+## dbt
+What does a dbt model contain? | A select statement | A Python class | A dashboard | A user list | dbt builds a table or view from it.
+What does ref() do? | Links one model to another | Reads a CSV | Creates a user | Loads a raw file into the warehouse | It also sets the build order.
+What checks that a column has no nulls? | A test | A seed | A macro | A snapshot | not_null is a built-in test.
+## Amazon Redshift
+How does Redshift store table data? | By column | By row | As JSON only | In memory only | Columnar storage speeds up analytics.
+What does a distribution key affect? | Where rows are placed | Who can sign in | Backup time | How rows are compressed | Good keys avoid moving data for joins.
+What loads large files from S3 fastest? | COPY | INSERT per row | UPDATE | SELECT | COPY loads in parallel.
+## Google BigQuery
+What is on-demand pricing based on? | Data scanned | Number of users | Number of tables | Query length | Selecting fewer columns costs less.
+What does partitioning a table reduce? | Data read | Column count | User rights | Row size | Queries read only matching partitions.
+Who manages BigQuery's servers? | Google | The analyst | The DBA | The network team | It is serverless.
+## Hadoop
+What stores files in Hadoop? | HDFS | YARN | Hive | Oozie | Files are split into blocks across nodes.
+What does YARN manage? | Cluster resources | Table schemas | User passwords | Web pages | It assigns containers to applications.
+Why are blocks replicated? | To survive a failed node | To save space | To sort data | To make every file easier to compress | Copies are kept on other nodes.
+## ETL Development
+What does the T in ETL stand for? | Transform | Transfer | Test | Trace | Data is shaped for its new use.
+What does an incremental load read? | Only changed data | All data again | Only errors | Only headers | It uses a watermark or change flag.
+What is a staging area for? | Holding raw data before use | Final reports | User logins | Showing finished reports to the business | It separates extraction from loading.
+## Informatica
+What defines how data moves in PowerCenter? | A mapping | A ticket | A dashboard | A folder name | Mappings join sources, transformations and targets.
+What does a Lookup transformation do? | Finds related values | Deletes rows | Sends mail | Joins two whole files | It reads a reference source.
+What runs mappings in order? | A workflow | A parameter | A repository | A port | Workflows contain sessions and tasks.
+## Data Modeling
+What does a fact table hold? | Measurements | Descriptions | Users | Settings | Dimensions describe the measurements.
+What does normalisation reduce? | Repeated data | Query speed | Security | Table names | Each fact is stored once.
+What does a foreign key point to? | A row in another table | A file | A user | A column in the same table | It keeps references valid.
+## Data Governance
+What does data lineage show? | Where data came from | Who likes it | Its price | Who may read the data | It traces steps from source to report.
+Who is accountable for a data set's quality? | The data owner | The newest analyst | The vendor | The help desk | Ownership makes someone responsible.
+What does a data catalogue list? | Data sets and their meaning | Server temperatures | Salaries | Servers and the people who run them | People can find and trust data.
+## Microsoft Excel
+What does a PivotTable do? | Summarises data | Sends mail | Draws maps only | Locks cells | Fields are grouped and totalled.
+Which function finds a value in another column? | XLOOKUP | CONCAT | ROUND | TODAY | It searches one range and returns from another.
+What does $A$1 keep fixed when copied? | Row and column | Row only | Column only | Nothing | Dollar signs make a reference absolute.
+## Statistical Analysis
+What does a small p-value suggest? | The result is unlikely by chance | The sample is small | The data is wrong | The result will be the same next time | It does not measure the size of an effect.
+Which measure is least affected by outliers? | Median | Mean | Range | Variance | It depends on the order, not on extremes.
+What does correlation not prove? | Causation | Association | Direction | Strength | Two things may share another cause.
+## R Programming
+Which structure holds rows and columns of mixed types? | Data frame | Matrix | Vector | Factor | Each column has its own type.
+What does the pipe operator pass on? | The result on its left | A file path | A package | The name of the data set that is loaded | It feeds the next function.
+Which package draws layered charts? | ggplot2 | dplyr | readr | stringr | Charts are built in layers.
+## Microsoft Fabric
+What is OneLake? | One data lake for a tenant | A chart type | A pricing plan | A separate data store for each workload | All workloads share it.
+Which file format do Fabric tables use? | Delta Parquet | CSV | XML | Compressed JSON | It is an open columnar format.
+Which tool builds reports in Fabric? | Power BI | Visio | Access | Paint | Reports read the same data.
+## Looker
+What does LookML define? | Dimensions and measures | User photos | Server ports | How the dashboards are coloured and placed | It is the semantic model.
+What does an Explore let a user do? | Query without writing SQL | Edit the database | Create servers | Change rows in the source tables | Looker writes the SQL.
+Why define a metric once in LookML? | So everyone gets the same number | So it loads once | So it is hidden | So the database stores fewer columns of data | It becomes the single definition.
+## SQL Server
+What does a clustered index decide? | Row order on disk | Login rights | Backup name | Which columns are unique | A table has only one.
+Which tool shows how a query will run? | The execution plan | The error log | The job list | The linked server | It shows scans, seeks and joins.
+What does a transaction log allow? | Recovery to a point in time | Faster logins | Smaller tables | Queries to read data without any locks | Changes are logged before they are written.
+## Oracle Database
+What is PL/SQL used for? | Procedural code in the database | Page styling | Network rules | Moving data files between database servers | It adds logic to SQL.
+What groups related procedures? | A package | A tablespace | A redo log | A synonym | It has a specification and a body.
+What holds data files together? | A tablespace | A sequence | A cursor | A trigger | Tables are created in tablespaces.
+## MySQL
+Which engine supports transactions by default? | InnoDB | MyISAM | CSV | Memory | InnoDB also supports foreign keys.
+What does EXPLAIN show? | How a query is executed | Table sizes | User rights | How many rows were changed today | It helps to find missing indexes.
+What does replication copy? | Changes to other servers | Passwords | Screens | Only the tables that were read most recently | Replicas apply the binary log.
+## MongoDB
+How is a record stored? | As a document | As a row | As a graph edge | As a file | Documents are stored as BSON.
+What splits data across servers? | Sharding | Indexing | Journaling | Profiling | A shard key decides the place.
+What does the aggregation pipeline do? | Processes documents in stages | Backs up data | Adds users | Copies documents between two collections | Each stage passes documents on.
+## Redis
+Where does Redis keep its data while running? | In memory | On tape | In a browser | In a queue server | That is why it is fast.
+What does a TTL set? | When a key expires | Who owns a key | Where a key lives | How a key sorts | Expired keys are removed.
+Which structure suits a leaderboard? | Sorted set | String | Hash | Stream | Members are ordered by score.
+## Apache Cassandra
+How are tables designed in Cassandra? | Around the queries | Around joins | Around screens | Around users | Joins are not supported.
+What decides which node holds a row? | The partition key | The row size | The user | The time zone | The key is hashed to a token.
+What does a consistency level set? | How many replicas must answer | How fast disks spin | Who may read | How often each table is backed up | Higher levels wait for more replicas.
+## Elasticsearch
+What makes text search fast? | The inverted index | Table joins | Triggers | Stored procedures | It maps words to documents.
+What splits an index across nodes? | Shards | Aliases | Pipelines | Templates | Replicas are copies of shards.
+What turns text into searchable terms? | An analyzer | A dashboard | A snapshot | A cluster name | It splits and normalises words.
+## Database Administration
+What proves that a backup works? | Restoring it | Its file size | Its name | Its date | An untested backup may fail.
+What does an index usually slow down? | Writes | Reads by key | Sorting | Filtering | Each write must update the index.
+What does least privilege mean? | Only the rights that are needed | Rights for everyone | No passwords | Every user gets the rights of a colleague | It limits the damage of a mistake.
+## Vector Databases
+What does a vector database search by? | Similarity | Alphabet | Date only | File size | Nearby vectors have similar meaning.
+What turns text into a vector? | An embedding model | A compiler | A hash table | A spell checker | The numbers represent meaning.
+What does an approximate index trade? | A little accuracy for speed | Security for cost | Colour for size | More storage space for a lower price | Exact search is slower on large sets.
+## Deep Learning
+What does backpropagation compute? | Gradients | File sizes | Labels | Batch names | The gradients are used to update weights.
+What does dropout reduce? | Overfitting | Training data | Image size | Labels | Some units are ignored during training.
+What is an epoch? | One pass over the data | One layer | One weight | One update of the weights | Training usually takes several.
+## PyTorch
+What does autograd do? | Computes gradients | Loads images | Plots charts | Moves data to the GPU | It records operations on tensors.
+Which call updates the weights? | optimizer.step | loss.backward | model.eval | torch.save | backward only computes gradients.
+What does model.eval() change? | Dropout and batch norm | The data set | The learning rate | Weights and gradients used | These layers act differently in evaluation.
+## TensorFlow
+Which API builds models layer by layer? | Keras | TFLite | TensorBoard | XLA | It is TensorFlow's high-level API.
+What does TensorBoard show? | Training progress | Source code | User accounts | Disk usage | It plots metrics and graphs.
+What is TFLite for? | Running models on devices | Cleaning data | Writing SQL | Labelling images for training | Models are made smaller for phones and edge devices.
+## Computer Vision
+What does object detection return? | Boxes and classes | Only one label | A sound | A text summary | Each object gets a position and class.
+Which layer type suits images? | Convolutional | Recurrent | Embedding | Softmax only | Filters find local patterns.
+What does augmentation add? | Varied training images | New labels | More layers | Images collected from new customers | Flips and crops help to generalise.
+## LangChain
+What does LangChain mainly connect? | Models, tools and data | Servers and cables | Phones and tablets | Tables and forms | It composes steps into applications.
+What does a retriever return? | Relevant documents | A trained model | A user session | A chart | They are added to the prompt.
+What is LangGraph suited to? | Steps with state and loops | Static pages | Image editing | Short prompts with only one model call | Agents can branch and repeat.
+## Retrieval-Augmented Generation
+What is added to the prompt in RAG? | Retrieved passages | More layers | Random text | The whole database | The model answers from them.
+What does chunking split? | Documents | Servers | Models | Users | Smaller pieces are easier to match.
+What does RAG reduce most? | Made-up answers | Network traffic | Screen size | Licence cost | Answers can point to a source.
+## Prompt Engineering
+What does giving examples in a prompt do? | Shows the wanted form | Trains the weights | Lowers the price | Removes limits | It is called few-shot prompting.
+What does a system instruction set? | The model's role and rules | The server port | The font | The length limit of the answer | It guides every answer.
+How should an answer for a program be requested? | In a fixed format | As a story | In capitals | With a long explanation | A schema makes it easy to check.
+## AI Agents
+What lets an agent act on the world? | Tools | Fonts | Themes | Cookies | It calls functions and reads the results.
+What should limit a risky action? | Human approval | A longer prompt | A faster model | More tokens | People confirm what cannot be undone.
+What does an agent do after a tool call? | Reads the result and decides | Always stops | Retrains itself | Calls the same tool again to be sure | It plans the next step.
+## Large Language Models
+What is a token? | A piece of text | A password | A server | A whole sentence | Models read and write tokens.
+What does temperature control? | Randomness | Speed | Price | Length only | Low values give steadier answers.
+What does fine-tuning change? | The model's weights | The prompt only | The user interface | The database | It trains on new examples.
+## Scikit-learn
+What does fit do? | Learns from data | Draws a chart | Saves a file | Splits text | predict then uses what was learned.
+Why split data into train and test sets? | To check on unseen data | To save memory | To sort rows | To let the model train twice as fast | It shows how well the model generalises.
+What does a Pipeline combine? | Preparation and model | Servers and users | Tests and logs | Charts and tables | The same steps run in training and use.
+## Amazon SageMaker
+What hosts a model for live predictions? | An endpoint | A notebook | A bucket | A VPC | Applications call the endpoint.
+Where are model artifacts stored? | Amazon S3 | CloudWatch | Route 53 | IAM | Training jobs write there.
+What grants a training job access to data? | An IAM role | A key pair | A subnet | A tag | The job assumes the role.
+## Vertex AI
+What is Vertex AI? | Google Cloud's ML platform | A spreadsheet | A CDN | Google Cloud's data warehouse service | It covers training, hosting and pipelines.
+What does Model Registry keep? | Model versions | User photos | Invoices | Log files | Versions can be compared and deployed.
+What does an endpoint serve? | Predictions | Images only | Source code | Passwords | Models are deployed to it.
+## Azure OpenAI
+What do you call to use a model? | A deployment | A resource group | A subnet | A tag | Each deployment names a model.
+What checks prompts and answers for harm? | Content filters | Load balancers | Cost alerts | Backup jobs | They run on input and output.
+How can access avoid API keys? | Managed identity | Public links | Shared passwords | Cookies | Entra ID issues the token.
+## Responsible AI
+What can biased training data cause? | Unfair results | Slow servers | Broken links | Larger fonts | Models learn the patterns in the data.
+What does explainability help people understand? | Why a result was given | How to code | Where data is stored | Who pays | It supports trust and appeal.
+Who stays accountable for an AI decision? | People | The model | The GPU | The data set | Responsibility cannot be handed to software.
+## Time Series Forecasting
+What is seasonality? | A pattern that repeats | A single spike | A missing value | A slow rise over many years | Such as higher sales each December.
+How should a time series be split for testing? | By time order | At random | By value size | By colour | The future must not leak into training.
+What does a naive forecast use? | The last value | The average of all data | A neural network | Two models | It is a simple baseline.
+## LLMOps
+What should be versioned in LLM applications? | Prompts and models | Only the logo | Only logs | User names and roles | A change in either can change answers.
+What does an evaluation set check? | Answer quality | Server heat | Font use | Licence dates | Fixed questions make results comparable.
+What is a common cost driver? | Token use | Disk space | Screen time | User count only | Long prompts cost more.

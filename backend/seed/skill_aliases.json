@@ -1,0 +1,1633 @@
+{
+ "JavaScript": {
+  "names": [
+   "JS",
+   "ES6",
+   "ECMAScript"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "C#": {
+  "names": [
+   "CSharp",
+   "C Sharp"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "ASP.NET Core": {
+  "names": [
+   ".NET",
+   ".NET Core",
+   "dotnet",
+   "ASP.NET",
+   "ASP.NET MVC",
+   ".NET Framework"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Entity Framework": {
+  "names": [
+   "EF Core",
+   "Entity Framework Core"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Node.js": {
+  "names": [
+   "NodeJS",
+   "Node JS"
+  ],
+  "cased": [],
+  "exact": [
+   "Node"
+  ]
+ },
+ "Express.js": {
+  "names": [
+   "ExpressJS"
+  ],
+  "cased": [],
+  "exact": [
+   "Express"
+  ]
+ },
+ "Go (Golang)": {
+  "names": [
+   "Golang"
+  ],
+  "cased": [],
+  "exact": [
+   "Go"
+  ]
+ },
+ "Ruby on Rails": {
+  "names": [
+   "RoR",
+   "Ruby"
+  ],
+  "cased": [],
+  "exact": [
+   "Rails"
+  ]
+ },
+ "C++": {
+  "names": [
+   "CPP"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Django": {
+  "names": [
+   "Django REST Framework"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "GraphQL": {
+  "names": [
+   "Apollo GraphQL"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Apache Kafka": {
+  "names": [
+   "Kafka",
+   "Confluent Kafka"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "RabbitMQ": {
+  "names": [
+   "message queues",
+   "AMQP"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Hibernate": {
+  "names": [
+   "JPA",
+   "Spring Data JPA"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Event-Driven Architecture": {
+  "names": [
+   "event driven",
+   "event sourcing",
+   "CQRS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "JUnit & Mockito": {
+  "names": [
+   "JUnit",
+   "Mockito"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Angular": {
+  "names": [
+   "AngularJS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Vue.js": {
+  "names": [
+   "VueJS",
+   "Vue",
+   "Nuxt"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "HTML & CSS": {
+  "names": [
+   "HTML5",
+   "CSS3",
+   "HTML",
+   "CSS",
+   "SASS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Tailwind CSS": {
+  "names": [
+   "Tailwind"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Redux": {
+  "names": [
+   "Redux Toolkit"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Web Accessibility": {
+  "names": [
+   "WCAG",
+   "accessibility standards"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Android Development": {
+  "names": [
+   "Android",
+   "Jetpack Compose"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "iOS Development": {
+  "names": [
+   "iOS",
+   "SwiftUI",
+   "UIKit",
+   "Objective-C"
+  ],
+  "cased": [],
+  "exact": [
+   "Swift"
+  ]
+ },
+ "Flutter": {
+  "names": [
+   "Dart"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Snowflake": {
+  "names": [
+   "SnowSQL",
+   "Snowpark"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Power BI": {
+  "names": [
+   "PowerBI",
+   "DAX",
+   "Microsoft Power BI"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Tableau": {
+  "names": [
+   "Tableau Desktop",
+   "Tableau Server"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Apache Airflow": {
+  "names": [
+   "Airflow"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "dbt": {
+  "names": [
+   "data build tool"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Amazon Redshift": {
+  "names": [
+   "Redshift"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Google BigQuery": {
+  "names": [
+   "BigQuery",
+   "Big Query"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Hadoop": {
+  "names": [
+   "HDFS",
+   "Hive",
+   "MapReduce"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "ETL Development": {
+  "names": [
+   "ETL",
+   "ELT",
+   "data pipelines",
+   "data pipeline",
+   "data integration"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Informatica": {
+  "names": [
+   "Informatica PowerCenter",
+   "IICS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Data Modeling": {
+  "names": [
+   "data modelling",
+   "dimensional modeling",
+   "star schema"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Data Governance": {
+  "names": [
+   "data catalog",
+   "data lineage",
+   "Collibra"
+  ],
+  "cased": [],
+  "exact": [
+   "data quality"
+  ]
+ },
+ "Microsoft Excel": {
+  "names": [
+   "MS Excel",
+   "advanced Excel"
+  ],
+  "cased": [],
+  "exact": [
+   "Excel"
+  ]
+ },
+ "Statistical Analysis": {
+  "names": [
+   "statistics",
+   "hypothesis testing",
+   "A/B testing",
+   "statistical modeling"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "R Programming": {
+  "names": [
+   "RStudio",
+   "R language"
+  ],
+  "cased": [],
+  "exact": [
+   "R"
+  ]
+ },
+ "Microsoft Fabric": {
+  "names": [
+   "OneLake"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Looker": {
+  "names": [
+   "LookML"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SQL Server": {
+  "names": [
+   "MS SQL",
+   "MSSQL",
+   "T-SQL",
+   "Microsoft SQL Server",
+   "SSIS",
+   "SSRS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Oracle Database": {
+  "names": [
+   "PL/SQL",
+   "Oracle DB",
+   "Oracle SQL"
+  ],
+  "cased": [],
+  "exact": [
+   "Oracle"
+  ]
+ },
+ "MySQL": {
+  "names": [
+   "MariaDB"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "MongoDB": {
+  "names": [
+   "Mongo"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Apache Cassandra": {
+  "names": [
+   "Cassandra"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Elasticsearch": {
+  "names": [
+   "OpenSearch",
+   "ELK",
+   "Elastic Stack"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Database Administration": {
+  "names": [
+   "DBA",
+   "database tuning"
+  ],
+  "cased": [],
+  "exact": [
+   "database administrator"
+  ]
+ },
+ "Vector Databases": {
+  "names": [
+   "Pinecone",
+   "Weaviate",
+   "pgvector",
+   "vector database",
+   "vector store",
+   "vector search",
+   "embeddings",
+   "ChromaDB"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Deep Learning": {
+  "names": [
+   "neural networks",
+   "CNN"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "TensorFlow": {
+  "names": [
+   "Keras"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Computer Vision": {
+  "names": [
+   "OpenCV",
+   "image recognition",
+   "object detection",
+   "YOLO"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "LangChain": {
+  "names": [
+   "LangGraph",
+   "LlamaIndex"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Retrieval-Augmented Generation": {
+  "names": [
+   "RAG",
+   "retrieval augmented generation"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Prompt Engineering": {
+  "names": [
+   "prompt design"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "AI Agents": {
+  "names": [
+   "agentic AI",
+   "multi-agent systems",
+   "AI agent",
+   "agentic workflows"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Large Language Models": {
+  "names": [
+   "LLM",
+   "LLMs",
+   "large language model",
+   "fine-tuning",
+   "model fine tuning"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Scikit-learn": {
+  "names": [
+   "sklearn",
+   "scikit learn"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Amazon SageMaker": {
+  "names": [
+   "SageMaker",
+   "AWS SageMaker"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Vertex AI": {
+  "names": [
+   "Google Vertex AI"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Azure OpenAI": {
+  "names": [
+   "OpenAI API",
+   "Azure AI Foundry",
+   "Azure AI services"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Responsible AI": {
+  "names": [
+   "AI governance",
+   "AI ethics",
+   "explainable AI"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Time Series Forecasting": {
+  "names": [
+   "demand forecasting",
+   "time series"
+  ],
+  "cased": [],
+  "exact": [
+   "forecasting"
+  ]
+ },
+ "LLMOps": {
+  "names": [
+   "LLM operations"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "AWS": {
+  "names": [
+   "Amazon Web Services",
+   "EC2",
+   "Amazon S3"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Google Cloud": {
+  "names": [
+   "GCP",
+   "Google Cloud Platform",
+   "GKE"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Serverless Computing": {
+  "names": [
+   "AWS Lambda",
+   "serverless",
+   "Azure Functions",
+   "Cloud Functions"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Helm": {
+  "names": [
+   "Helm charts"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Ansible": {
+  "names": [
+   "Ansible playbooks"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Jenkins": {
+  "names": [
+   "Jenkins pipelines"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "GitLab CI": {
+  "names": [
+   "GitLab",
+   "GitLab CI/CD"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Argo CD": {
+  "names": [
+   "ArgoCD",
+   "GitOps"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Prometheus & Grafana": {
+  "names": [
+   "Prometheus",
+   "Grafana"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Site Reliability Engineering": {
+  "names": [
+   "SRE",
+   "error budgets",
+   "SLOs"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Linux Administration": {
+  "names": [
+   "Linux",
+   "RHEL",
+   "Red Hat Enterprise Linux",
+   "Unix",
+   "Ubuntu"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Shell Scripting": {
+  "names": [
+   "Bash",
+   "shell scripts",
+   "bash scripting"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "PowerShell": {
+  "names": [
+   "Windows PowerShell"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "OpenShift": {
+  "names": [
+   "Red Hat OpenShift"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "VMware vSphere": {
+  "names": [
+   "VMware",
+   "ESXi",
+   "vSphere"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Cloud Migration": {
+  "names": [
+   "lift and shift",
+   "workload migration"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Cloud Architecture": {
+  "names": [
+   "landing zone",
+   "well-architected"
+  ],
+  "cased": [],
+  "exact": [
+   "cloud architect"
+  ]
+ },
+ "FinOps": {
+  "names": [
+   "cloud cost optimization",
+   "cloud cost management"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Observability": {
+  "names": [
+   "Datadog",
+   "New Relic",
+   "OpenTelemetry",
+   "Dynatrace",
+   "application monitoring"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "AWS CloudFormation": {
+  "names": [
+   "CloudFormation",
+   "AWS CDK"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Platform Engineering": {
+  "names": [
+   "internal developer platform",
+   "Backstage"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Network Security": {
+  "names": [
+   "firewalls",
+   "firewall",
+   "IDS/IPS",
+   "Palo Alto"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Cloud Security": {
+  "names": [
+   "CSPM",
+   "cloud security posture",
+   "AWS security",
+   "Azure security"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SIEM": {
+  "names": [
+   "Splunk",
+   "Microsoft Sentinel",
+   "QRadar"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Penetration Testing": {
+  "names": [
+   "pentesting",
+   "pen testing",
+   "ethical hacking",
+   "Burp Suite",
+   "Metasploit",
+   "Kali Linux"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Application Security": {
+  "names": [
+   "AppSec",
+   "OWASP",
+   "secure coding",
+   "SAST",
+   "DAST"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Identity & Access Management": {
+  "names": [
+   "IAM",
+   "identity and access management",
+   "Okta",
+   "Entra ID",
+   "Azure AD",
+   "Active Directory",
+   "SailPoint",
+   "CyberArk"
+  ],
+  "cased": [],
+  "exact": [
+   "SSO",
+   "OAuth"
+  ]
+ },
+ "Incident Response": {
+  "names": [
+   "DFIR",
+   "digital forensics",
+   "security incidents"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Threat Hunting": {
+  "names": [
+   "threat intelligence",
+   "MITRE ATT&CK",
+   "threat detection"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Vulnerability Management": {
+  "names": [
+   "Nessus",
+   "Qualys",
+   "vulnerability assessment",
+   "vulnerability scanning"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "GRC & Compliance": {
+  "names": [
+   "GRC",
+   "ISO 27001",
+   "SOC 2",
+   "PCI DSS",
+   "NIST",
+   "GDPR",
+   "risk assessment",
+   "governance risk and compliance"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "DevSecOps": {
+  "names": [
+   "shift-left security"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Zero Trust Architecture": {
+  "names": [
+   "zero trust"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Security Operations": {
+  "names": [
+   "SOC operations",
+   "security operations center",
+   "security monitoring"
+  ],
+  "cased": [
+   "SOC"
+  ],
+  "exact": [
+   "SOC analyst"
+  ]
+ },
+ "Endpoint Security": {
+  "names": [
+   "EDR",
+   "CrowdStrike",
+   "Microsoft Defender"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Cryptography": {
+  "names": [
+   "encryption",
+   "PKI",
+   "key management"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Salesforce Administration": {
+  "names": [
+   "Salesforce Admin",
+   "Salesforce",
+   "Sales Cloud",
+   "Service Cloud"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Apex": {
+  "names": [
+   "Salesforce Apex",
+   "Salesforce development",
+   "SOQL",
+   "Visualforce"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Lightning Web Components": {
+  "names": [
+   "LWC"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SAP ABAP": {
+  "names": [
+   "ABAP"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SAP FICO": {
+  "names": [
+   "SAP FI",
+   "SAP CO",
+   "SAP Finance"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SAP MM": {
+  "names": [
+   "SAP Materials Management"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SAP S/4HANA": {
+  "names": [
+   "S/4HANA",
+   "SAP HANA",
+   "S4 HANA"
+  ],
+  "cased": [],
+  "exact": [
+   "SAP"
+  ]
+ },
+ "SAP Fiori": {
+  "names": [
+   "SAPUI5",
+   "SAP UI5"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Workday HCM": {
+  "names": [
+   "Workday"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "ServiceNow": {
+  "names": [
+   "Service Now"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Microsoft Dynamics 365": {
+  "names": [
+   "Dynamics 365",
+   "D365",
+   "Dynamics CRM"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Power Platform": {
+  "names": [
+   "Power Apps",
+   "Power Automate",
+   "PowerApps"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Oracle ERP Cloud": {
+  "names": [
+   "Oracle Fusion",
+   "Oracle EBS",
+   "Oracle E-Business Suite"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "MuleSoft": {
+  "names": [
+   "Anypoint",
+   "Mule ESB"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "API Management": {
+  "names": [
+   "Apigee",
+   "Kong",
+   "API gateway",
+   "Azure API Management"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SharePoint": {
+  "names": [
+   "SharePoint Online"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Pega": {
+  "names": [
+   "Pega PRPC",
+   "Pega Platform"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Robotic Process Automation": {
+  "names": [
+   "RPA",
+   "UiPath",
+   "Automation Anywhere",
+   "Blue Prism"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Guidewire": {
+  "names": [
+   "PolicyCenter",
+   "ClaimCenter",
+   "BillingCenter"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "COBOL & Mainframe": {
+  "names": [
+   "COBOL",
+   "mainframe",
+   "JCL",
+   "CICS",
+   "DB2"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "SaaS Architecture": {
+  "names": [
+   "multi-tenant",
+   "multi-tenancy",
+   "subscription billing"
+  ],
+  "cased": [],
+  "exact": [
+   "SaaS"
+  ]
+ },
+ "Adobe Experience Manager": {
+  "names": [
+   "AEM"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "E-Commerce Platforms": {
+  "names": [
+   "Magento",
+   "Shopify",
+   "Adobe Commerce",
+   "SAP Commerce",
+   "ecommerce"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "CMS Development": {
+  "names": [
+   "WordPress",
+   "Drupal"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Cypress": {
+  "names": [
+   "Cypress.io"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Appium": {
+  "names": [
+   "mobile automation"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Performance Testing": {
+  "names": [
+   "JMeter",
+   "LoadRunner",
+   "load testing",
+   "Gatling"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Manual Testing": {
+  "names": [
+   "functional testing",
+   "regression testing"
+  ],
+  "cased": [],
+  "exact": [
+   "test cases",
+   "UAT"
+  ]
+ },
+ "Cucumber & BDD": {
+  "names": [
+   "Cucumber",
+   "BDD",
+   "Gherkin"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Test Management": {
+  "names": [
+   "test strategy",
+   "test planning",
+   "TestRail"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Product Management": {
+  "names": [
+   "product roadmap",
+   "product strategy"
+  ],
+  "cased": [],
+  "exact": [
+   "product owner",
+   "product manager"
+  ]
+ },
+ "Project Management": {
+  "names": [
+   "PMP",
+   "PRINCE2",
+   "project planning"
+  ],
+  "cased": [],
+  "exact": [
+   "project manager"
+  ]
+ },
+ "Scrum": {
+  "names": [
+   "Scrum Master",
+   "sprint planning"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Scaled Agile": {
+  "names": [
+   "Scaled Agile Framework"
+  ],
+  "cased": [
+   "SAFe"
+  ],
+  "exact": []
+ },
+ "UX Design": {
+  "names": [
+   "user experience",
+   "UX research",
+   "wireframing",
+   "usability testing",
+   "UX"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "UI Design": {
+  "names": [
+   "Figma",
+   "user interface design",
+   "design systems"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Business Analysis": {
+  "names": [
+   "BRD",
+   "gap analysis",
+   "process mapping"
+  ],
+  "cased": [],
+  "exact": [
+   "user stories",
+   "business analyst"
+  ]
+ },
+ "ITIL": {
+  "names": [
+   "ITSM",
+   "IT service management"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Technical Support": {
+  "names": [
+   "L2 support",
+   "L3 support",
+   "service desk",
+   "help desk",
+   "helpdesk",
+   "production support",
+   "application support"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Network Administration": {
+  "names": [
+   "Cisco",
+   "CCNA",
+   "routing and switching",
+   "LAN/WAN"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Solution Architecture": {
+  "names": [
+   "enterprise architecture",
+   "TOGAF"
+  ],
+  "cased": [],
+  "exact": [
+   "solution architect"
+  ]
+ },
+ "Technical Pre-Sales": {
+  "names": [
+   "pre-sales",
+   "presales",
+   "solution consulting",
+   "RFP"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Change Management": {
+  "names": [
+   "organizational change",
+   "Prosci"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Technical Writing": {
+  "names": [
+   "API documentation",
+   "documentation writing"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Customer Success": {
+  "names": [
+   "customer onboarding"
+  ],
+  "cased": [],
+  "exact": [
+   "customer success manager"
+  ]
+ },
+ "Program Management": {
+  "names": [
+   "PMO",
+   "portfolio management"
+  ],
+  "cased": [],
+  "exact": [
+   "program manager"
+  ]
+ },
+ "Blockchain Development": {
+  "names": [
+   "blockchain",
+   "Solidity",
+   "Ethereum",
+   "smart contracts",
+   "Web3"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "IoT Development": {
+  "names": [
+   "IoT",
+   "Internet of Things",
+   "MQTT"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Embedded C": {
+  "names": [
+   "embedded systems",
+   "RTOS",
+   "firmware",
+   "embedded software"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Unity Development": {
+  "names": [
+   "Unity",
+   "Unity3D",
+   "AR/VR",
+   "game development"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "HL7 FHIR": {
+  "names": [
+   "HL7",
+   "FHIR",
+   "healthcare interoperability"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Core Banking": {
+  "names": [
+   "Temenos",
+   "Finacle",
+   "payments domain",
+   "ISO 20022"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Telecom OSS & BSS": {
+  "names": [
+   "OSS/BSS",
+   "telecom BSS",
+   "telecom OSS",
+   "5G"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "AUTOSAR": {
+  "names": [
+   "CAN bus",
+   "ADAS",
+   "automotive software"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Next.js App Architecture": {
+  "names": [
+   "Next.js",
+   "NextJS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Enterprise TypeScript Development": {
+  "names": [
+   "TypeScript"
+  ],
+  "cased": [],
+  "exact": [
+   "TS"
+  ]
+ },
+ "Gemini API Integration": {
+  "names": [
+   "Gemini API",
+   "Google Gemini"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "System Design & Scalability": {
+  "names": [
+   "system design",
+   "distributed systems"
+  ],
+  "cased": [],
+  "exact": [
+   "scalability"
+  ]
+ },
+ "PostgreSQL & Vector Database Optimization": {
+  "names": [
+   "PostgreSQL",
+   "Postgres"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Selenium Automation Framework": {
+  "names": [
+   "Selenium",
+   "Selenium WebDriver"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Postman & REST API Testing": {
+  "names": [
+   "Postman",
+   "API testing"
+  ],
+  "cased": [
+   "REST Assured"
+  ],
+  "exact": []
+ },
+ "Git & Version Control": {
+  "names": [
+   "Git",
+   "version control",
+   "Bitbucket"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "TestNG & Automation Frameworks": {
+  "names": [
+   "TestNG",
+   "test automation frameworks"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Java": {
+  "names": [
+   "Core Java",
+   "Java 17",
+   "Java 21"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Spring Boot": {
+  "names": [
+   "Spring Framework",
+   "Spring MVC"
+  ],
+  "cased": [],
+  "exact": [
+   "Spring"
+  ]
+ },
+ "React": {
+  "names": [
+   "React.js",
+   "ReactJS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Microservices": {
+  "names": [
+   "microservice",
+   "microservices architecture"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "REST APIs": {
+  "names": [
+   "REST API",
+   "RESTful APIs",
+   "RESTful services",
+   "RESTful"
+  ],
+  "cased": [
+   "REST"
+  ],
+  "exact": []
+ },
+ "CI/CD": {
+  "names": [
+   "CICD",
+   "continuous integration",
+   "continuous delivery"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Spark": {
+  "names": [
+   "Apache Spark",
+   "PySpark"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Azure Data Factory": {
+  "names": [
+   "ADF"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Azure": {
+  "names": [
+   "Microsoft Azure"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Kubernetes": {
+  "names": [
+   "K8s",
+   "AKS",
+   "EKS"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Docker": {
+  "names": [
+   "containers",
+   "containerization"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Terraform": {
+  "names": [
+   "infrastructure as code",
+   "IaC"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Agile": {
+  "names": [
+   "agile methodology",
+   "agile delivery"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Jira": {
+  "names": [
+   "Atlassian"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Stakeholder Management": {
+  "names": [
+   "stakeholder engagement"
+  ],
+  "cased": [],
+  "exact": [
+   "client management"
+  ]
+ },
+ "Machine Learning": {
+  "names": [
+   "ML",
+   "predictive modeling"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "NLP": {
+  "names": [
+   "natural language processing"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "GenAI": {
+  "names": [
+   "generative AI",
+   "Gen AI"
+  ],
+  "cased": [],
+  "exact": []
+ },
+ "Requirements Gathering": {
+  "names": [
+   "requirements elicitation",
+   "requirement gathering"
+  ],
+  "cased": [],
+  "exact": []
+ }
+}

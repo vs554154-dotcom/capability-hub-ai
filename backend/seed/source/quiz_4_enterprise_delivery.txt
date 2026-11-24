@@ -1,0 +1,222 @@
+# Three questions per technology: question | right answer | wrong | wrong | wrong | why
+
+## Salesforce Administration
+What controls which records a user sees? | Sharing settings | Page layouts | Themes | Reports | Org-wide defaults and rules decide.
+What automates a process without code? | Flow | Apex | Visualforce | SOQL | Flow Builder is declarative.
+What bundles extra permissions for users? | A permission set | A dashboard | A queue | An assignment rule | It adds to the profile.
+## Apex
+What must triggers be written to handle? | Many records at once | One record only | Only new users | Only one record's change | Up to 200 records arrive together.
+What limits queries in one transaction? | Governor limits | Page layouts | Profiles | Themes | Shared resources are protected.
+How much test coverage is needed to deploy? | 75 percent | 10 percent | 50 percent | 100 percent | It is required for production.
+## Lightning Web Components
+Which decorator exposes a property to a parent? | @api | @track | @wire | @test | The parent can then set it.
+What does @wire read? | Salesforce data | Local files | Cookies | Logs | It calls an adapter or Apex.
+How does a child inform its parent? | By an event | By a file | By a record | By CSS | CustomEvent is dispatched.
+## SAP ABAP
+What does a SELECT inside a loop usually cause? | Slow programs | Syntax errors | Locked users | Lost transports | Read once and loop in memory.
+What carries changes between systems? | A transport request | An IDoc | A variant | A background job variant | It moves from development to production.
+What is an internal table? | Data held in memory | A database view | A screen | A user list | It lives while the program runs.
+## SAP FICO
+What does a cost centre collect? | Costs of an area | Customer orders | Stock | User roles | It supports controlling.
+What links an account to the balance sheet? | The chart of accounts | The plant | The material | The controlling area settings | It lists all general ledger accounts.
+Which process pays suppliers? | Accounts payable | Accounts receivable | Asset sales | Payroll | Vendor invoices are settled.
+## SAP MM
+What starts buying in SAP MM? | A purchase requisition | An invoice | A delivery | A supplier's delivery note | It may become a purchase order.
+What does a goods receipt update? | Stock | Salaries | Roles | Routes | It also posts to finance.
+What is matched in three-way matching? | Order, receipt and invoice | Plant, user and date | Name, price and colour | Tax, bank and route | Payment follows a match.
+## SAP S/4HANA
+What is S/4HANA built on? | An in-memory database | A file server | Spreadsheets | A distributed file system | SAP HANA stores data by column.
+What is the Universal Journal? | One place for finance postings | A diary | A print log | A log of every user's actions in the system | Finance and controlling share it.
+What is a greenfield project? | A new implementation | An upgrade in place | A data copy | A test only | Processes are designed afresh.
+## SAP Fiori
+What do Fiori apps aim for? | Simple, role-based work | More transactions | Longer forms | One screen for all processes | Each app fits a task.
+What does SAPUI5 provide? | Web UI controls | A database | A compiler | Payroll rules | Apps are built from its controls.
+What usually supplies a Fiori app's data? | OData services | FTP files | E-mail | Excel macros | Standard REST-style services.
+## Workday HCM
+What changes a worker's data under control? | A business process | A report | A theme | A manager's calculated field | Steps and approvals apply.
+What groups workers for security? | Security groups | Pay slips | Calendars | Job titles only | They decide access.
+What builds a custom list of data? | A report | A tenant | A tile | A badge | The report writer selects fields.
+## ServiceNow
+What stores data in ServiceNow? | Tables | Spreadsheets | Files only | Mailboxes | Every record belongs to a table.
+Where does a business rule run? | On the server | In the browser | On a phone | In e-mail | Client scripts run in the browser.
+What moves customisations between instances? | Update sets | Knowledge articles | Incidents | Tags | Changes are captured and moved.
+## Microsoft Dynamics 365
+Where is the data usually stored? | Dataverse | Access | Notepad | SMTP | Tables are shared with Power Platform.
+What extends logic on the server? | A plug-in | A chart | A view | A theme | It runs on events such as create.
+What groups components for moving? | A solution | A lead | A queue | A case | Solutions are exported and imported.
+## Power Platform
+Which tool automates steps between apps? | Power Automate | Power BI | Power Pages | Word | Flows react to triggers.
+What does a connector do? | Links to a service | Draws a chart | Prints a page | Stores a theme | Apps and flows use it.
+What protects data between connectors? | Data loss prevention policies | Bigger screens | Faster flows | A licence for each person who builds an app | Policies block unsafe mixes.
+## Oracle ERP Cloud
+What loads data in bulk? | File-based import | Screen typing | E-mail | Fax | Templates feed interface tables.
+What defines who approves what? | Approval rules | Font rules | Print rules | Backup rules | They route transactions.
+How often does Oracle release updates? | Quarterly | Daily | Every five years | Never | Customers test each update.
+## MuleSoft
+What are the three layers of API-led design? | System, process, experience | Red, green, blue | Read, write, run | Gateway, database, front end | Each has a clear purpose.
+What language transforms data? | DataWeave | SQL | CSS | JavaScript | It maps between formats.
+What holds a message during a flow? | The Mule event | The log | The policy | The worker | It has payload and variables.
+## API Management
+What does a gateway enforce? | Policies | Colours | Grammar | Salaries | Such as limits and authentication.
+What protects an API from too many calls? | Rate limiting | Caching images | Longer URLs | More logs | Extra calls are refused.
+Why version an API? | So old clients keep working | To look newer | To add cost | So each new client can have its own address | Breaking changes need a new version.
+## SharePoint
+What organises files with metadata? | A document library | A theme | A web part | A site collection theme | Columns describe the files.
+What does versioning keep? | Earlier copies | Deleted users | Search logs | Page colours | Old versions can be restored.
+What places content on a page? | Web parts | Triggers | Schemas | Pods | Each part shows something.
+## Pega
+What does Pega model work as? | Cases | Tables | Threads | Charts | Stages and steps guide the work.
+What decides the next best offer? | Decision strategies | Stylesheets | Log levels | Case life cycle stages | Rules and models are combined.
+What supports reuse across apps? | Built-on layers | Copying files | Printing | E-mail | Rules are inherited.
+## Robotic Process Automation
+Which process suits a bot best? | Rule-based and repeated | Creative work | Rare cases | Different in every single case | Clear rules are needed.
+What is an attended bot? | One that helps a person | One on a server only | One with no rules | One that is off | A person starts it.
+What should a bot do on an unexpected screen? | Log it and stop safely | Guess | Delete data | Try the next button it finds | A person then decides.
+## Guidewire
+Which product handles claims? | ClaimCenter | PolicyCenter | BillingCenter | DataHub | Each product covers one area.
+What language is used for rules? | Gosu | COBOL | Swift | R | It runs on the JVM.
+What does PolicyCenter manage? | Quotes and policies | Payroll | Servers | Payments made to repairers | It covers the policy life cycle.
+## COBOL & Mainframe
+What does JCL describe? | How to run a job | A screen layout | A user | A network | It names programs and files.
+Which division declares data in COBOL? | DATA DIVISION | PROCEDURE DIVISION | IDENTIFICATION DIVISION | REPORT DIVISION | Variables and files are defined there.
+What does CICS handle? | Online transactions | Batch printing | Backups | Nightly batch jobs | Many users work at once.
+## SaaS Architecture
+What is a tenant? | A customer's isolated space | A server rack | A developer | A server that only one developer may use | Tenants share the product safely.
+What must never cross tenants? | Data | Code | Servers | Logos | Isolation is the first duty.
+What does metering measure? | Usage for billing | Network cable | Staff hours | Page colours | Plans depend on it.
+## Adobe Experience Manager
+What makes up a page in AEM? | Components | Pods | Triggers | Pivots | Authors place them on templates.
+Where is content stored? | In the JCR repository | In Excel | In Redis only | In the Dispatcher's cache | It is a tree of nodes.
+What caches pages in front of publish? | The Dispatcher | The author | The bundle | The workflow | It also protects the server.
+## E-Commerce Platforms
+What is cart abandonment? | Leaving before paying | A lost parcel | A price error | Returning an order later | Checkout changes can lower it.
+What must card payments comply with? | PCI DSS | HIPAA | WCAG | SAFe | Card data is protected.
+What does headless commerce separate? | Front end and engine | Buyer and seller | Price and tax | Stock and store | Any front end can use the API.
+## CMS Development
+What changes WordPress without editing core? | Plugins and hooks | Deleting files | New domains | Cookies | Updates stay safe.
+What controls how a site looks? | The theme | The role | The cron job | The feed | Content stays separate.
+Why keep a CMS updated? | Security fixes | More users | Longer pages | New domains | Known flaws are attacked.
+## Cypress
+Where do Cypress tests run? | In the browser | On a phone | In a database | In e-mail | They share the page's run loop.
+What does cy.intercept control? | Network requests | Fonts | Screenshots | Git branches | Responses can be stubbed.
+What does Cypress do before failing an assertion? | Retries for a time | Restarts the computer | Skips the test | Deletes data | Waiting is built in.
+## Playwright
+Which browsers does it cover? | Chromium, Firefox and WebKit | Chrome only | Edge only | Only browsers that are built on Chromium | One API drives them all.
+What do locators do before acting? | Wait until ready | Take a photo | Clear cookies | Log out | Auto-waiting reduces flaky tests.
+What records steps for debugging? | The trace viewer | The linter | The bundler | The test generator | It shows each step.
+## Appium
+What does Appium drive? | Real apps on devices | Only websites | Databases | Screens drawn by a web server | It uses the platform's own tools.
+What tells Appium which device to use? | Capabilities | Cookies | Themes | Permissions | Such as platform and app path.
+Which platforms does it cover? | Android and iOS | Windows only | Linux only | Consoles | One API for both.
+## Performance Testing
+What does a load test apply? | Expected traffic | A virus | A new theme | The highest load possible | A stress test goes beyond it.
+Why report the 95th percentile? | Averages hide slow users | It is always lower | It is easier | It shows the fastest users | One in twenty waits longer.
+What does a soak test find? | Slow leaks over time | Typing errors | Colour faults | The highest possible load | It runs for hours.
+## Manual Testing
+What does exploratory testing combine? | Learning, design and running | Coding and billing | Sales and support | Planning, coding and release | The tester adapts.
+What makes a defect report good? | Steps to repeat it | A long title | A guess | Capital letters | Others can see the problem.
+What does regression testing check? | That old features still work | New prices | Staff changes | That new features match the latest designs | Changes can break other parts.
+## Cucumber & BDD
+Which words begin a scenario's steps? | Given, When, Then | If, Else, End | Plan, Do, Check | Try, Catch, Throw | They describe context, action and result.
+Who writes scenarios in BDD? | Business, dev and test together | Only testers | Only managers | Testers alone, after the code is finished | It is shared understanding.
+What connects a step to code? | A step definition | A pivot | A pod | A background section | The text matches a method.
+## Test Management
+What ranks what to test first? | Risk | Alphabet | Team size | Age | Likely and costly failures come first.
+What does a traceability matrix link? | Requirements and tests | Users and roles | Servers and racks | Defects and developers | Gaps become visible.
+What tells a team that testing may stop? | Exit criteria | The clock only | A holiday | A new tool | They are agreed at the start.
+## Product Management
+What should a roadmap show? | Outcomes and priorities | Every task by hour | Salaries | Every feature with a date | It explains why and when.
+What does an MVP test? | A key assumption | All features | The logo | The budget | It is the smallest useful version.
+What shows product value best? | Customers' behaviour | Lines of code | Meetings held | The number of features shipped | Use and retention tell the truth.
+## Project Management
+What is the critical path? | The longest chain of tasks | The cheapest task | The first task | The tasks with the most people | A delay there delays the project.
+What controls changes to scope? | A change process | A longer day | A bigger team | A new tool | Impact is agreed first.
+What does a risk register hold? | Risks, owners and responses | Salaries | Source code | Completed tasks and the hours they took | It is reviewed often.
+## Scrum
+Who orders the product backlog? | The Product Owner | The Scrum Master | The tester | The client's lawyer | One person is accountable.
+What is the daily scrum for? | Planning the next day's work | Reporting to the boss | Estimating costs | Reporting progress to the manager | It takes 15 minutes.
+What must be true of an increment? | It meets the Definition of Done | It is large | It is sold | It contains every item in the backlog | Quality is agreed.
+## Scaled Agile
+What does PI Planning align? | Many teams | One developer | Servers | Invoices | Teams plan together.
+What is an Agile Release Train? | A team of teams | A tool | A report | A meeting room | It delivers in a shared rhythm.
+What order does WSJF suggest first? | High value, small size | Largest first | Oldest first | The largest and most visible | Cost of delay is divided by size.
+## UX Design
+What should come before screens? | Understanding users | Choosing colours | Buying fonts | Writing code | Needs guide the design.
+What does a usability test watch? | People doing tasks | Server logs only | Sales calls | Designers talking | Problems become visible.
+What is a wireframe? | A simple layout sketch | A final design | A network map | A coded version of the page | It shows structure, not style.
+## UI Design
+What does a design system give? | Reusable, consistent parts | Faster servers | More fonts | A final picture of every page in a product | Screens look and act alike.
+What does visual hierarchy guide? | Where the eye goes first | Who may log in | What is stored | Which page a user opens next | Size, colour and space show importance.
+What does auto layout do in Figma? | Adjusts spacing to content | Draws icons | Writes text | Aligns every frame to the same grid column | Frames resize by rules.
+## Business Analysis
+What does a requirement describe? | A need to be met | A person's salary | A server | A price | It should be testable.
+What does gap analysis compare? | Now and the goal | Two people | Two logos | Two teams' results | It shows what is missing.
+What do acceptance criteria decide? | When work is done | Who is paid | Which tool is used | Where teams sit | They can be checked.
+## ITIL
+What is the aim of incident management? | Restore service quickly | Find the root cause | Buy servers | Hire staff | Problem management finds causes.
+What does an SLA state? | Agreed service levels | Source code | Staff ages | The tools that the team must use | It sets expectations.
+What does change enablement reduce? | Risk of changes | Number of users | Network speed | Backups | Changes are assessed first.
+## Technical Support
+What should come first with a problem? | Understand and repeat it | Reinstall everything | Blame the user | Close the ticket | Facts come before fixes.
+When should a ticket be escalated? | When skills or time run out | Never | Always | Whenever the user asks for a manager | The next level takes over.
+What saves time for the next case? | A knowledge article | A longer call | A new queue | A longer ticket title | Solutions are shared.
+## Network Administration
+What does a VLAN do? | Divides a network logically | Speeds up disks | Stores files | Joins two networks over the internet | Traffic is kept apart.
+What does DHCP give a device? | An IP address | A password | A firewall | A user | It also gives gateway and DNS.
+What does OSPF choose? | Routes | Users | Ports on a printer | File names | It is a routing protocol.
+## Solution Architecture
+What should drive architecture choices? | Requirements and constraints | Fashion | The newest tool | What the previous project happened to use | Trade-offs are explained.
+What records why a choice was made? | A decision record | A log file | A pay slip | A ticket number | Later readers see the reasons.
+What are non-functional requirements? | Qualities such as speed | Unwanted features | Broken functions | Features for a later phase | They include security and reliability.
+## Technical Pre-Sales
+What should discovery find? | The client's real problem | The client's salary | The office size | The competitors' prices | Solutions follow needs.
+What does a proof of concept show? | That it works for the client | The final price | The contract | That the full project will cost less | Success criteria are set first.
+What does an RFP ask for? | A proposal | A refund | A password | A holiday | Answers are compared.
+## Change Management
+What helps people accept change? | Knowing why | Surprise | Silence | Penalties | Awareness comes first.
+Who influences teams most in a change? | Their own manager | The vendor | The auditor | The project sponsor alone | Messages land best from close leaders.
+What is measured after go-live? | Adoption | Logo use | Office size | E-mail length | The change must be used.
+## Technical Writing
+Who should a document be written for? | Its reader | Its writer | The tool | The boss | Their task comes first.
+What makes steps easy to follow? | One action per step | Long paragraphs | Hidden links | Many adjectives | Readers do and check.
+Where should API docs live? | Close to the code | In a drawer | In chat only | In the support ticket | They change together.
+## Customer Success
+What does onboarding aim for? | Early value | A longer contract | More tickets | Fewer calls | First results keep customers.
+What does churn measure? | Customers who leave | New hires | Server errors | Customers who upgrade | Lower is better.
+What is a health score based on? | Use and engagement | Office size | Logo colour | The size of the contract | It warns of risk.
+## Program Management
+What does a programme deliver? | Benefits from several projects | One task | One server | A single system built by one project team | Projects are coordinated.
+What do dependencies between projects need? | One owner and a date | Silence | More slides | A shared folder for files | Unmanaged links cause delays.
+What does governance provide? | Clear decisions | More e-mail | New offices | Free tools | People know who decides.
+## Blockchain Development
+What runs a smart contract? | The network's nodes | One web server | A browser tab | The contract's author | All nodes get the same result.
+What is gas in Ethereum? | A fee for computation | A token name | A wallet | The reward for a miner | Each operation costs gas.
+Why test contracts carefully? | They are hard to change | They are slow | They are private | They cannot be read by others | Deployed code stays.
+## IoT Development
+Which protocol suits small devices? | MQTT | FTP | SMTP | RDP | It is light and uses publish and subscribe.
+What does edge processing reduce? | Data sent to the cloud | Device count | Battery life | The number of sensors that are needed | Work is done near the device.
+What must each device have for security? | Its own identity | The same password | A public IP | A screen | One stolen key must not open all.
+## Embedded C
+What does volatile tell the compiler? | The value may change outside | The value is constant | The value is small | The value must be kept in a register | Registers must be read each time.
+What should an interrupt handler be? | Short | Long | Recursive | Printed | Other work must continue.
+What does an RTOS guarantee? | Predictable timing | Unlimited memory | Faster CPUs | Web access | Tasks meet their deadlines.
+## Unity Development
+Which method runs once per frame? | Update | Start | Awake | OnDestroy | FixedUpdate runs with physics.
+What is a prefab? | A reusable object | A scene light | A build target | A shader file | Copies share its settings.
+Why multiply by Time.deltaTime? | Speed stays the same on any device | Colours improve | Memory is freed | It makes each frame take the same time to draw | Frame rates differ.
+## HL7 FHIR
+What is the basic unit in FHIR? | A resource | A table | A segment | A packet | Such as Patient or Observation.
+How are FHIR resources usually exchanged? | REST and JSON | Fax | FTP only | Spreadsheets | It uses web standards.
+What does HL7 stand for? | Health Level Seven | High Load 7 | Host Link 7 | Hospital Link Version 7 | It names the application layer.
+## Core Banking
+What is double-entry bookkeeping? | Each debit has a credit | Two users sign in | Two backups | Each user signs in twice | Accounts always balance.
+What does ISO 20022 define? | Financial messages | Card plastic | Branch hours | Interest rates | It is a shared message standard.
+What does KYC check? | A customer's identity | A server key | A loan rate | The balance of an account | It prevents fraud.
+## Telecom OSS & BSS
+What does BSS cover? | Customers and billing | Radio masts | Fibre cables | Network faults and alarms | OSS covers the network.
+What does provisioning do? | Turns a service on | Prints a bill | Sells a phone | Measures network use | Network elements are configured.
+What does mediation process? | Usage records | Legal disputes | Job offers | Street maps | They feed billing.
+## AUTOSAR
+What does AUTOSAR separate? | Application and hardware | Driver and seat | Fuel and air | Safety and comfort features | Software can be reused.
+What does the RTE connect? | Software components | Wheels | Batteries | Vehicles and workshops | It carries their communication.
+Which bus is common in vehicles? | CAN | USB | HDMI | SATA | Control units share messages on it.

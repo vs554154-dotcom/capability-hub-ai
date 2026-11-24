@@ -1,0 +1,225 @@
+# Demo technologies. One per line: name | category | description | other names
+# Category: T technical, M methodology, L leadership, D domain.
+# Other names are what a job description may call it. "=" before one means it counts
+# only when it is the whole skill name ("=Go"), never when found inside a text. "^" means it is found
+# in a text only with these capitals ("^SAFe", not "safe").
+
+# --- Languages and back end
+JavaScript | T | Building interactive web applications in modern JavaScript, in the browser and on the server. | JS; ES6; ECMAScript
+C# | T | Object-oriented development on the .NET platform. | CSharp; C Sharp
+ASP.NET Core | T | Web APIs and applications on Microsoft's cross-platform web framework. | .NET; .NET Core; dotnet; ASP.NET; ASP.NET MVC; .NET Framework
+Entity Framework | T | Object-relational mapping and data access in .NET. | EF Core; Entity Framework Core
+Node.js | T | Server-side JavaScript services and tooling. | NodeJS; Node JS; =Node
+Express.js | T | Web servers and REST services on Node.js. | ExpressJS; =Express
+Go (Golang) | T | Fast, concurrent network services and cloud tooling. | Golang; =Go
+Rust | T | Memory-safe systems programming.
+PHP | T | Server-side web development in PHP. |
+Laravel | T | Web applications on the Laravel PHP framework. |
+Ruby on Rails | T | Rapid web application development with Ruby. | =Rails; RoR; Ruby
+Scala | T | Functional and object-oriented programming on the JVM, often for data. |
+Kotlin | T | Concise JVM and Android programming. |
+C++ | T | High-performance systems and application programming. | CPP
+Django | T | Full-featured web applications in Python. | Django REST Framework
+FastAPI | T | High-performance Python APIs with typed requests. |
+GraphQL | T | Typed, client-driven APIs. | Apollo GraphQL
+Apache Kafka | T | Event streaming between systems at scale. | Kafka; Confluent Kafka
+RabbitMQ | T | Message queues between services. | message queues; AMQP
+Hibernate | T | Object-relational mapping for Java. | JPA; Spring Data JPA
+Event-Driven Architecture | T | Systems that react to events instead of direct calls. | event driven; event sourcing; CQRS
+JUnit & Mockito | T | Unit testing and mocking in Java. | JUnit; Mockito
+
+# --- Front end
+Angular | T | Enterprise single-page applications in Angular. | AngularJS
+Vue.js | T | Progressive web interfaces with Vue. | VueJS; Vue; Nuxt
+HTML & CSS | T | Semantic, responsive page structure and styling. | HTML5; CSS3; HTML; CSS; SASS
+Tailwind CSS | T | Utility-first styling for web interfaces. | Tailwind
+Redux | T | Predictable state management for front-end applications. | Redux Toolkit
+Web Accessibility | T | Interfaces that everyone can use, to WCAG standards. | WCAG; accessibility standards
+
+# --- Mobile
+Android Development | T | Native Android applications. | Android; Jetpack Compose
+iOS Development | T | Native applications for iPhone and iPad. | iOS; SwiftUI; UIKit; Objective-C; =Swift
+Flutter | T | Cross-platform mobile applications from one Dart codebase. | Dart
+React Native | T | Cross-platform mobile applications with React. |
+
+# --- Data and analytics
+Snowflake | T | Cloud data warehousing on Snowflake. | SnowSQL; Snowpark
+Power BI | T | Business dashboards and semantic models in Power BI. | PowerBI; DAX; Microsoft Power BI
+Tableau | T | Visual analytics and dashboards in Tableau. | Tableau Desktop; Tableau Server
+Apache Airflow | T | Scheduling and monitoring data workflows. | Airflow
+dbt | T | Transforming warehouse data with tested, versioned SQL. | data build tool
+Amazon Redshift | T | Data warehousing on AWS. | Redshift
+Google BigQuery | T | Serverless data warehousing on Google Cloud. | BigQuery; Big Query
+Hadoop | T | Distributed storage and batch processing of large data sets. | HDFS; Hive; MapReduce
+ETL Development | T | Extracting, transforming and loading data between systems. | ETL; ELT; data pipelines; data pipeline; data integration
+Informatica | T | Enterprise data integration on Informatica. | Informatica PowerCenter; IICS
+Data Modeling | T | Designing relational and dimensional data models. | data modelling; dimensional modeling; star schema
+Data Governance | M | Ownership, quality and lineage of enterprise data. | data catalog; data lineage; Collibra; =data quality
+Microsoft Excel | T | Analysis and reporting in spreadsheets. | MS Excel; advanced Excel; =Excel
+Statistical Analysis | T | Drawing sound conclusions from data. | statistics; hypothesis testing; A/B testing; statistical modeling
+R Programming | T | Statistical computing in R. | RStudio; R language; =R
+Microsoft Fabric | T | Microsoft's unified analytics platform. | OneLake
+Looker | T | Governed metrics and dashboards in Looker. | LookML
+
+# --- Databases
+SQL Server | T | Developing and tuning Microsoft SQL Server databases. | MS SQL; MSSQL; T-SQL; Microsoft SQL Server; SSIS; SSRS
+Oracle Database | T | Developing and tuning Oracle databases. | PL/SQL; Oracle DB; Oracle SQL; =Oracle
+MySQL | T | Relational databases on MySQL. | MariaDB
+MongoDB | T | Document databases on MongoDB. | Mongo
+Redis | T | In-memory caching and data structures. |
+Apache Cassandra | T | Wide-column databases for very high write volumes. | Cassandra
+Elasticsearch | T | Search and log analytics. | OpenSearch; ELK; Elastic Stack
+Database Administration | T | Backup, recovery, security and tuning of databases. | DBA; database tuning; =database administrator
+Vector Databases | T | Storing and searching embeddings. | Pinecone; Weaviate; pgvector; vector database; vector store; vector search; embeddings; ChromaDB
+
+# --- AI and machine learning
+Deep Learning | T | Neural networks for vision, language and prediction. | neural networks; CNN
+PyTorch | T | Building and training neural networks in PyTorch. |
+TensorFlow | T | Building and deploying neural networks in TensorFlow. | Keras
+Computer Vision | T | Teaching software to understand images and video. | OpenCV; image recognition; object detection; YOLO
+LangChain | T | Composing language-model applications. | LangGraph; LlamaIndex
+Retrieval-Augmented Generation | T | Grounding a language model's answers in documents. | RAG; retrieval augmented generation
+Prompt Engineering | T | Instructing language models so answers are reliable. | prompt design
+AI Agents | T | Systems where a model plans, calls tools and acts. | agentic AI; multi-agent systems; AI agent; agentic workflows
+Large Language Models | T | Selecting, tuning and evaluating language models. | LLM; LLMs; large language model; fine-tuning; model fine tuning
+Scikit-learn | T | Classical machine learning in Python. | sklearn; scikit learn
+Amazon SageMaker | T | Training and hosting models on AWS. | SageMaker; AWS SageMaker
+Vertex AI | T | Training and hosting models on Google Cloud. | Google Vertex AI
+Azure OpenAI | T | Language models in Azure. | OpenAI API; Azure AI Foundry; Azure AI services
+Responsible AI | M | Fair, explainable and well-governed AI. | AI governance; AI ethics; explainable AI
+Time Series Forecasting | T | Predicting values that change over time. | =forecasting; demand forecasting; time series
+LLMOps | T | Running language-model applications in production. | LLM operations
+
+# --- Cloud, DevOps and platforms
+AWS | T | Designing and running workloads on Amazon Web Services. | Amazon Web Services; EC2; Amazon S3
+Google Cloud | T | Designing and running workloads on Google Cloud. | GCP; Google Cloud Platform; GKE
+Serverless Computing | T | Running code without managing servers. | AWS Lambda; serverless; Azure Functions; Cloud Functions
+Helm | T | Packaging applications for Kubernetes. | Helm charts
+Ansible | T | Automating configuration and deployment. | Ansible playbooks
+Jenkins | T | Building and running CI/CD pipelines in Jenkins. | Jenkins pipelines
+GitHub Actions | T | CI/CD workflows on GitHub. |
+GitLab CI | T | CI/CD pipelines on GitLab. | GitLab; GitLab CI/CD
+Argo CD | T | GitOps delivery to Kubernetes. | ArgoCD; GitOps
+Prometheus & Grafana | T | Metrics, dashboards and alerts. | Prometheus; Grafana
+Site Reliability Engineering | M | Reliability through SLOs, automation and error budgets. | SRE; error budgets; SLOs
+Linux Administration | T | Running and securing Linux servers. | Linux; RHEL; Red Hat Enterprise Linux; Unix; Ubuntu
+Shell Scripting | T | Automating work in Bash and other shells. | Bash; shell scripts; bash scripting
+PowerShell | T | Automating Windows and Azure. | Windows PowerShell
+OpenShift | T | Red Hat's Kubernetes platform. | Red Hat OpenShift
+VMware vSphere | T | Virtualised servers and data centres. | VMware; ESXi; vSphere
+Cloud Migration | T | Moving workloads to the cloud safely. | lift and shift; workload migration
+Cloud Architecture | T | Designing secure, resilient and affordable cloud systems. | landing zone; well-architected; =cloud architect
+FinOps | M | Managing and lowering cloud spend. | cloud cost optimization; cloud cost management
+Observability | T | Understanding running systems from logs, metrics and traces. | Datadog; New Relic; OpenTelemetry; Dynatrace; application monitoring
+AWS CloudFormation | T | Infrastructure as code on AWS. | CloudFormation; AWS CDK
+Platform Engineering | T | Self-service platforms for development teams. | internal developer platform; Backstage
+
+# --- Cybersecurity
+Network Security | T | Protecting networks from attack. | firewalls; firewall; IDS/IPS; Palo Alto
+Cloud Security | T | Protecting cloud accounts, workloads and data. | CSPM; cloud security posture; AWS security; Azure security
+SIEM | T | Collecting and analysing security events. | Splunk; Microsoft Sentinel; QRadar
+Penetration Testing | T | Finding weaknesses by controlled attack. | pentesting; pen testing; ethical hacking; Burp Suite; Metasploit; Kali Linux
+Application Security | T | Building and testing software so it resists attack. | AppSec; OWASP; secure coding; SAST; DAST
+Identity & Access Management | T | Who can sign in and what they may do. | IAM; identity and access management; Okta; Entra ID; Azure AD; Active Directory; =SSO; =OAuth; SailPoint; CyberArk
+Incident Response | T | Containing and recovering from security incidents. | DFIR; digital forensics; security incidents
+Threat Hunting | T | Searching for attackers who have evaded detection. | threat intelligence; MITRE ATT&CK; threat detection
+Vulnerability Management | T | Finding, ranking and fixing weaknesses. | Nessus; Qualys; vulnerability assessment; vulnerability scanning
+GRC & Compliance | M | Governance, risk and regulatory compliance. | GRC; ISO 27001; SOC 2; PCI DSS; NIST; GDPR; risk assessment; governance risk and compliance
+DevSecOps | M | Security built into delivery pipelines. | shift-left security
+Zero Trust Architecture | T | Verifying every request, wherever it comes from. | zero trust
+Security Operations | T | Monitoring and responding around the clock. | =SOC analyst; SOC operations; security operations center; security monitoring; ^SOC
+Endpoint Security | T | Protecting laptops, servers and phones. | EDR; CrowdStrike; Microsoft Defender
+Cryptography | T | Protecting data with encryption and keys. | encryption; PKI; key management
+
+# --- Enterprise applications and SaaS
+Salesforce Administration | T | Configuring and running Salesforce. | Salesforce Admin; Salesforce; Sales Cloud; Service Cloud
+Apex | T | Server-side logic and triggers on Salesforce. | Salesforce Apex; Salesforce development; SOQL; Visualforce
+Lightning Web Components | T | User interfaces on the Salesforce platform. | LWC
+SAP ABAP | T | Custom development on SAP. | ABAP
+SAP FICO | T | SAP finance and controlling. | SAP FI; SAP CO; SAP Finance
+SAP MM | T | SAP materials management and procurement. | SAP Materials Management
+SAP S/4HANA | T | SAP's current ERP suite. | S/4HANA; SAP HANA; S4 HANA; =SAP
+SAP Fiori | T | Modern SAP user interfaces. | SAPUI5; SAP UI5
+Workday HCM | T | HR and payroll processes in Workday. | Workday
+ServiceNow | T | Workflows and IT service management on ServiceNow. | Service Now
+Microsoft Dynamics 365 | T | CRM and ERP on Dynamics 365. | Dynamics 365; D365; Dynamics CRM
+Power Platform | T | Low-code apps and automation from Microsoft. | Power Apps; Power Automate; PowerApps
+Oracle ERP Cloud | T | Finance and operations in Oracle's cloud ERP. | Oracle Fusion; Oracle EBS; Oracle E-Business Suite
+MuleSoft | T | API-led integration on MuleSoft. | Anypoint; Mule ESB
+API Management | T | Publishing, securing and measuring APIs. | Apigee; Kong; API gateway; Azure API Management
+SharePoint | T | Document and content solutions on SharePoint. | SharePoint Online
+Pega | T | Case management and low-code applications on Pega. | Pega PRPC; Pega Platform
+Robotic Process Automation | T | Automating repetitive desktop work. | RPA; UiPath; Automation Anywhere; Blue Prism
+Guidewire | D | Insurance policy, billing and claims systems. | PolicyCenter; ClaimCenter; BillingCenter
+COBOL & Mainframe | T | Maintaining and modernising mainframe systems. | COBOL; mainframe; JCL; CICS; DB2
+SaaS Architecture | T | Multi-tenant, subscription-based products. | multi-tenant; multi-tenancy; =SaaS; subscription billing
+Adobe Experience Manager | T | Enterprise content and digital experience. | AEM
+E-Commerce Platforms | T | Online stores and checkout. | Magento; Shopify; Adobe Commerce; SAP Commerce; ecommerce
+CMS Development | T | Websites on content management systems. | WordPress; Drupal
+
+# --- Quality engineering
+Cypress | T | End-to-end browser testing in Cypress. | Cypress.io
+Playwright | T | Cross-browser end-to-end testing. |
+Appium | T | Automated testing of mobile applications. | mobile automation
+Performance Testing | T | Measuring speed and stability under load. | JMeter; LoadRunner; load testing; Gatling
+Manual Testing | M | Exploring software and checking it by hand. | functional testing; regression testing; =test cases; =UAT
+Cucumber & BDD | T | Executable specifications in plain language. | Cucumber; BDD; Gherkin
+Test Management | M | Planning and steering test work. | test strategy; test planning; TestRail
+
+# --- Product, delivery, design and support
+Product Management | L | Deciding what to build and why. | product roadmap; =product owner; =product manager; product strategy
+Project Management | M | Delivering scope on time and on budget. | PMP; PRINCE2; project planning; =project manager
+Scrum | M | Running Scrum teams. | Scrum Master; sprint planning
+Scaled Agile | M | Agile delivery across many teams. | ^SAFe; Scaled Agile Framework
+UX Design | T | Designing products around how people work. | user experience; UX research; wireframing; usability testing; UX
+UI Design | T | Visual and interaction design. | Figma; user interface design; design systems
+Business Analysis | M | Turning business needs into clear requirements. | BRD; gap analysis; process mapping; =user stories; =business analyst
+ITIL | M | Managing IT services. | ITSM; IT service management
+Technical Support | T | Solving user and system problems. | L2 support; L3 support; service desk; help desk; helpdesk; production support; application support
+Network Administration | T | Running routed and switched networks. | Cisco; CCNA; routing and switching; LAN/WAN
+Solution Architecture | T | Designing whole solutions across systems. | enterprise architecture; TOGAF; =solution architect
+Technical Pre-Sales | L | Shaping and presenting solutions to clients. | pre-sales; presales; solution consulting; RFP
+Change Management | L | Helping people adopt new ways of working. | organizational change; Prosci
+Technical Writing | M | Clear documentation for users and developers. | API documentation; documentation writing
+Customer Success | L | Helping customers get value and stay. | customer onboarding; =customer success manager
+Program Management | L | Steering several projects to one outcome. | PMO; =program manager; portfolio management
+
+# --- Industry and emerging
+Blockchain Development | T | Smart contracts and distributed ledgers. | blockchain; Solidity; Ethereum; smart contracts; Web3
+IoT Development | T | Connecting devices and using their data. | IoT; Internet of Things; MQTT
+Embedded C | T | Firmware for microcontrollers. | embedded systems; RTOS; firmware; embedded software
+Unity Development | T | Games, simulations and AR/VR in Unity. | Unity; Unity3D; AR/VR; game development
+HL7 FHIR | D | Exchanging healthcare data between systems. | HL7; FHIR; healthcare interoperability
+Core Banking | D | Banking systems for accounts, lending and payments. | Temenos; Finacle; payments domain; ISO 20022
+Telecom OSS & BSS | D | Telecom operations and billing systems. | OSS/BSS; telecom BSS; telecom OSS; 5G
+AUTOSAR | D | Standard software architecture for vehicles. | CAN bus; ADAS; automotive software
+
+# --- Other names for technologies the base catalogue already has
++Next.js App Architecture | Next.js; NextJS
++Enterprise TypeScript Development | TypeScript; =TS
++Gemini API Integration | Gemini API; Google Gemini
++System Design & Scalability | system design; distributed systems; =scalability
++PostgreSQL & Vector Database Optimization | PostgreSQL; Postgres
++Selenium Automation Framework | Selenium; Selenium WebDriver
++Postman & REST API Testing | Postman; API testing; ^REST Assured
++Git & Version Control | Git; version control; Bitbucket
++TestNG & Automation Frameworks | TestNG; test automation frameworks
++Java | Core Java; Java 17; Java 21
++Spring Boot | =Spring; Spring Framework; Spring MVC
++React | React.js; ReactJS
++Microservices | microservice; microservices architecture
++REST APIs | REST API; RESTful APIs; RESTful services; RESTful; ^REST
++CI/CD | CICD; continuous integration; continuous delivery
++Spark | Apache Spark; PySpark
++Azure Data Factory | ADF
++Azure | Microsoft Azure
++Kubernetes | K8s; AKS; EKS
++Docker | containers; containerization
++Terraform | infrastructure as code; IaC
++Agile | agile methodology; agile delivery
++Jira | Atlassian
++Stakeholder Management | stakeholder engagement; =client management
++Machine Learning | ML; predictive modeling
++NLP | natural language processing
++GenAI | generative AI; Gen AI
++Requirements Gathering | requirements elicitation; requirement gathering

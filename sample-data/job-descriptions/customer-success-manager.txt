@@ -1,0 +1,28 @@
+Job title: Customer Success Manager
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Helps customers get value and stay.
+
+What you will do
+- Lead onboarding
+- Watch health scores
+- Solve adoption problems
+- Prepare renewals
+
+Must have
+- Customer Success
+- Stakeholder Management
+- SaaS Architecture
+- Salesforce Administration
+- Business Analysis
+
+Good to have
+- Statistical Analysis
+- Change Management
+
+How we interview
+A technical discussion, then a short practical task.

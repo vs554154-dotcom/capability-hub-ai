@@ -71,20 +71,23 @@ def compute_motivation_scores(user_id: str) -> dict[str, int]:
     return {"willScore": will, "engagementScore": js_round(completion_ratio * 100)}
 
 
-def capability_report(user_id: str) -> dict[str, Any]:
+def capability_report(
+    user_id: str,
+    skills: list[dict[str, Any]] | None = None,
+    roles: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """The Capability Readiness Score with its per-skill breakdown and a plain-text
-    explanation of how it was reached."""
+    explanation of how it was reached. A caller reporting on everyone passes the
+    catalogue it has already read."""
     with transaction():
         user = users.get_user_by_id(user_id)
         if not user:
             raise NotFound("User not found")
 
-        skills = catalog.get_skills()
+        skills = skills if skills is not None else catalog.get_skills()
+        roles = roles if roles is not None else catalog.get_target_roles()
         levels = user_skills.get_user_skills(user_id)
-        role = next(
-            (r for r in catalog.get_target_roles() if r["id"] == user.get("targetRoleId")),
-            None,
-        )
+        role = next((r for r in roles if r["id"] == user.get("targetRoleId")), None)
         submitted = evidence.get_for_user(user_id)
 
     met_count = 0
@@ -92,12 +95,11 @@ def capability_report(user_id: str) -> dict[str, Any]:
     score_accumulator = 0
     breakdown: list[dict[str, Any]] = []
 
+    held_by_id = {s["skillId"]: s for s in levels}
+    required_by_id = {s["skillId"]: s for s in role["requiredSkills"]} if role else {}
     for sk in skills:
-        held = next((s for s in levels if s["skillId"] == sk["id"]), None)
-        required = (
-            next((s for s in role["requiredSkills"] if s["skillId"] == sk["id"]), None)
-            if role else None
-        )
+        held = held_by_id.get(sk["id"])
+        required = required_by_id.get(sk["id"])
         current = held["currentLevel"] if held else 0
         target = required["minLevel"] if required else (held["targetLevel"] if held else 0)
 

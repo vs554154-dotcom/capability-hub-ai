@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ProjectDemand, CandidateMatch, ResumeEligibility } from "../types";
 import { 
   FileText, Sparkles, Target, Briefcase, Users, Calendar, 
   CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Download, 
-  Send, RefreshCw, Layers, MapPin, Award, Check, X, Circle, ThumbsUp, ThumbsDown
+  Send, RefreshCw, Layers, MapPin, Award, Check, X, Circle, ThumbsUp, ThumbsDown, Search, Upload
 } from "lucide-react";
+import { parseUploadedFile } from "../utils/fileParser";
 import { PageHeader } from "./ui/Page";
 import { Markdown } from "./ui/Markdown";
 
@@ -17,6 +18,16 @@ const datePassed = (value?: string) => {
   const parsed = value ? new Date(value) : null;
   return !!parsed && !Number.isNaN(parsed.getTime()) && parsed.getTime() < new Date().setHours(0, 0, 0, 0);
 };
+// "5+ years" is stored as 5 to 5, and nothing at all as 0 to 0.
+const yearsRange = (low: number, high: number) =>
+  high > low ? `${low} - ${high} Years` : low > 0 ? `${low}+ Years` : "Any";
+const PAGE = 10;
+// The ranking in bands of overall fitment; 80 is the line below which a handoff is advised.
+const BANDS = [
+  { id: "strong", label: "Strong", range: "80%+", holds: (pct: number) => pct >= 80, tone: "text-emerald-400 border-emerald-500/40" },
+  { id: "partial", label: "Partial", range: "60-79%", holds: (pct: number) => pct >= 60 && pct < 80, tone: "text-amber-400 border-amber-500/40" },
+  { id: "low", label: "Low", range: "below 60%", holds: (pct: number) => pct < 60, tone: "text-[#94A3B8] border-[#2A384C]" },
+] as const;
 const asList = (text: string) => Array.from(new Set(text.split(",").map(s => s.trim()).filter(Boolean)));
 
 // Small presentational row for the Client Resume Readiness checklist - one line per gate
@@ -46,6 +57,8 @@ export const ProjectDemandAgent: React.FC = () => {
   const [isParsingJd, setIsParsingJd] = useState(false);
   const [parsedCompetencies, setParsedCompetencies] = useState<any>(null);
   const [parseError, setParseError] = useState("");
+  const jdFileRef = useRef<HTMLInputElement>(null);
+  const [jdFileName, setJdFileName] = useState("");
 
   // New Requisition Form Data. Every field starts empty and is on screen: the form used
   // to publish a hidden domain, location, team size and dates nobody had entered.
@@ -74,6 +87,11 @@ export const ProjectDemandAgent: React.FC = () => {
   const [isMatching, setIsMatching] = useState(false);
   const [matchError, setMatchError] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateMatch | null>(null);
+  const [uncoveredSkills, setUncoveredSkills] = useState<string[]>([]);
+  const [shownCandidates, setShownCandidates] = useState(PAGE);
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [band, setBand] = useState<string | null>(null);
+  const [demandSearch, setDemandSearch] = useState("");
 
   // Client Resume Generator State
   const [clientResumeMarkdown, setClientResumeMarkdown] = useState("");
@@ -114,6 +132,21 @@ export const ProjectDemandAgent: React.FC = () => {
       console.error("Failed to load project demands:", err);
     } finally {
       setIsLoadingDemands(false);
+    }
+  };
+
+  const handleJdFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      const parsed = await parseUploadedFile(file);
+      setRawJdText(parsed.extractedText);
+      setJdFileName(parsed.fileName);
+      setParseError("");
+    } catch (err: any) {
+      setJdFileName("");
+      setParseError(err?.message || "The file could not be read.");
+    } finally {
+      if (jdFileRef.current) jdFileRef.current.value = "";   // the same file can be chosen again
     }
   };
 
@@ -198,6 +231,8 @@ export const ProjectDemandAgent: React.FC = () => {
       fetchDemands();
       setSelectedDemand(data.demand);
       setRawJdText("");
+      setJdFileName("");
+      setDemandSearch("");
       setParsedCompetencies(null);
       [setProjectName, setCustomerName, setBusinessUnit, setProjectDescription, setRequiredSkillsText,
         setExpMin, setExpMax, setClientInterviewDate, setExpectedJoiningDate, setLocation, setDomain]
@@ -228,10 +263,15 @@ export const ProjectDemandAgent: React.FC = () => {
       if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
       setMatchError("");
       setCandidateMatches(data.matches || []);
+      setUncoveredSkills(data.uncoveredSkills || []);
+      setShownCandidates(PAGE);
+      setCandidateSearch("");
+      setBand(null);
       setSelectedCandidate(data.matches?.[0] ?? null);
     } catch (err: any) {
       // Never leave another demand's ranking on screen under this one.
       setCandidateMatches([]);
+      setUncoveredSkills([]);
       setMatchError(err?.message || "Candidates could not be matched.");
     } finally {
       setIsMatching(false);
@@ -335,6 +375,18 @@ export const ProjectDemandAgent: React.FC = () => {
     }
   };
 
+  const wanted = demandSearch.trim().toLowerCase();
+  const visibleDemands = demands.filter(d => !wanted || [d.projectName, d.customerName, d.domain, ...d.requiredSkills]
+    .some(text => (text || "").toLowerCase().includes(wanted)));
+  const whom = candidateSearch.trim().toLowerCase();
+  // The place in the ranking is kept, so a filtered list still says who is first.
+  const inBand = BANDS.find(b => b.id === band);
+  const ranked = candidateMatches.map((cand, idx) => ({ cand, idx }))
+    .filter(({ cand }) => !inBand || inBand.holds(cand.overallMatchPct)).filter(({ cand }) => !whom ||
+    [cand.fullName, cand.employeeId, cand.currentRole, cand.department, ...(cand.primarySkills || [])]
+      .some(text => (text || "").toLowerCase().includes(whom)));
+  const bestTechnical = candidateMatches[0]?.technicalMatchPct ?? 0;
+
   return (
     <div className="space-y-8 py-6">
       
@@ -379,8 +431,23 @@ export const ProjectDemandAgent: React.FC = () => {
               </h3>
             </div>
 
+            <label className="flex items-center gap-2 bg-[#0A0A0A] border border-[#2A384C] rounded-lg px-3 py-2">
+              <Search className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" aria-hidden="true" />
+              <input
+                id="demand-search"
+                value={demandSearch}
+                onChange={(e) => setDemandSearch(e.target.value)}
+                placeholder="Find by project, client, industry or skill"
+                aria-label="Find a requisition"
+                className="w-full bg-transparent text-xs text-[#F0F4FF] placeholder-[#555] focus:outline-none"
+              />
+            </label>
+
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {demands.map((dem) => {
+              {visibleDemands.length === 0 && !isLoadingDemands && (
+                <p className="text-xs text-[#94A3B8]">No requisition matches "{demandSearch}".</p>
+              )}
+              {visibleDemands.map((dem) => {
                 const isSelected = selectedDemand?.id === dem.id;
                 return (
                   <div
@@ -444,8 +511,28 @@ export const ProjectDemandAgent: React.FC = () => {
             </div>
 
             <p className="text-xs text-[#94A3B8] leading-relaxed">
-              Paste raw customer JD text or upload project specifications. The AI parser will extract structured skill matrices, required years of experience, and tech stack.
+              Paste a job description or upload it as PDF, Word or text. The parser reads the required and
+              optional skills, years of experience and dates; check them, then publish to rank everyone.
             </p>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => jdFileRef.current?.click()}
+                className="flex items-center gap-1.5 bg-[#141E30] hover:bg-[#1E293B] text-[#4F8EF7] border border-[#4F8EF7]/50 text-xs font-mono font-semibold py-1.5 px-3 rounded cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" aria-hidden="true" /> Upload a JD file
+              </button>
+              {jdFileName && <span className="text-[11px] text-[#94A3B8] truncate">{jdFileName}</span>}
+              <input
+                ref={jdFileRef}
+                id="demand-jd-file"
+                type="file"
+                accept=".pdf,.docx,.txt,.md"
+                onChange={(e) => handleJdFile(e.target.files?.[0])}
+                className="hidden"
+              />
+            </div>
 
             <textarea
               rows={5}
@@ -501,9 +588,13 @@ export const ProjectDemandAgent: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-[#94A3B8]">Extracted Tech Stack:</label>
+                  <label className="text-[10px] font-mono uppercase text-[#94A3B8]">
+                    {parsedCompetencies.preferredSkills?.length ? "Optional Skills:" : "Extracted Tech Stack:"}
+                  </label>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {parsedCompetencies.technologyStack?.map((t: string, idx: number) => (
+                    {(parsedCompetencies.preferredSkills?.length
+                      ? parsedCompetencies.preferredSkills : parsedCompetencies.technologyStack
+                    )?.map((t: string, idx: number) => (
                       <span key={idx} className="text-[10px] bg-[#0A0A0A] text-[#F0F4FF] border border-[#2A384C] px-2 py-0.5 rounded font-mono">
                         {t}
                       </span>
@@ -673,7 +764,7 @@ export const ProjectDemandAgent: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[#94A3B8] text-[9px] uppercase block">Exp Range:</span>
-                  <span className="text-white font-semibold">{selectedDemand.experienceRangeMin} - {selectedDemand.experienceRangeMax} Years</span>
+                  <span className="text-white font-semibold">{yearsRange(selectedDemand.experienceRangeMin, selectedDemand.experienceRangeMax)}</span>
                 </div>
                 <div>
                   <span className="text-[#94A3B8] text-[9px] uppercase block">Interview Date:</span>
@@ -728,7 +819,44 @@ export const ProjectDemandAgent: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {handoffError && <p role="alert" className="text-xs font-mono text-rose-400">{handoffError}</p>}
-                {candidateMatches.map((cand, idx) => {
+                {uncoveredSkills.length > 0 && (
+                  <div role="status" id="uncovered-skills" className="p-3 bg-amber-500/10 border border-amber-500/40 rounded-lg text-xs text-amber-400 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>
+                      No one in the pool has {uncoveredSkills.join(", ")}.{" "}
+                      {bestTechnical < 50
+                        ? "The people below are the closest profiles, not a fit; consider hiring or longer training."
+                        : "Plan training or hiring for that."}
+                    </span>
+                  </div>
+                )}
+                <div id="fitment-bands" className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="group" aria-label="Filter the ranking by fitment">
+                  {[{ id: null, label: "All", range: "everyone", holds: () => true, tone: "text-[#4F8EF7] border-[#4F8EF7]/40" }, ...BANDS].map(b => (
+                    <button
+                      key={b.label}
+                      type="button"
+                      aria-pressed={band === b.id}
+                      onClick={() => { setBand(b.id); setShownCandidates(PAGE); }}
+                      className={`text-left rounded-lg border px-3 py-2 bg-[#0A0A0A] cursor-pointer ${b.tone} ${band === b.id ? "ring-2 ring-[#4F8EF7]" : ""}`}
+                    >
+                      <span className="block text-lg font-extrabold leading-tight">{candidateMatches.filter(c => b.holds(c.overallMatchPct)).length}</span>
+                      <span className="block text-[10px] font-mono text-[#94A3B8]">{b.label} · {b.range}</span>
+                    </button>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2 bg-[#0A0A0A] border border-[#2A384C] rounded-lg px-3 py-2">
+                  <Search className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" aria-hidden="true" />
+                  <input
+                    id="candidate-search"
+                    value={candidateSearch}
+                    onChange={(e) => { setCandidateSearch(e.target.value); setShownCandidates(PAGE); }}
+                    placeholder="Find by name, role, department or skill"
+                    aria-label="Find a person in the ranking"
+                    className="w-full bg-transparent text-xs text-[#F0F4FF] placeholder-[#555] focus:outline-none"
+                  />
+                </label>
+                {ranked.length === 0 && <p className="text-xs text-[#94A3B8]">{whom ? `No one here matches "${candidateSearch}".` : "No one is in this band for this opening."}</p>}
+                {ranked.slice(0, shownCandidates).map(({ cand, idx }) => {
                   const isSelected = selectedCandidate?.employeeId === cand.employeeId;
                   const isHighMatch = cand.overallMatchPct >= 80;
                   const isTopFit = idx === 0;
@@ -747,8 +875,8 @@ export const ProjectDemandAgent: React.FC = () => {
                     >
                       {/* Top Fit Ribbon Badge */}
                       {isTopFit && (
-                        <div className="absolute -top-3 right-4 bg-emerald-500 text-[#0F1724] font-mono text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> #1 Best Fit Resume
+                        <div className={`absolute -top-3 right-4 ${bestTechnical >= 50 ? "bg-emerald-500" : "bg-amber-500"} text-[#0F1724] font-mono text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1`}>
+                          {bestTechnical >= 50 ? <><CheckCircle2 className="h-3 w-3" /> #1 Best Fit Resume</> : "Closest profile"}
                         </div>
                       )}
 
@@ -879,6 +1007,16 @@ export const ProjectDemandAgent: React.FC = () => {
                     </div>
                   );
                 })}
+                {ranked.length > shownCandidates && (
+                  <button
+                    id="show-more-candidates"
+                    type="button"
+                    onClick={() => setShownCandidates(n => n + PAGE)}
+                    className="w-full bg-[#141E30] hover:bg-[#1E293B] text-[#4F8EF7] border border-[#4F8EF7]/50 text-xs font-mono font-bold py-2.5 px-4 rounded-lg cursor-pointer"
+                  >
+                    Show {Math.min(PAGE, ranked.length - shownCandidates)} more of {ranked.length}
+                  </button>
+                )}
               </div>
             )}
           </div>

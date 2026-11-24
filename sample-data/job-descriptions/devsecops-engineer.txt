@@ -1,0 +1,30 @@
+Job title: DevSecOps Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds security into delivery.
+
+What you will do
+- Add scans to pipelines
+- Help teams fix findings
+- Harden containers
+- Manage secrets
+
+Must have
+- DevSecOps
+- Application Security
+- CI/CD
+- Docker
+- Kubernetes
+- GitLab CI
+
+Good to have
+- Terraform
+- Cloud Security
+- Python
+
+How we interview
+A technical discussion, then a short practical task.

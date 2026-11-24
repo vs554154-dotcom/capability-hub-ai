@@ -1,0 +1,31 @@
+Job title: AI Agent Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds agents that plan, use tools and act safely.
+
+What you will do
+- Design agent workflows
+- Connect tools safely
+- Add human approval
+- Measure results
+
+Must have
+- AI Agents
+- GenAI
+- LangChain
+- Large Language Models
+- Python
+- Gemini API Integration
+- Prompt Engineering
+
+Good to have
+- Azure OpenAI
+- Responsible AI
+- GraphQL
+
+How we interview
+A technical discussion, then a short practical task.

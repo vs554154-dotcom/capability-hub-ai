@@ -1,0 +1,28 @@
+Job title: Scrum Master
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Helps teams deliver and improve.
+
+What you will do
+- Facilitate Scrum events
+- Remove blockers
+- Coach teams
+- Improve flow
+
+Must have
+- Scrum
+- Scaled Agile
+- Agile
+- Jira
+- Stakeholder Management
+
+Good to have
+- Change Management
+- Project Management
+
+How we interview
+A technical discussion, then a short practical task.

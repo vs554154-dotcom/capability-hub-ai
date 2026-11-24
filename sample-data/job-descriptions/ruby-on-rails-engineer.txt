@@ -1,0 +1,31 @@
+Job title: Ruby on Rails Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds subscription products on Ruby on Rails.
+
+What you will do
+- Build product features in Rails
+- Keep tenants' data apart
+- Run background jobs
+- Improve test coverage
+
+Must have
+- Ruby on Rails
+- PostgreSQL & Vector Database Optimization
+- JavaScript
+- Redis
+- REST APIs
+- SaaS Architecture
+- Git & Version Control
+
+Good to have
+- GraphQL
+- React
+- AWS
+
+How we interview
+A technical discussion, then a short practical task.

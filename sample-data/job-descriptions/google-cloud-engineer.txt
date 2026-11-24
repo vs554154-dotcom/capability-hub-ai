@@ -1,0 +1,30 @@
+Job title: Google Cloud Engineer
+Domain: Retail
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds and runs workloads on Google Cloud.
+
+What you will do
+- Build projects and networks
+- Run services on GKE and Cloud Run
+- Connect data to BigQuery
+- Monitor and improve
+
+Must have
+- Google Cloud
+- Kubernetes
+- Terraform
+- Google BigQuery
+- Python
+- Docker
+- Observability
+
+Good to have
+- Vertex AI
+- Apache Airflow
+
+How we interview
+A technical discussion, then a short practical task.

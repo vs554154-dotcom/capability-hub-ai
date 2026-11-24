@@ -1,0 +1,639 @@
+# Demo job roles. Each block makes a target role, people at different levels, a job
+# description and, where there is a "demand" line, an open client demand.
+# ## title | practice | domains | people
+# demand: project | client | business unit | domain | location | min yrs | max yrs | people | priority | interview in days
+# Clients and people are made up.
+
+## .NET Full Stack Developer | Digital Engineering | Banking, Insurance | 3
+about: Builds enterprise web applications on Microsoft's stack, from database to browser.
+skills: C#, ASP.NET Core, SQL Server, Entity Framework, Angular, REST APIs, Azure
+nice: Docker, Azure DevOps, Enterprise TypeScript Development
+do: Design and build web APIs in ASP.NET Core; Build responsive screens in Angular; Tune SQL Server queries and data models; Deploy to Azure through automated pipelines
+ev: Loan origination API :: Replaced a manual form with a secured API :: Built 12 endpoints in ASP.NET Core with Entity Framework, unit tests and role-based access.
+ev: Policy search tuning :: Made policy search usable at peak load :: Added indexes and rewrote three SQL Server queries after reading the execution plans.
+demand: Loan Origination Modernisation | Harbour Trust Bank | Banking & Financial Services | Banking | Hybrid / Pune | 4 | 8 | 3 | HIGH | 24
+
+## MERN Stack Developer | Digital Engineering | SaaS, Retail | 3
+about: Delivers JavaScript web products end to end with MongoDB, Express, React and Node.js.
+skills: JavaScript, React, Node.js, Express.js, MongoDB, REST APIs, HTML & CSS
+nice: Enterprise TypeScript Development, Redux, AWS
+do: Build React screens and reusable components; Write Node.js and Express services; Model data in MongoDB; Test and release features every sprint
+ev: Subscription dashboard :: Gave account owners one page for plans and usage :: Built in React with an Express API and MongoDB aggregation pipelines.
+ev: Order notes service :: Moved notes out of e-mail :: Wrote a Node.js service with validation, pagination and tests.
+demand: Creator Commerce Portal | Brightlane Retail | Retail & Consumer Goods | Retail | Remote | 2 | 6 | 2 | MEDIUM | 18
+
+## Python Backend Developer | Digital Engineering | SaaS, Media | 3
+about: Builds reliable Python services and APIs.
+skills: Python, Django, FastAPI, PostgreSQL & Vector Database Optimization, REST APIs, Redis, Docker
+nice: Apache Kafka, Elasticsearch, GraphQL
+do: Build APIs in Django and FastAPI; Design PostgreSQL schemas; Cache hot data in Redis; Package services in Docker
+ev: Content ingestion API :: Publishers upload without support calls :: FastAPI service with typed models, background jobs and 90 tests.
+ev: Report caching :: Cut waiting time on the reports page :: Added Redis caching with clear expiry rules and cache tests.
+demand: Streaming Metadata Platform | Lumen Media Group | Media & Entertainment | Media | Remote | 3 | 7 | 2 | HIGH | 28
+
+## Java Microservices Engineer | Digital Engineering | Banking, Logistics | 3
+about: Builds event-driven Java services that scale.
+skills: Java, Spring Boot, Microservices, Apache Kafka, Hibernate, JUnit & Mockito, Kubernetes
+nice: Docker, Event-Driven Architecture, Prometheus & Grafana
+do: Split a monolith into Spring Boot services; Publish and consume Kafka events; Write unit and contract tests; Run services on Kubernetes
+ev: Payment events :: Payments no longer wait for reporting :: Published Kafka events from a Spring Boot service with idempotent consumers.
+ev: Shipment service tests :: Found errors before release :: Added JUnit and Mockito tests and a contract test for the tracking API.
+demand: Real-Time Payments Hub | Meridian Payments | Banking & Financial Services | Banking | Hybrid / Bengaluru | 5 | 9 | 3 | CRITICAL | 12
+
+## Go Backend Engineer | Digital Engineering | SaaS, Telecom | 2
+about: Writes fast, concurrent services and cloud tooling in Go.
+skills: Go (Golang), Microservices, Kubernetes, Redis, RabbitMQ, Event-Driven Architecture, Docker
+nice: GraphQL, AWS, Observability
+do: Build concurrent services in Go; Design message flows; Profile and tune for low latency; Ship containers to Kubernetes
+ev: Rate limiter :: Protected the API during a sale :: Wrote a Go service with Redis counters and load tests.
+ev: Notification queue :: Messages survive restarts :: Moved notifications to RabbitMQ with acknowledgements and a dead-letter queue.
+demand: Network Events Gateway | Vantel Communications | Telecom & Cloud Operations | Telecom | Remote | 3 | 7 | 2 | MEDIUM | 33
+
+## Angular Front End Developer | Digital Engineering | Insurance, Healthcare | 2
+about: Builds accessible enterprise interfaces in Angular.
+skills: Angular, Enterprise TypeScript Development, HTML & CSS, REST APIs, Web Accessibility, Cypress, Git & Version Control
+nice: Redux, UI Design
+do: Build modular Angular screens; Meet WCAG standards; Cover key journeys with Cypress; Work with designers on a shared component library
+ev: Claims form :: Fewer incomplete claims :: Reactive form in Angular with clear errors and keyboard support.
+ev: Accessibility fixes :: Screen-reader users can finish a claim :: Closed 40 findings from an audit and added Cypress checks.
+
+## React Front End Developer | Digital Engineering | SaaS, Retail | 3
+about: Builds fast, polished web interfaces with React and Next.js.
+skills: React, Enterprise TypeScript Development, Next.js App Architecture, JavaScript, Redux, Tailwind CSS, GraphQL
+nice: Web Accessibility, Cypress, UI Design
+do: Build pages in Next.js and TypeScript; Manage state with Redux; Consume GraphQL APIs; Improve load time and accessibility
+ev: Product page rebuild :: Pages open faster on phones :: Moved to server components in Next.js and split large bundles.
+ev: Design tokens :: One look across three apps :: Set up Tailwind tokens and documented the components.
+demand: Merchant Self-Service Portal | Cartwell Commerce | Retail & Consumer Goods | Retail | Hybrid / Hyderabad | 3 | 6 | 2 | HIGH | 21
+
+## PHP Laravel Developer | Digital Engineering | Education, Retail | 2
+about: Builds and maintains web platforms in PHP and Laravel.
+skills: PHP, Laravel, MySQL, Vue.js, JavaScript, HTML & CSS, REST APIs
+nice: CMS Development, Redis, Docker
+do: Build features in Laravel; Design MySQL tables; Add interactive screens in Vue.js; Keep the platform secure and updated
+ev: Course enrolment module :: Enrolment in one step :: Laravel module with payments, e-mail and feature tests.
+ev: Slow query clean-up :: Admin pages respond again :: Added MySQL indexes and removed repeated queries.
+
+## Ruby on Rails Engineer | Digital Engineering | SaaS | 2
+about: Builds subscription products on Ruby on Rails.
+skills: Ruby on Rails, PostgreSQL & Vector Database Optimization, JavaScript, Redis, REST APIs, SaaS Architecture, Git & Version Control
+nice: GraphQL, React, AWS
+do: Build product features in Rails; Keep tenants' data apart; Run background jobs; Improve test coverage
+ev: Plan upgrade flow :: Customers change plans themselves :: Rails feature with proration, audit log and tests.
+ev: Background jobs :: Imports no longer time out :: Moved imports to Redis-backed jobs with retries.
+
+## C++ Systems Engineer | Digital Engineering | Manufacturing, Automotive | 2
+about: Builds high-performance systems software.
+skills: C++, Linux Administration, System Design & Scalability, Shell Scripting, Rust, Git & Version Control
+nice: Embedded C, Python
+do: Write performance-critical C++; Profile and remove bottlenecks; Build tooling on Linux; Review code for memory safety
+ev: Sensor fusion module :: Runs within its time limit :: Rewrote the hot path in modern C++ and measured with perf.
+ev: Memory leak fix :: Night runs finish :: Found the leak with sanitizers and moved to smart pointers.
+
+## Android Engineer | Mobile & Connected Products | Banking, Retail | 2
+about: Builds native Android applications.
+skills: Android Development, Kotlin, REST APIs, GraphQL, Git & Version Control, JUnit & Mockito
+nice: Flutter, UI Design, Appium
+do: Build screens in Jetpack Compose; Work offline and sync later; Test on real devices; Publish to the store
+ev: Offline receipts :: Staff can work without signal :: Kotlin module with local storage and background sync.
+ev: Crash reduction :: Fewer one-star reviews :: Fixed the three most common crashes and added tests.
+demand: Retail Banking Mobile App | Cresta Bank | Banking & Financial Services | Banking | Hybrid / Mumbai | 3 | 6 | 2 | HIGH | 20
+
+## iOS Engineer | Mobile & Connected Products | Banking, Media | 2
+about: Builds native iPhone and iPad applications.
+skills: iOS Development, REST APIs, GraphQL, UI Design, Git & Version Control, Web Accessibility
+nice: React Native, Unity Development
+do: Build interfaces in SwiftUI; Store data safely on the device; Support Dynamic Type and VoiceOver; Release through TestFlight
+ev: Wallet screen :: Cards are found in one tap :: SwiftUI screen with biometric unlock and tests.
+ev: Accessibility pass :: VoiceOver users can pay :: Labelled controls and fixed focus order across 14 screens.
+
+## Flutter Developer | Mobile & Connected Products | Healthcare, Logistics | 2
+about: Builds one mobile codebase for Android and iOS.
+skills: Flutter, REST APIs, Android Development, iOS Development, Git & Version Control, UI Design
+nice: GraphQL, IoT Development
+do: Build Flutter screens and state; Call REST services; Test widgets; Release to both stores
+ev: Patient reminders app :: Fewer missed visits :: Flutter app with notifications and offline mode.
+ev: Driver scan app :: Parcels scanned in the van :: Camera scanning with retry and sync.
+demand: Field Delivery App | Northway Logistics | Logistics & Supply Chain | Logistics | Remote | 2 | 5 | 2 | MEDIUM | 26
+
+## React Native Developer | Mobile & Connected Products | SaaS, Travel | 2
+about: Builds cross-platform apps with React Native.
+skills: React Native, JavaScript, Enterprise TypeScript Development, Redux, REST APIs, Git & Version Control
+nice: React, GraphQL, Appium
+do: Build screens in React Native and TypeScript; Manage state with Redux; Integrate native modules; Keep the app fast on old phones
+ev: Booking app :: Book a trip in three steps :: React Native app with Redux and end-to-end tests.
+ev: List performance :: Smooth scrolling on old phones :: Moved to FlatList with memoised rows.
+
+## Embedded Software Engineer | Mobile & Connected Products | Automotive, Manufacturing | 3
+about: Writes firmware for vehicles and machines.
+skills: Embedded C, C++, AUTOSAR, Linux Administration, IoT Development, Git & Version Control
+nice: Python, Shell Scripting
+do: Write firmware in C; Configure AUTOSAR modules; Debug on hardware; Document timing and safety
+ev: Motor controller driver :: Meets its timing budget :: Interrupt-driven driver measured with an oscilloscope.
+ev: CAN diagnostics :: Faults found at the line :: Added diagnostic messages and a test script.
+demand: Electric Drive Controller | Voltara Motors | Automotive & Telematics | Automotive | Onsite / Pune | 4 | 9 | 2 | CRITICAL | 15
+
+## IoT Solutions Engineer | Mobile & Connected Products | Manufacturing, Energy | 2
+about: Connects devices to the cloud and uses their data.
+skills: IoT Development, Python, AWS, Embedded C, Apache Kafka, Serverless Computing
+nice: Azure, Time Series Forecasting, Power BI
+do: Connect devices over MQTT; Process data at the edge and in the cloud; Secure every device's identity; Build alerts
+ev: Pump monitoring :: Failures noticed earlier :: MQTT pipeline to AWS with alerts on vibration.
+ev: Device identity :: No shared passwords :: Issued certificates to 200 devices and rotated them.
+
+## Blockchain Developer | Mobile & Connected Products | Banking, Logistics | 2
+about: Builds smart contracts and the applications around them.
+skills: Blockchain Development, JavaScript, Node.js, Cryptography, REST APIs, Application Security
+nice: Rust, React
+do: Write and test smart contracts; Build services that use them; Review contracts for security; Explain trade-offs to the business
+ev: Trade document ledger :: One version of each document :: Solidity contract with tests and a Node.js API.
+ev: Contract review :: A refund bug was found before launch :: Wrote a test that failed and fixed the ordering.
+
+## Unity Developer | Mobile & Connected Products | Education, Manufacturing | 2
+about: Builds simulations, AR and games in Unity.
+skills: Unity Development, C#, UI Design, Git & Version Control, Performance Testing
+nice: C++, Android Development
+do: Build interactive scenes; Optimise for phones and headsets; Work with designers; Test on devices
+ev: Safety training in VR :: New staff practise safely :: Unity scenes with scoring and reset.
+ev: Frame rate work :: Runs on older headsets :: Batched draw calls and lowered texture sizes.
+
+## AWS Cloud Engineer | Cloud & Platform | SaaS, Banking | 3
+about: Builds and runs workloads on AWS.
+skills: AWS, Terraform, AWS CloudFormation, Serverless Computing, Docker, Linux Administration, Python
+nice: Cloud Security, FinOps, Kubernetes
+do: Build AWS infrastructure as code; Run serverless and container workloads; Control cost and access; Automate operations
+ev: Landing zone in Terraform :: New accounts ready in a day :: Reusable modules with guard rails and review.
+ev: Night batch on Lambda :: No idle servers :: Moved the batch to Step Functions and Lambda.
+demand: Digital Claims on AWS | Suraksha Insurance | Insurance & Risk Management | Insurance | Hybrid / Chennai | 4 | 8 | 3 | HIGH | 22
+
+## Azure Cloud Engineer | Cloud & Platform | Healthcare, Public Sector | 3
+about: Builds and runs workloads on Microsoft Azure.
+skills: Azure, Azure DevOps, Terraform, PowerShell, Kubernetes, Identity & Access Management, Observability
+nice: Cloud Security, Azure Data Factory
+do: Build Azure landing zones; Automate with Terraform and PowerShell; Run AKS clusters; Manage identity and monitoring
+ev: AKS upgrade :: No downtime for users :: Blue-green node pools and a rehearsed rollback.
+ev: Policy as code :: Misconfigurations blocked early :: Azure Policy with exceptions that expire.
+demand: Citizen Services Cloud | Civica Digital Authority | Public Sector | Public Sector | Hybrid / New Delhi | 4 | 9 | 2 | HIGH | 30
+
+## Google Cloud Engineer | Cloud & Platform | Retail, Media | 2
+about: Builds and runs workloads on Google Cloud.
+skills: Google Cloud, Kubernetes, Terraform, Google BigQuery, Python, Docker, Observability
+nice: Vertex AI, Apache Airflow
+do: Build projects and networks; Run services on GKE and Cloud Run; Connect data to BigQuery; Monitor and improve
+ev: Cloud Run migration :: Scales to zero at night :: Moved four services with health checks and alerts.
+ev: Log export to BigQuery :: Faster investigations :: Partitioned tables and saved queries.
+
+## DevOps Engineer | Cloud & Platform | SaaS, Retail | 3
+about: Automates building, testing and releasing software.
+skills: CI/CD, Docker, Kubernetes, Jenkins, Ansible, Terraform, Shell Scripting, Git & Version Control
+nice: GitHub Actions, Helm, Observability
+do: Build CI/CD pipelines; Automate infrastructure; Run container platforms; Improve release safety
+ev: Pipeline templates :: New services release in an hour :: Shared Jenkins library with tests and scans.
+ev: Ansible baseline :: Servers match the standard :: Roles for hardening with a weekly check.
+demand: Omnichannel Release Platform | Brightlane Retail | Retail & E-Commerce Infrastructure | Retail | Remote | 4 | 8 | 2 | HIGH | 17
+
+## Site Reliability Engineer | Cloud & Platform | SaaS, Telecom | 2
+about: Keeps services reliable through engineering.
+skills: Site Reliability Engineering, Prometheus & Grafana, Observability, Kubernetes, Go (Golang), Linux Administration, Incident Response
+nice: Terraform, Python, AWS
+do: Define SLOs and alerts; Automate routine work; Lead incident reviews; Plan capacity
+ev: SLO rollout :: Alerts now mean action :: Error budgets for six services in Grafana.
+ev: Runbook automation :: Shorter outages :: Go tool that gathers diagnostics in one command.
+
+## Platform Engineer | Cloud & Platform | SaaS, Banking | 2
+about: Builds the self-service platform developers rely on.
+skills: Platform Engineering, Kubernetes, Helm, Argo CD, GitHub Actions, Terraform, Docker
+nice: OpenShift, Go (Golang), DevSecOps
+do: Build golden paths for teams; Run GitOps delivery; Maintain Helm charts; Measure developer experience
+ev: Service template :: Teams start with tests and alerts :: Backstage template with Helm and Argo CD.
+ev: Preview environments :: Reviews happen on a running app :: GitHub Actions creates one per pull request.
+demand: Developer Platform Build-Out | FinEdge Cloud | Digital Banking & AI Engineering | Banking | Remote | 5 | 10 | 2 | MEDIUM | 36
+
+## Cloud Architect | Cloud & Platform | Banking, Manufacturing | 2
+about: Designs secure, resilient and affordable cloud systems.
+skills: Cloud Architecture, AWS, Azure, Cloud Migration, FinOps, Cloud Security, Solution Architecture
+nice: Kubernetes, Terraform, Technical Pre-Sales
+do: Design target architectures; Plan migration waves; Review cost and security; Guide delivery teams
+ev: Migration wave plan :: 60 systems grouped by risk :: Dependency map, tests and rollback for each wave.
+ev: Cost review :: Idle spend removed :: Right-sizing and commitments agreed with owners.
+demand: Data Centre Exit Programme | Orion Steel | Manufacturing & Industrial AI | Manufacturing | Hybrid / Kolkata | 10 | 16 | 1 | CRITICAL | 19
+
+## Linux & VMware Administrator | Cloud & Platform | Energy, Public Sector | 2
+about: Runs servers and virtual infrastructure.
+skills: Linux Administration, VMware vSphere, Shell Scripting, Ansible, Network Administration, PowerShell
+nice: OpenShift, Observability
+do: Patch and secure servers; Run vSphere clusters; Automate checks; Support on call
+ev: Patch automation :: Patching in one weekend :: Ansible playbooks with snapshots and checks.
+ev: Cluster rebuild :: Failover works again :: Reconfigured HA and tested it.
+
+## SOC Analyst | Cybersecurity | Banking, Telecom | 3
+about: Watches for attacks and responds to them.
+skills: Security Operations, SIEM, Incident Response, Threat Hunting, Endpoint Security, Network Security
+nice: Python, Cloud Security
+do: Triage alerts in the SIEM; Investigate and contain incidents; Hunt for hidden attackers; Improve detection rules
+ev: Phishing playbook :: Cases closed the same day :: Steps and queries for triage, with a report template.
+ev: Detection tuning :: Fewer false alarms :: Rewrote 15 SIEM rules after reviewing a month of alerts.
+demand: 24x7 Security Operations Centre | Meridian Payments | Cyber Defence Services | Banking | Onsite / Bengaluru | 2 | 6 | 4 | CRITICAL | 10
+
+## Penetration Tester | Cybersecurity | Banking, SaaS | 2
+about: Finds weaknesses before attackers do.
+skills: Penetration Testing, Application Security, Network Security, Vulnerability Management, Python, Linux Administration
+nice: Cloud Security, Cryptography
+do: Test web, API and network targets; Report findings clearly; Help teams fix them; Retest
+ev: API test report :: An access flaw was fixed before launch :: Reproduced it step by step and retested the fix.
+ev: Internal network test :: Segmentation improved :: Showed lateral movement and proposed rules.
+demand: Application Security Testing | Cartwell Commerce | Cyber Defence Services | Retail | Remote | 3 | 7 | 1 | HIGH | 23
+
+## Cloud Security Engineer | Cybersecurity | SaaS, Healthcare | 2
+about: Protects cloud accounts, workloads and data.
+skills: Cloud Security, AWS, Azure, Identity & Access Management, Zero Trust Architecture, Terraform
+nice: Kubernetes, SIEM, GRC & Compliance
+do: Find and fix misconfigurations; Design least-privilege access; Automate guard rails; Support audits
+ev: Public storage sweep :: No public buckets remain :: Scripted the check and blocked it by policy.
+ev: Access review :: Unused rights removed :: Reviewed 120 roles with their owners.
+
+## IAM Engineer | Cybersecurity | Banking, Insurance | 2
+about: Runs identity, sign-in and access.
+skills: Identity & Access Management, Zero Trust Architecture, PowerShell, Azure, Cryptography, GRC & Compliance
+nice: Java, ServiceNow
+do: Run single sign-on and MFA; Automate joiners, movers and leavers; Certify access; Integrate applications
+ev: MFA rollout :: All staff use a second factor :: Phased rollout with help pages and exceptions that expire.
+ev: Leaver automation :: Access ends on the last day :: HR feed closes accounts and reports failures.
+
+## GRC Consultant | Cybersecurity | Banking, Healthcare | 2
+about: Keeps security governed, measured and compliant.
+skills: GRC & Compliance, Vulnerability Management, Stakeholder Management, Technical Writing, Change Management
+nice: Cloud Security, Data Governance
+do: Run risk assessments; Prepare for audits; Write policies people follow; Track actions to closure
+ev: ISO 27001 readiness :: Audit passed with two minor findings :: Control owners, evidence and internal audit.
+ev: Vendor risk reviews :: High-risk vendors are known :: One questionnaire and a scoring guide.
+
+## DevSecOps Engineer | Cybersecurity | SaaS, Banking | 2
+about: Builds security into delivery.
+skills: DevSecOps, Application Security, CI/CD, Docker, Kubernetes, GitLab CI
+nice: Terraform, Cloud Security, Python
+do: Add scans to pipelines; Help teams fix findings; Harden containers; Manage secrets
+ev: Dependency scanning :: Weak libraries are found on commit :: GitLab stage with clear fail rules.
+ev: Secret clean-up :: No passwords in code :: Moved to a vault and added a commit check.
+
+## Snowflake Data Engineer | Data & Analytics | Retail, Insurance | 3
+about: Builds modern data platforms on Snowflake.
+skills: Snowflake, SQL, dbt, Apache Airflow, Python, Data Modeling
+nice: Amazon Redshift, AWS, Data Governance
+do: Build tested models in dbt; Orchestrate with Airflow; Tune warehouses and cost; Document data for analysts
+ev: Customer 360 models :: One answer for customer counts :: dbt models with tests and documentation.
+ev: Warehouse tuning :: Lower credit use :: Right-sized warehouses and fixed two heavy queries.
+demand: Unified Customer Data Platform | Brightlane Retail | Data & Analytics Services | Retail | Hybrid / Hyderabad | 3 | 8 | 3 | HIGH | 25
+
+## Big Data Engineer | Data & Analytics | Telecom, Banking | 2
+about: Processes very large data sets.
+skills: Spark, Hadoop, Apache Kafka, Scala, Python, SQL, Databricks
+nice: Apache Airflow, AWS, Apache Cassandra
+do: Build Spark pipelines; Stream with Kafka; Optimise storage; Keep data quality high
+ev: Call record pipeline :: Reports ready before 7 a.m. :: Spark job with partition pruning and quality checks.
+ev: Streaming fraud features :: Features arrive in seconds :: Kafka and Spark streaming with replay tests.
+demand: Network Analytics Lakehouse | Vantel Communications | Telecom & Cloud Operations | Telecom | Remote | 4 | 9 | 2 | HIGH | 31
+
+## BI Developer | Data & Analytics | Manufacturing, Healthcare | 3
+about: Turns data into dashboards people use.
+skills: Power BI, SQL, Data Modeling, Microsoft Excel, Microsoft Fabric, Stakeholder Management
+nice: Tableau, SQL Server, Azure Data Factory
+do: Build semantic models and reports; Write clear DAX; Secure data by role; Train users
+ev: Plant dashboard :: One morning meeting page :: Star schema, DAX measures and row-level security.
+ev: Report retirement :: 30 reports became 4 :: Usage review with owners and a shared model.
+demand: Hospital Performance Insights | CareNova Hospitals | Healthcare & Life Sciences | Healthcare | Hybrid / Chennai | 3 | 7 | 2 | MEDIUM | 27
+
+## Data Analyst | Data & Analytics | Retail, SaaS | 3
+about: Answers business questions with data.
+skills: SQL, Tableau, Microsoft Excel, Statistical Analysis, Python, Stakeholder Management
+nice: Looker, Power BI, R Programming
+do: Explore data and find patterns; Build dashboards; Run experiments; Present findings plainly
+ev: Returns analysis :: Two causes explained most returns :: SQL and Tableau with a clear recommendation.
+ev: A/B test readout :: A wrong launch was avoided :: Checked sample size and significance.
+
+## ETL Developer | Data & Analytics | Banking, Insurance | 2
+about: Moves and shapes enterprise data.
+skills: Informatica, ETL Development, Oracle Database, SQL, Shell Scripting, Data Governance
+nice: Snowflake, Azure Data Factory
+do: Build and schedule mappings; Load incrementally; Reconcile results; Document lineage
+ev: Regulatory feed :: Delivered on time each month :: Informatica workflow with reconciliation.
+ev: Incremental loads :: Night window halved :: Change capture instead of full loads.
+demand: Regulatory Reporting Data Hub | Harbour Trust Bank | Banking & Financial Services | Banking | Onsite / Mumbai | 4 | 9 | 2 | HIGH | 16
+
+## Database Administrator | Data & Analytics | Banking, Public Sector | 2
+about: Keeps databases safe, fast and available.
+skills: Database Administration, SQL Server, Oracle Database, MySQL, PowerShell, Linux Administration
+nice: PostgreSQL & Vector Database Optimization, Cloud Migration
+do: Back up and restore; Tune queries and indexes; Manage access; Plan upgrades
+ev: Restore drills :: Recovery time is known :: Monthly restores with a written result.
+ev: Index review :: Faster month end :: Removed unused indexes and added three.
+
+## Data Governance Analyst | Data & Analytics | Insurance, Healthcare | 2
+about: Makes data trusted and understood.
+skills: Data Governance, Data Modeling, SQL, Stakeholder Management, GRC & Compliance, Technical Writing
+nice: Microsoft Fabric, Power BI
+do: Run the data catalogue; Define owners and rules; Measure quality; Support privacy
+ev: Catalogue launch :: 300 data sets have owners :: Definitions agreed with the business.
+ev: Quality scorecard :: Errors are seen weekly :: Rules in SQL with a trend report.
+
+## Data Scientist | AI & Machine Learning | Retail, Banking | 3
+about: Builds models that support decisions.
+skills: Python, Machine Learning, Statistical Analysis, Scikit-learn, SQL, Time Series Forecasting
+nice: R Programming, Deep Learning, MLOps
+do: Frame the question; Build and test models; Explain results; Work with engineers to deploy
+ev: Demand forecast :: Less waste in two stores :: Compared three models against a naive baseline.
+ev: Churn model :: The team calls the right customers :: Scikit-learn pipeline with fairness checks.
+demand: Store Demand Forecasting | Cartwell Commerce | Data & Analytics Services | Retail | Remote | 3 | 8 | 2 | MEDIUM | 29
+
+## GenAI Engineer | AI & Machine Learning | SaaS, Insurance | 3
+about: Builds applications on language models.
+skills: Python, GenAI, Large Language Models, Retrieval-Augmented Generation, LangChain, Vector Databases, Prompt Engineering, FastAPI
+nice: AI Agents, Azure OpenAI, LLMOps, NLP
+do: Build RAG applications; Evaluate answers; Control cost and safety; Ship APIs
+ev: Policy assistant :: Answers cite the clause :: RAG over policy documents with an evaluation set.
+ev: Prompt tests :: Changes no longer break answers :: 120 test questions run on each change.
+demand: Claims Knowledge Assistant | Suraksha Insurance | AI & Automation Services | Insurance | Remote | 3 | 8 | 3 | CRITICAL | 14
+
+## Computer Vision Engineer | AI & Machine Learning | Manufacturing, Healthcare | 2
+about: Builds systems that understand images.
+skills: Computer Vision, PyTorch, Deep Learning, Python, Machine Learning, TensorFlow, Docker
+nice: IoT Development, MLOps
+do: Collect and label data; Train detection models; Deploy to the edge; Watch accuracy over time
+ev: Weld inspection :: Defects found on the line :: PyTorch detector with a held-out test set.
+ev: Edge deployment :: Runs without the network :: Quantised model in a container.
+demand: Visual Quality Inspection | Orion Steel | Manufacturing & Industrial AI | Manufacturing | Onsite / Pune | 3 | 7 | 1 | HIGH | 34
+
+## MLOps Engineer | AI & Machine Learning | SaaS, Banking | 2
+about: Takes models to production and keeps them healthy.
+skills: MLOps, Python, Docker, Kubernetes, Amazon SageMaker, Apache Airflow, LLMOps
+nice: Terraform, Vertex AI, Prometheus & Grafana
+do: Build training and release pipelines; Version data and models; Monitor drift; Automate rollback
+ev: Model registry :: Every model can be traced :: Versioning, approval and rollback.
+ev: Drift alerts :: Problems seen in a day :: Weekly checks with thresholds per feature.
+
+## AI Agent Engineer | AI & Machine Learning | SaaS, Retail | 2
+about: Builds agents that plan, use tools and act safely.
+skills: AI Agents, GenAI, LangChain, Large Language Models, Python, Gemini API Integration, Prompt Engineering
+nice: Azure OpenAI, Responsible AI, GraphQL
+do: Design agent workflows; Connect tools safely; Add human approval; Measure results
+ev: Order help agent :: Common requests solved in chat :: Tools for status and returns, with approval for refunds.
+ev: Agent evaluation :: Failures are understood :: Recorded steps and scored 80 cases.
+
+## Salesforce Developer | SaaS & CRM Platforms | Telecom, Banking | 3
+about: Builds on the Salesforce platform.
+skills: Apex, Lightning Web Components, Salesforce Administration, JavaScript, REST APIs, Git & Version Control
+nice: MuleSoft, Agile
+do: Write bulk-safe Apex; Build Lightning Web Components; Integrate other systems; Release with source control
+ev: Case routing trigger :: Cases reach the right team :: Bulk-safe Apex with tests above the required coverage.
+ev: Quote builder :: Quotes in one screen :: Lightning Web Component with server-side rules.
+demand: Service Cloud Rollout | Vantel Communications | SaaS & CRM Services | Telecom | Hybrid / Gurugram | 3 | 8 | 3 | HIGH | 13
+
+## CRM Functional Consultant | SaaS & CRM Platforms | Insurance, Retail | 2
+about: Shapes sales and service processes in CRM.
+skills: Salesforce Administration, Microsoft Dynamics 365, Business Analysis, Stakeholder Management, Customer Success
+nice: Power Platform, Change Management
+do: Map processes; Configure CRM; Run workshops; Support adoption
+ev: Lead process redesign :: Leads answered in a day :: Flow, queues and a simple dashboard.
+ev: Adoption plan :: Field teams use the app :: Training by role and weekly measures.
+
+## Power Platform Developer | SaaS & CRM Platforms | Manufacturing, Public Sector | 2
+about: Builds low-code apps and automation.
+skills: Power Platform, Microsoft Dynamics 365, SharePoint, SQL Server, Power BI, REST APIs
+nice: C#, Azure
+do: Build apps and flows; Govern environments; Integrate data; Coach business makers
+ev: Permit approvals :: Paper forms ended :: Power App with approvals and an audit trail.
+ev: Environment rules :: No data leaves by mistake :: Data loss prevention policies by environment.
+
+## Integration Engineer | SaaS & CRM Platforms | Banking, Healthcare | 2
+about: Connects systems through APIs and events.
+skills: MuleSoft, API Management, REST APIs, Apache Kafka, Microservices, Event-Driven Architecture
+nice: HL7 FHIR, Java, Salesforce Administration
+do: Design API layers; Build integrations; Secure and version APIs; Monitor traffic
+ev: Customer API :: Five systems share one API :: Three-layer design with policies and tests.
+ev: Event bridge :: Updates arrive in seconds :: Kafka topics with schemas and replay.
+
+## SaaS Product Engineer | SaaS & CRM Platforms | SaaS | 2
+about: Builds multi-tenant products.
+skills: SaaS Architecture, Node.js, React, PostgreSQL & Vector Database Optimization, AWS, Enterprise TypeScript Development
+nice: GraphQL, Observability, Customer Success
+do: Build features for many tenants; Meter usage; Protect tenant data; Release daily
+ev: Usage metering :: Bills match use :: Event counting with checks against the ledger.
+ev: Tenant isolation tests :: Leaks are caught in CI :: Tests that try to cross tenants.
+demand: Multi-Tenant HR Platform | PeopleLoop SaaS | SaaS & CRM Services | SaaS | Remote | 4 | 8 | 2 | MEDIUM | 38
+
+## AEM Developer | SaaS & CRM Platforms | Retail, Travel | 2
+about: Builds content and commerce experiences.
+skills: Adobe Experience Manager, Java, HTML & CSS, JavaScript, E-Commerce Platforms, REST APIs
+nice: React, CMS Development
+do: Build AEM components; Support authors; Connect commerce; Cache for speed
+ev: Component library :: Authors build pages alone :: 18 components with dialogs and guidance.
+ev: Dispatcher rules :: Fast pages in a sale :: Cache rules and tests.
+
+## SAP ABAP Consultant | Enterprise Applications | Manufacturing, Energy | 2
+about: Develops and improves SAP applications.
+skills: SAP ABAP, SAP S/4HANA, SAP Fiori, REST APIs, SQL, Agile
+nice: SAP MM, Oracle Database
+do: Write efficient ABAP; Build Fiori apps and OData services; Prepare for S/4HANA; Support releases
+ev: Goods receipt app :: Receipts posted on the floor :: Fiori app with an OData service.
+ev: Report tuning :: Month-end report finishes :: Removed selects in loops and added a CDS view.
+demand: S/4HANA Conversion | Orion Steel | Enterprise Applications | Manufacturing | Hybrid / Kolkata | 5 | 10 | 2 | CRITICAL | 32
+
+## SAP FICO Consultant | Enterprise Applications | Manufacturing, Retail | 2
+about: Configures SAP finance and controlling.
+skills: SAP FICO, SAP S/4HANA, SAP MM, Business Analysis, Stakeholder Management, Change Management
+nice: Microsoft Excel, Power BI
+do: Run finance workshops; Configure FICO; Test with the business; Support close
+ev: New cost centre model :: Managers see their costs :: Design, configuration and tests with finance.
+ev: Close calendar :: Close two days earlier :: Tasks, owners and checks in one plan.
+
+## ServiceNow Developer | Enterprise Applications | Banking, Telecom | 3
+about: Builds workflows on ServiceNow.
+skills: ServiceNow, JavaScript, ITIL, REST APIs, Agile, Business Analysis
+nice: Power Platform, SIEM
+do: Build workflows and portals; Integrate systems; Follow ITIL; Release update sets safely
+ev: Access request catalogue :: Requests no longer e-mailed :: Catalogue items, approvals and automation.
+ev: Asset integration :: One list of devices :: REST import with matching rules.
+demand: Enterprise Service Portal | Harbour Trust Bank | Enterprise Applications | Banking | Hybrid / Hyderabad | 3 | 7 | 2 | HIGH | 20
+
+## Oracle ERP Consultant | Enterprise Applications | Public Sector, Logistics | 2
+about: Implements Oracle's cloud ERP.
+skills: Oracle ERP Cloud, Oracle Database, Business Analysis, SQL, Stakeholder Management, Change Management
+nice: ETL Development, Project Management
+do: Run workshops; Configure finance and procurement; Load data; Test quarterly updates
+ev: Supplier load :: 8,000 suppliers loaded once :: File-based import with checks.
+ev: Approval rules :: Orders approved in time :: Rules by amount and department.
+
+## Workday Consultant | Enterprise Applications | Healthcare, SaaS | 2
+about: Implements HR processes in Workday.
+skills: Workday HCM, Business Analysis, REST APIs, Change Management, Stakeholder Management
+nice: Project Management, SQL
+do: Configure business processes; Build reports and integrations; Set up security; Support adoption
+ev: Hiring process :: Fewer steps to an offer :: Business process with clear approvals.
+ev: Payroll feed :: Files match each month :: Integration with reconciliation.
+
+## Pega Developer | Enterprise Applications | Insurance, Banking | 2
+about: Builds case management applications on Pega.
+skills: Pega, Java, SQL, REST APIs, Agile, Business Analysis
+nice: Robotic Process Automation, JavaScript
+do: Model cases; Write decision rules; Integrate services; Test and deploy
+ev: Claim intake case :: One path from call to payment :: Stages, SLAs and decision rules.
+ev: Rule clean-up :: Fewer conflicts :: Removed duplicates and documented layers.
+
+## RPA Developer | Enterprise Applications | Banking, Logistics | 2
+about: Automates repetitive work.
+skills: Robotic Process Automation, SQL, Business Analysis, Power Platform, Microsoft Excel
+nice: Python, REST APIs
+do: Assess processes; Build and test bots; Handle exceptions; Report results
+ev: Invoice bot :: Staff review only exceptions :: UiPath bot with queues and logs.
+ev: Bot health page :: Failures are seen at once :: Power BI page from run logs.
+
+## Mainframe Developer | Enterprise Applications | Banking, Insurance | 2
+about: Keeps core mainframe systems running and modern.
+skills: COBOL & Mainframe, SQL, Core Banking, REST APIs, Agile
+nice: Java, Cloud Migration
+do: Maintain COBOL and JCL; Expose services; Support batch; Plan modernisation
+ev: Batch fix :: Nightly run finishes :: Reordered JCL steps and tuned DB2 access.
+ev: Balance service :: Mobile app reads balances :: Wrapped a CICS program as a service.
+demand: Core Banking Modernisation | Cresta Bank | Banking & Financial Services | Banking | Onsite / Mumbai | 6 | 14 | 2 | HIGH | 40
+
+## Guidewire Developer | Enterprise Applications | Insurance | 2
+about: Builds insurance systems on Guidewire.
+skills: Guidewire, Java, SQL, REST APIs, Agile
+nice: Pega, Business Analysis
+do: Configure ClaimCenter and PolicyCenter; Write Gosu rules; Integrate partners; Support upgrades
+ev: Claim assignment rules :: Claims reach the right adjuster :: Gosu rules with tests.
+ev: Upgrade rehearsal :: Issues found early :: Ran the upgrade twice with a checklist.
+
+## SDET | Quality Engineering | SaaS, Banking | 3
+about: Builds test automation.
+skills: Playwright, Selenium Automation Framework, Java, Postman & REST API Testing, CI/CD Test Automation Pipelines, Cucumber & BDD, Enterprise TypeScript Development
+nice: Cypress, Docker
+do: Build test frameworks; Automate UI and API tests; Run tests in CI; Report quality
+ev: Playwright suite :: Regression in 20 minutes :: Parallel tests with traces.
+ev: API contract tests :: Breaking changes are caught :: Postman collections in CI.
+demand: Test Automation Factory | FinEdge Cloud | Quality Engineering Services | Banking | Hybrid / Chennai | 3 | 7 | 2 | MEDIUM | 23
+
+## Performance Test Engineer | Quality Engineering | Retail, Telecom | 2
+about: Proves systems are fast and stable.
+skills: Performance Testing, SQL, Linux Administration, Observability, Postman & REST API Testing
+nice: AWS, Java
+do: Model real traffic; Run load and soak tests; Find bottlenecks; Advise on capacity
+ev: Sale readiness test :: No surprises on the day :: JMeter model from real traffic.
+ev: Leak found by soak test :: Restarts ended :: Eight-hour run with memory graphs.
+
+## QA Analyst | Quality Engineering | Healthcare, Education | 2
+about: Checks that software does what people need.
+skills: Manual Testing, Test Management, Jira, SQL, Postman & REST API Testing, Agile
+nice: Cypress, Business Analysis
+do: Design tests from requirements; Explore new features; Report defects well; Track coverage
+ev: Test plan by risk :: The riskiest parts tested first :: Risk list agreed with the team.
+ev: Defect review :: Fewer repeats :: Grouped causes and changed the checklist.
+
+## Mobile Test Engineer | Quality Engineering | Banking, Travel | 2
+about: Tests mobile apps on real devices.
+skills: Appium, Android Development, Java, TestNG & Automation Frameworks, Manual Testing
+nice: iOS Development, Performance Testing
+do: Automate on Android and iOS; Test on a device farm; Check accessibility; Report crashes
+ev: Device matrix :: Covers most customers :: Chosen from usage data.
+ev: Login suite :: Runs on each build :: Appium tests with stable locators.
+
+## Product Manager | Consulting & Delivery | SaaS, Retail | 2
+about: Decides what to build and why.
+skills: Product Management, Agile, Stakeholder Management, UX Design, Business Analysis, Statistical Analysis
+nice: SaaS Architecture, Strategic AI Product Management
+do: Understand customers; Set outcomes and priorities; Work with design and engineering; Measure results
+ev: Onboarding bet :: More users reach first value :: Interviews, a small test and a clear result.
+ev: Roadmap by outcome :: Sales and teams agree :: Three outcomes instead of forty features.
+demand: Seller Growth Product | Cartwell Commerce | Product & Design Services | Retail | Hybrid / Bengaluru | 5 | 10 | 1 | MEDIUM | 35
+
+## Project Manager | Consulting & Delivery | Banking, Manufacturing | 2
+about: Delivers projects on time and on budget.
+skills: Project Management, Agile, Jira, Stakeholder Management, Change Management, Business Analysis
+nice: Scrum, Program Management
+do: Plan and track delivery; Manage risks and scope; Report honestly; Lead the team
+ev: Recovery plan :: A late project back on track :: Critical path, scope options and weekly decisions.
+ev: Risk register :: No surprise at go-live :: Owners and dates reviewed each week.
+demand: Core Systems Programme Office | Harbour Trust Bank | Consulting Services | Banking | Onsite / Mumbai | 7 | 14 | 1 | HIGH | 21
+
+## Scrum Master | Consulting & Delivery | SaaS, Insurance | 2
+about: Helps teams deliver and improve.
+skills: Scrum, Scaled Agile, Agile, Jira, Stakeholder Management
+nice: Change Management, Project Management
+do: Facilitate Scrum events; Remove blockers; Coach teams; Improve flow
+ev: Smaller stories :: Work finishes in the sprint :: Splitting workshop and a limit on work in progress.
+ev: PI planning :: Five teams share one plan :: Dependencies on one board.
+
+## Solution Architect | Consulting & Delivery | Banking, Telecom | 2
+about: Designs whole solutions across systems.
+skills: Solution Architecture, Cloud Architecture, Microservices, System Design & Scalability, API Management, Technical Pre-Sales
+nice: AWS, Event-Driven Architecture, Stakeholder Management
+do: Design solutions; Record decisions; Review delivery; Present to clients
+ev: Target architecture :: Teams build toward one picture :: Decision records and a migration path.
+ev: Load model :: Sized before buying :: Capacity model checked by a test.
+demand: Open Banking Platform Design | Meridian Payments | Consulting Services | Banking | Hybrid / Bengaluru | 10 | 16 | 1 | CRITICAL | 18
+
+## Pre-Sales Consultant | Consulting & Delivery | SaaS, Healthcare | 2
+about: Shapes winning, realistic proposals.
+skills: Technical Pre-Sales, Solution Architecture, Stakeholder Management, Cloud Architecture, Business Analysis
+nice: Technical Writing, FinOps
+do: Run discovery; Build demos and proposals; Estimate effort; Hand over to delivery
+ev: Proof of concept :: The client saw their own data :: Success criteria agreed first.
+ev: Estimate model :: Bids are closer to actuals :: Compared ten past projects.
+
+## UX/UI Designer | Consulting & Delivery | SaaS, Healthcare | 2
+about: Designs products around people.
+skills: UX Design, UI Design, Web Accessibility, HTML & CSS, Stakeholder Management
+nice: React, Product Management
+do: Research users; Sketch and prototype; Test with people; Maintain the design system
+ev: Booking redesign :: Fewer calls to the help line :: Five tests and three rounds of changes.
+ev: Design system :: Screens look alike :: Components and guidance in Figma.
+
+## Technical Writer | Consulting & Delivery | SaaS | 2
+about: Writes documentation people can follow.
+skills: Technical Writing, Git & Version Control, HTML & CSS, REST APIs, Jira
+nice: UX Design, Agile
+do: Write guides and API docs; Work with engineers; Test instructions; Measure use
+ev: API quick start :: First call in ten minutes :: Tested with three new developers.
+ev: Docs in Git :: Docs change with code :: Reviews and checks in the pipeline.
+
+## IT Support Engineer | IT Operations & Support | Healthcare, Education | 3
+about: Solves user and system problems.
+skills: Technical Support, ITIL, PowerShell, Network Administration, ServiceNow, Linux Administration
+nice: Microsoft Dynamics 365, Endpoint Security
+do: Resolve tickets; Write knowledge articles; Automate routine fixes; Escalate well
+ev: Password reset page :: Fewer calls each morning :: Self-service with clear steps.
+ev: Top ten fixes :: New staff solve more :: Articles tested by two new joiners.
+demand: Managed Service Desk | CareNova Hospitals | IT Operations & Support | Healthcare | Onsite / Chennai | 1 | 5 | 4 | MEDIUM | 15
+
+## Network Engineer | IT Operations & Support | Telecom, Public Sector | 2
+about: Runs secure, reliable networks.
+skills: Network Administration, Network Security, Linux Administration, Shell Scripting, Observability
+nice: Zero Trust Architecture, Python
+do: Design and run networks; Monitor and troubleshoot; Secure traffic; Document changes
+ev: Branch rollout :: 40 branches moved with no outage :: Templates and a tested rollback.
+ev: Firewall clean-up :: Unused rules removed :: Reviewed with owners and logs.
+
+## Customer Success Manager | IT Operations & Support | SaaS | 2
+about: Helps customers get value and stay.
+skills: Customer Success, Stakeholder Management, SaaS Architecture, Salesforce Administration, Business Analysis
+nice: Statistical Analysis, Change Management
+do: Lead onboarding; Watch health scores; Solve adoption problems; Prepare renewals
+ev: Onboarding plan :: Customers live sooner :: Plan by role with a first-value date.
+ev: Health score :: Risks seen a quarter ahead :: Simple score from use and tickets.
+
+## Telecom OSS/BSS Engineer | IT Operations & Support | Telecom | 2
+about: Builds and runs telecom operations and billing systems.
+skills: Telecom OSS & BSS, Java, Oracle Database, Apache Kafka, Linux Administration
+nice: Microservices, API Management
+do: Integrate ordering and billing; Automate provisioning; Process usage records; Support releases
+ev: Order fallout tool :: Stuck orders fixed daily :: Java tool with reasons and retries.
+ev: Usage feed :: Bills match the network :: Kafka feed with reconciliation.
+
+## Healthcare Integration Engineer | IT Operations & Support | Healthcare | 2
+about: Connects hospital systems safely.
+skills: HL7 FHIR, REST APIs, SQL, MuleSoft, Java, GRC & Compliance
+nice: Azure, Data Governance
+do: Build FHIR and HL7 interfaces; Protect patient data; Monitor messages; Work with clinicians
+ev: Lab results interface :: Results reach the ward :: FHIR mapping with checks.
+ev: Message monitor :: Lost messages are seen :: Dashboard with alerts.
+demand: Patient Data Exchange | CareNova Hospitals | Healthcare & Life Sciences | Healthcare | Hybrid / Bengaluru | 4 | 9 | 1 | HIGH | 26

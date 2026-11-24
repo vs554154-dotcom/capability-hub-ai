@@ -1,0 +1,168 @@
+# One course or official guide per demo technology: skill | title | provider | url | type
+# Only public pages of the named provider. No ratings or learner counts: none are known.
+JavaScript | JavaScript Guide | MDN Web Docs | https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide | Course
+C# | C# documentation and tutorials | Microsoft Learn | https://learn.microsoft.com/en-us/dotnet/csharp/ | Course
+ASP.NET Core | ASP.NET Core documentation and tutorials | Microsoft Learn | https://learn.microsoft.com/en-us/aspnet/core/ | Course
+Entity Framework | Entity Framework Core documentation | Microsoft Learn | https://learn.microsoft.com/en-us/ef/core/ | Course
+Node.js | Introduction to Node.js | OpenJS Foundation | https://nodejs.org/en/learn | Course
+Express.js | Express guide | OpenJS Foundation | https://expressjs.com/ | Course
+Go (Golang) | A Tour of Go | Go project | https://go.dev/tour/ | Course
+Rust | The Rust Programming Language | Rust project | https://doc.rust-lang.org/book/ | Course
+PHP | PHP Manual | The PHP Group | https://www.php.net/manual/en/ | Course
+Laravel | Laravel documentation | Laravel | https://laravel.com/docs | Course
+Ruby on Rails | Ruby on Rails Guides | Rails project | https://guides.rubyonrails.org/ | Course
+Scala | Learn Scala | Scala project | https://docs.scala-lang.org/ | Course
+Kotlin | Kotlin documentation | JetBrains | https://kotlinlang.org/docs/home.html | Course
+C++ | Learn C++ | learncpp.com | https://www.learncpp.com/ | Course
+Django | Django documentation and tutorial | Django Software Foundation | https://docs.djangoproject.com/en/stable/ | Course
+FastAPI | FastAPI Tutorial | FastAPI | https://fastapi.tiangolo.com/tutorial/ | Course
+GraphQL | Introduction to GraphQL | GraphQL Foundation | https://graphql.org/learn/ | Course
+Apache Kafka | Apache Kafka documentation | Apache Software Foundation | https://kafka.apache.org/documentation/ | Course
+RabbitMQ | RabbitMQ Tutorials | RabbitMQ | https://www.rabbitmq.com/tutorials | Course
+Hibernate | Hibernate ORM documentation | Hibernate | https://hibernate.org/orm/documentation/ | Course
+Event-Driven Architecture | Event-driven architecture style | Microsoft Learn | https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/event-driven | Course
+JUnit & Mockito | JUnit 5 User Guide | JUnit | https://junit.org/junit5/docs/current/user-guide/ | Course
+Angular | Angular documentation and tutorials | Google | https://angular.dev/overview | Course
+Vue.js | Vue.js Guide | Vue.js | https://vuejs.org/guide/introduction.html | Course
+HTML & CSS | Learn web development | MDN Web Docs | https://developer.mozilla.org/en-US/docs/Learn_web_development | Course
+Tailwind CSS | Tailwind CSS documentation | Tailwind Labs | https://tailwindcss.com/docs | Course
+Redux | Redux Essentials | Redux | https://redux.js.org/tutorials/essentials/part-1-overview-concepts | Course
+Web Accessibility | Digital Accessibility Foundations | W3C | https://www.w3.org/WAI/courses/foundations-course/ | Course
+Android Development | Android developer training | Google | https://developer.android.com/courses | Course
+iOS Development | Develop in Swift tutorials | Apple | https://developer.apple.com/tutorials/develop-in-swift | Course
+Flutter | Flutter documentation | Google | https://docs.flutter.dev/ | Course
+React Native | React Native documentation | Meta | https://reactnative.dev/docs/getting-started | Course
+Snowflake | Snowflake documentation | Snowflake | https://docs.snowflake.com/ | Course
+Power BI | Power BI training | Microsoft Learn | https://learn.microsoft.com/en-us/power-bi/ | Course
+Tableau | Tableau training | Tableau | https://www.tableau.com/learn/training | Course
+Apache Airflow | Apache Airflow documentation | Apache Software Foundation | https://airflow.apache.org/docs/apache-airflow/stable/ | Course
+dbt | dbt Learn | dbt Labs | https://learn.getdbt.com/ | Course
+Amazon Redshift | Amazon Redshift documentation | AWS | https://docs.aws.amazon.com/redshift/ | Course
+Google BigQuery | BigQuery documentation | Google Cloud | https://cloud.google.com/bigquery/docs | Course
+Hadoop | Apache Hadoop documentation | Apache Software Foundation | https://hadoop.apache.org/docs/stable/ | Course
+ETL Development | Extract, transform and load | Microsoft Learn | https://learn.microsoft.com/en-us/azure/architecture/data-guide/relational-data/etl | Course
+Informatica | Informatica documentation | Informatica | https://docs.informatica.com/ | Course
+Data Modeling | Star schema guidance | Microsoft Learn | https://learn.microsoft.com/en-us/power-bi/guidance/star-schema | Course
+Data Governance | Microsoft Purview documentation | Microsoft Learn | https://learn.microsoft.com/en-us/purview/ | Course
+Microsoft Excel | Excel video training | Microsoft Support | https://support.microsoft.com/en-us/excel | Course
+Statistical Analysis | Statistics and probability | Khan Academy | https://www.khanacademy.org/math/statistics-probability | Course
+R Programming | R for Data Science | Hadley Wickham and co-authors | https://r4ds.hadley.nz/ | Course
+Microsoft Fabric | Microsoft Fabric documentation | Microsoft Learn | https://learn.microsoft.com/en-us/fabric/ | Course
+Looker | Looker documentation | Google Cloud | https://cloud.google.com/looker/docs | Course
+SQL Server | SQL Server documentation | Microsoft Learn | https://learn.microsoft.com/en-us/sql/sql-server/ | Course
+Oracle Database | Oracle Database documentation | Oracle | https://docs.oracle.com/en/database/ | Course
+MySQL | MySQL documentation | Oracle | https://dev.mysql.com/doc/ | Course
+MongoDB | MongoDB University | MongoDB | https://learn.mongodb.com/ | Course
+Redis | Redis University | Redis | https://university.redis.io/ | Course
+Apache Cassandra | Apache Cassandra documentation | Apache Software Foundation | https://cassandra.apache.org/doc/latest/ | Course
+Elasticsearch | Elastic documentation | Elastic | https://www.elastic.co/docs | Course
+Database Administration | SQL Server administration | Microsoft Learn | https://learn.microsoft.com/en-us/sql/relational-databases/databases/databases | Course
+Vector Databases | Vector database learning center | Pinecone | https://www.pinecone.io/learn/ | Course
+Deep Learning | Practical Deep Learning for Coders | fast.ai | https://course.fast.ai/ | Course
+PyTorch | PyTorch Tutorials | PyTorch Foundation | https://docs.pytorch.org/tutorials/ | Course
+TensorFlow | TensorFlow Tutorials | Google | https://www.tensorflow.org/tutorials | Course
+Computer Vision | OpenCV Tutorials | OpenCV | https://docs.opencv.org/4.x/d9/df8/tutorial_root.html | Course
+LangChain | LangChain documentation | LangChain | https://docs.langchain.com/ | Course
+Retrieval-Augmented Generation | Retrieval-augmented generation overview | Google Cloud | https://cloud.google.com/use-cases/retrieval-augmented-generation | Course
+Prompt Engineering | Prompt Engineering Guide | DAIR.AI | https://www.promptingguide.ai/ | Course
+AI Agents | AI Agents Course | Hugging Face | https://huggingface.co/learn/agents-course/unit0/introduction | Course
+Large Language Models | LLM Course | Hugging Face | https://huggingface.co/learn/llm-course/chapter1/1 | Course
+Scikit-learn | scikit-learn User Guide | scikit-learn | https://scikit-learn.org/stable/user_guide.html | Course
+Amazon SageMaker | Amazon SageMaker AI documentation | AWS | https://docs.aws.amazon.com/sagemaker/ | Course
+Vertex AI | Vertex AI documentation | Google Cloud | https://cloud.google.com/vertex-ai/docs | Course
+Azure OpenAI | Azure OpenAI documentation | Microsoft Learn | https://learn.microsoft.com/en-us/azure/ai-services/openai/ | Course
+Responsible AI | Responsible AI practices | Google | https://ai.google/responsibility/responsible-ai-practices/ | Course
+Time Series Forecasting | Forecasting: Principles and Practice | Rob Hyndman and George Athanasopoulos | https://otexts.com/fpp3/ | Course
+LLMOps | What is LLMOps? | Databricks | https://www.databricks.com/glossary/llmops | Course
+AWS | AWS Skill Builder | AWS | https://skillbuilder.aws/ | Course
+Google Cloud | Google Cloud documentation | Google Cloud | https://cloud.google.com/docs | Course
+Serverless Computing | AWS Lambda documentation | AWS | https://docs.aws.amazon.com/lambda/ | Course
+Helm | Helm documentation | Helm | https://helm.sh/docs/ | Course
+Ansible | Ansible documentation | Red Hat | https://docs.ansible.com/ | Course
+Jenkins | Jenkins User Documentation | Jenkins | https://www.jenkins.io/doc/ | Course
+GitHub Actions | GitHub Actions documentation | GitHub | https://docs.github.com/en/actions | Course
+GitLab CI | GitLab CI/CD documentation | GitLab | https://docs.gitlab.com/ci/ | Course
+Argo CD | Argo CD documentation | Argo project | https://argo-cd.readthedocs.io/en/stable/ | Course
+Prometheus & Grafana | Prometheus documentation | Prometheus | https://prometheus.io/docs/introduction/overview/ | Course
+Site Reliability Engineering | Site Reliability Engineering books | Google | https://sre.google/books/ | Course
+Linux Administration | Red Hat Enterprise Linux documentation | Red Hat | https://docs.redhat.com/en | Course
+Shell Scripting | Bash Reference Manual | GNU | https://www.gnu.org/software/bash/manual/ | Course
+PowerShell | PowerShell documentation | Microsoft Learn | https://learn.microsoft.com/en-us/powershell/ | Course
+OpenShift | OpenShift documentation | Red Hat | https://docs.redhat.com/en/documentation/openshift_container_platform/ | Course
+VMware vSphere | VMware documentation | Broadcom | https://techdocs.broadcom.com/ | Course
+Cloud Migration | Cloud Adoption Framework: Migrate | Microsoft Learn | https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/migrate/ | Course
+Cloud Architecture | AWS Well-Architected Framework | AWS | https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html | Course
+FinOps | FinOps Framework | FinOps Foundation | https://www.finops.org/framework/ | Course
+Observability | OpenTelemetry documentation | OpenTelemetry | https://opentelemetry.io/docs/ | Course
+AWS CloudFormation | AWS CloudFormation documentation | AWS | https://docs.aws.amazon.com/cloudformation/ | Course
+Platform Engineering | Platform Engineering guide | Microsoft Learn | https://learn.microsoft.com/en-us/platform-engineering/ | Course
+Network Security | Network security documentation | Microsoft Learn | https://learn.microsoft.com/en-us/azure/security/fundamentals/network-overview | Course
+Cloud Security | Cloud security guidance | Cloud Security Alliance | https://cloudsecurityalliance.org/ | Course
+SIEM | Microsoft Sentinel documentation | Microsoft Learn | https://learn.microsoft.com/en-us/azure/sentinel/ | Course
+Penetration Testing | Web Security Academy | PortSwigger | https://portswigger.net/web-security | Course
+Application Security | OWASP Top Ten | OWASP Foundation | https://owasp.org/www-project-top-ten/ | Course
+Identity & Access Management | Microsoft Entra documentation | Microsoft Learn | https://learn.microsoft.com/en-us/entra/ | Course
+Incident Response | Incident response guidance (SP 800-61) | NIST | https://csrc.nist.gov/projects/incident-response | Course
+Threat Hunting | MITRE ATT&CK resources | MITRE | https://attack.mitre.org/resources/ | Course
+Vulnerability Management | Known Exploited Vulnerabilities guidance | CISA | https://www.cisa.gov/known-exploited-vulnerabilities | Course
+GRC & Compliance | NIST Cybersecurity Framework | NIST | https://www.nist.gov/cyberframework | Course
+DevSecOps | OWASP DevSecOps Guideline | OWASP Foundation | https://owasp.org/www-project-devsecops-guideline/ | Course
+Zero Trust Architecture | Zero Trust guidance | Microsoft Learn | https://learn.microsoft.com/en-us/security/zero-trust/ | Course
+Security Operations | Microsoft security operations documentation | Microsoft Learn | https://learn.microsoft.com/en-us/security/operations/overview | Course
+Endpoint Security | Microsoft Defender for Endpoint documentation | Microsoft Learn | https://learn.microsoft.com/en-us/defender-endpoint/ | Course
+Cryptography | Cryptography course | Khan Academy | https://www.khanacademy.org/computing/computer-science/cryptography | Course
+Salesforce Administration | Admin Beginner | Salesforce Trailhead | https://trailhead.salesforce.com/content/learn/trails/force_com_admin_beginner | Course
+Apex | Developer Beginner | Salesforce Trailhead | https://trailhead.salesforce.com/content/learn/trails/force_com_dev_beginner | Course
+Lightning Web Components | Build Lightning Web Components | Salesforce Trailhead | https://trailhead.salesforce.com/content/learn/trails/build-lightning-web-components | Course
+SAP ABAP | SAP Learning | SAP | https://learning.sap.com/ | Course
+SAP FICO | SAP Learning: finance | SAP | https://learning.sap.com/ | Course
+SAP MM | SAP Learning: sourcing and procurement | SAP | https://learning.sap.com/ | Course
+SAP S/4HANA | SAP Learning: SAP S/4HANA | SAP | https://learning.sap.com/ | Course
+SAP Fiori | SAPUI5 Demo Kit | SAP | https://sapui5.hana.ondemand.com/ | Course
+Workday HCM | Workday training | Workday | https://www.workday.com/ | Course
+ServiceNow | ServiceNow University | ServiceNow | https://learning.servicenow.com/ | Course
+Microsoft Dynamics 365 | Dynamics 365 documentation | Microsoft Learn | https://learn.microsoft.com/en-us/dynamics365/ | Course
+Power Platform | Power Platform documentation | Microsoft Learn | https://learn.microsoft.com/en-us/power-platform/ | Course
+Oracle ERP Cloud | Oracle Fusion Cloud documentation | Oracle | https://docs.oracle.com/en/cloud/saas/index.html | Course
+MuleSoft | MuleSoft documentation | MuleSoft | https://docs.mulesoft.com/ | Course
+API Management | Azure API Management documentation | Microsoft Learn | https://learn.microsoft.com/en-us/azure/api-management/ | Course
+SharePoint | SharePoint documentation | Microsoft Learn | https://learn.microsoft.com/en-us/sharepoint/ | Course
+Pega | Pega Academy | Pegasystems | https://academy.pega.com/ | Course
+Robotic Process Automation | UiPath Academy | UiPath | https://academy.uipath.com/ | Course
+Guidewire | Guidewire Education | Guidewire | https://www.guidewire.com/ | Course
+COBOL & Mainframe | COBOL Programming Course | Open Mainframe Project | https://github.com/openmainframeproject/cobol-programming-course | Course
+SaaS Architecture | Multitenant solutions on Azure | Microsoft Learn | https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/overview | Course
+Adobe Experience Manager | Adobe Experience Manager guides | Adobe Experience League | https://experienceleague.adobe.com/en/docs/experience-manager | Course
+E-Commerce Platforms | Shopify developer documentation | Shopify | https://shopify.dev/docs | Course
+CMS Development | WordPress Developer Resources | WordPress.org | https://developer.wordpress.org/ | Course
+Cypress | Cypress documentation | Cypress | https://docs.cypress.io/ | Course
+Playwright | Playwright documentation | Microsoft | https://playwright.dev/docs/intro | Course
+Appium | Appium documentation | OpenJS Foundation | https://appium.io/docs/en/latest/ | Course
+Performance Testing | Apache JMeter User's Manual | Apache Software Foundation | https://jmeter.apache.org/usermanual/index.html | Course
+Manual Testing | ISTQB Foundation Level | ISTQB | https://www.istqb.org/certifications/certified-tester-foundation-level-ctfl-v4-0/ | Certification
+Cucumber & BDD | Cucumber documentation | Cucumber | https://cucumber.io/docs/ | Course
+Test Management | ISTQB Test Management | ISTQB | https://www.istqb.org/ | Certification
+Product Management | Product management guides | Atlassian | https://www.atlassian.com/agile/product-management | Course
+Project Management | Project Management Institute learning | PMI | https://www.pmi.org/learning | Course
+Scrum | The Scrum Guide | Scrum Guides | https://scrumguides.org/scrum-guide.html | Course
+Scaled Agile | Scaled Agile Framework | Scaled Agile | https://framework.scaledagile.com/ | Course
+UX Design | UX articles and videos | Nielsen Norman Group | https://www.nngroup.com/articles/ | Course
+UI Design | Figma learning | Figma | https://help.figma.com/hc/en-us | Course
+Business Analysis | Business analysis resources | IIBA | https://www.iiba.org/ | Course
+ITIL | ITIL certification | PeopleCert | https://www.peoplecert.org/ | Certification
+Technical Support | Technical Support Fundamentals | Google on Coursera | https://www.coursera.org/learn/technical-support-fundamentals | Course
+Network Administration | Cisco Networking Academy | Cisco | https://www.netacad.com/ | Course
+Solution Architecture | Azure Architecture Center | Microsoft Learn | https://learn.microsoft.com/en-us/azure/architecture/ | Course
+Technical Pre-Sales | Solution architecture for pre-sales: architecture styles | Microsoft Learn | https://learn.microsoft.com/en-us/azure/architecture/guide/ | Course
+Change Management | Change management articles | Prosci | https://www.prosci.com/resources | Course
+Technical Writing | Technical Writing Courses | Google | https://developers.google.com/tech-writing | Course
+Customer Success | Customer success guides | HubSpot | https://academy.hubspot.com/ | Course
+Program Management | Program management resources | PMI | https://www.pmi.org/learning | Course
+Blockchain Development | Ethereum developer documentation | ethereum.org | https://ethereum.org/en/developers/docs/ | Course
+IoT Development | AWS IoT documentation | AWS | https://docs.aws.amazon.com/iot/ | Course
+Embedded C | FreeRTOS documentation | FreeRTOS | https://www.freertos.org/ | Course
+Unity Development | Unity Learn | Unity | https://learn.unity.com/ | Course
+HL7 FHIR | FHIR specification | HL7 International | https://hl7.org/fhir/ | Course
+Core Banking | ISO 20022 | ISO 20022 Registration Authority | https://www.iso20022.org/ | Course
+Telecom OSS & BSS | Open Digital Architecture | TM Forum | https://www.tmforum.org/oda/ | Course
+AUTOSAR | AUTOSAR standards | AUTOSAR | https://www.autosar.org/standards | Course

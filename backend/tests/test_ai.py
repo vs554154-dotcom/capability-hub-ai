@@ -228,6 +228,15 @@ def test_the_total_time_is_bounded_however_many_models_there_are(backups, monkey
     assert time.monotonic() - started < 5.0
 
 
+def test_a_caller_can_wait_less_than_the_general_limit(gemini, monkeypatch):
+    gemini.connect(timeout_seconds=30.0)
+    gemini.delay_seconds = 6
+    monkeypatch.setattr(ai, "GEMINI_TIMEOUT_SECONDS", 30.0)
+    started = time.monotonic()
+    assert ai.generate("hello", within=1.5) is None
+    assert time.monotonic() - started < 4
+
+
 @pytest.mark.parametrize("raw", ["0", "-5", "soon"])
 def test_an_invalid_timeout_setting_is_refused(monkeypatch, raw):
     monkeypatch.setenv("GEMINI_TIMEOUT_SECONDS", raw)

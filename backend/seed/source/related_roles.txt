@@ -1,0 +1,77 @@
+# Roles whose work people often share, so an opening also ranks people from next door.
+# role: related role, related role, ...
+.NET Full Stack Developer: Angular Front End Developer, Java Microservices Engineer, Azure Cloud Engineer
+MERN Stack Developer: React Front End Developer, SaaS Product Engineer, React Native Developer
+Python Backend Developer: GenAI Engineer, Data Scientist, Go Backend Engineer
+Java Microservices Engineer: Go Backend Engineer, Integration Engineer, SDET
+Go Backend Engineer: Site Reliability Engineer, Platform Engineer, Python Backend Developer
+Angular Front End Developer: React Front End Developer, .NET Full Stack Developer, UX/UI Designer
+React Front End Developer: MERN Stack Developer, Angular Front End Developer, React Native Developer
+PHP Laravel Developer: MERN Stack Developer, AEM Developer, Ruby on Rails Engineer
+Ruby on Rails Engineer: SaaS Product Engineer, PHP Laravel Developer, Python Backend Developer
+C++ Systems Engineer: Embedded Software Engineer, Unity Developer, Linux & VMware Administrator
+Android Engineer: Flutter Developer, React Native Developer, Mobile Test Engineer
+iOS Engineer: Flutter Developer, React Native Developer, Android Engineer
+Flutter Developer: Android Engineer, iOS Engineer, React Native Developer
+React Native Developer: React Front End Developer, Android Engineer, Flutter Developer
+Embedded Software Engineer: IoT Solutions Engineer, C++ Systems Engineer
+IoT Solutions Engineer: Embedded Software Engineer, AWS Cloud Engineer, Big Data Engineer
+Blockchain Developer: MERN Stack Developer, SaaS Product Engineer, Penetration Tester
+Unity Developer: C++ Systems Engineer, .NET Full Stack Developer, Android Engineer
+AWS Cloud Engineer: Azure Cloud Engineer, Google Cloud Engineer, DevOps Engineer
+Azure Cloud Engineer: AWS Cloud Engineer, DevOps Engineer, IAM Engineer
+Google Cloud Engineer: AWS Cloud Engineer, Platform Engineer, Snowflake Data Engineer
+DevOps Engineer: Platform Engineer, Site Reliability Engineer, DevSecOps Engineer
+Site Reliability Engineer: DevOps Engineer, Platform Engineer, Linux & VMware Administrator
+Platform Engineer: DevOps Engineer, Site Reliability Engineer, Google Cloud Engineer
+Cloud Architect: Solution Architect, AWS Cloud Engineer, Azure Cloud Engineer
+Linux & VMware Administrator: Network Engineer, IT Support Engineer, DevOps Engineer
+SOC Analyst: Penetration Tester, Network Engineer, Cloud Security Engineer
+Penetration Tester: SOC Analyst, DevSecOps Engineer, Network Engineer
+Cloud Security Engineer: IAM Engineer, AWS Cloud Engineer, SOC Analyst
+IAM Engineer: Cloud Security Engineer, Azure Cloud Engineer, GRC Consultant
+GRC Consultant: Data Governance Analyst, IAM Engineer, Project Manager
+DevSecOps Engineer: DevOps Engineer, Cloud Security Engineer, Penetration Tester
+Snowflake Data Engineer: ETL Developer, Big Data Engineer, BI Developer
+Big Data Engineer: Snowflake Data Engineer, MLOps Engineer, ETL Developer
+BI Developer: Data Analyst, Snowflake Data Engineer, Power Platform Developer
+Data Analyst: BI Developer, Data Scientist, Product Manager
+ETL Developer: Database Administrator, Snowflake Data Engineer, Big Data Engineer
+Database Administrator: ETL Developer, Linux & VMware Administrator, BI Developer
+Data Governance Analyst: GRC Consultant, BI Developer, Data Analyst
+Data Scientist: MLOps Engineer, Computer Vision Engineer, Data Analyst
+GenAI Engineer: AI Agent Engineer, Python Backend Developer, MLOps Engineer
+Computer Vision Engineer: Data Scientist, MLOps Engineer, GenAI Engineer
+MLOps Engineer: DevOps Engineer, GenAI Engineer, Data Scientist
+AI Agent Engineer: GenAI Engineer, Python Backend Developer, Data Scientist
+Salesforce Developer: CRM Functional Consultant, Integration Engineer, ServiceNow Developer
+CRM Functional Consultant: Salesforce Developer, Customer Success Manager, Workday Consultant
+Power Platform Developer: RPA Developer, BI Developer, .NET Full Stack Developer
+Integration Engineer: Java Microservices Engineer, Healthcare Integration Engineer, Salesforce Developer
+SaaS Product Engineer: MERN Stack Developer, React Front End Developer, Ruby on Rails Engineer
+AEM Developer: React Front End Developer, PHP Laravel Developer, Java Microservices Engineer
+SAP ABAP Consultant: SAP FICO Consultant, Oracle ERP Consultant, Integration Engineer
+SAP FICO Consultant: SAP ABAP Consultant, Oracle ERP Consultant, Project Manager
+ServiceNow Developer: IT Support Engineer, Power Platform Developer, Pega Developer
+Oracle ERP Consultant: SAP FICO Consultant, Database Administrator, Workday Consultant
+Workday Consultant: Oracle ERP Consultant, CRM Functional Consultant, ServiceNow Developer
+Pega Developer: RPA Developer, Guidewire Developer, ServiceNow Developer
+RPA Developer: Power Platform Developer, Pega Developer, QA Analyst
+Mainframe Developer: Guidewire Developer, Pega Developer, ETL Developer
+Guidewire Developer: Java Microservices Engineer, Pega Developer, Mainframe Developer
+SDET: Performance Test Engineer, Mobile Test Engineer, QA Analyst
+Performance Test Engineer: SDET, Site Reliability Engineer, QA Analyst
+QA Analyst: SDET, Mobile Test Engineer, Scrum Master
+Mobile Test Engineer: SDET, Android Engineer, QA Analyst
+Product Manager: Scrum Master, Project Manager, UX/UI Designer
+Project Manager: Scrum Master, Product Manager, Workday Consultant
+Scrum Master: Project Manager, Product Manager, QA Analyst
+Solution Architect: Cloud Architect, Integration Engineer, Pre-Sales Consultant
+Pre-Sales Consultant: Solution Architect, Product Manager, Customer Success Manager
+UX/UI Designer: Angular Front End Developer, React Front End Developer, Product Manager
+Technical Writer: UX/UI Designer, QA Analyst, Customer Success Manager
+IT Support Engineer: Network Engineer, Linux & VMware Administrator, ServiceNow Developer
+Network Engineer: Linux & VMware Administrator, SOC Analyst, IT Support Engineer
+Customer Success Manager: CRM Functional Consultant, Product Manager, Pre-Sales Consultant
+Telecom OSS/BSS Engineer: Integration Engineer, Java Microservices Engineer, Database Administrator
+Healthcare Integration Engineer: Integration Engineer, GRC Consultant, Data Governance Analyst

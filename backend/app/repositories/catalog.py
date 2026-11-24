@@ -15,17 +15,17 @@ def get_skills() -> list[dict[str, Any]]:
 def get_target_roles() -> list[dict[str, Any]]:
     """Roles with their required skills joined in."""
     roles = query_all("SELECT * FROM target_roles")
-    role_skills = query_all("SELECT * FROM target_role_skills")
+    required: dict[str, list[dict[str, Any]]] = {}
+    for rs in query_all("SELECT * FROM target_role_skills"):
+        required.setdefault(rs["roleId"], []).append(
+            {"skillId": rs["skillId"], "minLevel": rs["minLevel"]}
+        )
     return [
         {
             "id": r["id"],
             "title": r["title"],
             "description": r["description"],
-            "requiredSkills": [
-                {"skillId": rs["skillId"], "minLevel": rs["minLevel"]}
-                for rs in role_skills
-                if rs["roleId"] == r["id"]
-            ],
+            "requiredSkills": required.get(r["id"], []),
         }
         for r in roles
     ]

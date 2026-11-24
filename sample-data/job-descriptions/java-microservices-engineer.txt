@@ -1,0 +1,34 @@
+Job title: Java Microservices Engineer
+Project: Real-Time Payments Hub
+Client: Meridian Payments
+Business unit: Banking & Financial Services
+Domain: Banking
+Location: Hybrid / Bengaluru
+Experience: 5-9 years
+Openings: 3
+
+About the role
+Builds event-driven Java services that scale. You will work on Real-Time Payments Hub for Meridian Payments.
+
+What you will do
+- Split a monolith into Spring Boot services
+- Publish and consume Kafka events
+- Write unit and contract tests
+- Run services on Kubernetes
+
+Must have
+- Java
+- Spring Boot
+- Microservices
+- Apache Kafka
+- Hibernate
+- JUnit & Mockito
+- Kubernetes
+
+Good to have
+- Docker
+- Event-Driven Architecture
+- Prometheus & Grafana
+
+How we interview
+A technical discussion, then a short practical task.

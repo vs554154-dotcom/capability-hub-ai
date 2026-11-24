@@ -12,6 +12,8 @@ capability-hub.db
 capability-hub.db-journal
 capability-hub.db-wal
 capability-hub.db-shm
+backups
+sample-data
 cookie.txt
 
 # Python: the local virtualenv and bytecode never belong in the image. The image

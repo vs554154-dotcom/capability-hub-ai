@@ -1,0 +1,30 @@
+Job title: Data Analyst
+Domain: Retail
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Answers business questions with data.
+
+What you will do
+- Explore data and find patterns
+- Build dashboards
+- Run experiments
+- Present findings plainly
+
+Must have
+- SQL
+- Tableau
+- Microsoft Excel
+- Statistical Analysis
+- Python
+- Stakeholder Management
+
+Good to have
+- Looker
+- Power BI
+- R Programming
+
+How we interview
+A technical discussion, then a short practical task.

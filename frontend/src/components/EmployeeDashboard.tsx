@@ -174,7 +174,9 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     ? courses.filter(c => c.skillId === activeSkillFilter)
     : courses.filter(c => {
         const breakdownItem = capabilityData?.skillsBreakdown?.find((b: any) => b.skillId === c.skillId);
-        return breakdownItem && !breakdownItem.isTargetMet;
+        // A skill with no target is not a gap: every course in the catalogue used to be
+        // listed here as mapped to the person's gaps.
+        return breakdownItem && breakdownItem.target > 0 && !breakdownItem.isTargetMet;
       });
 
   // Radar chart skills data array mapping (Focus on target role requirements & active skills)
@@ -361,7 +363,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                 className="w-full bg-[#0F1724] text-[#F0F4FF] text-xs font-semibold py-2.5 px-3.5 rounded-md border border-[#2A384C] focus:outline-none focus:ring-1 focus:ring-[#4F8EF7] cursor-pointer"
               >
                 <option value="">-- Select Target Career Role --</option>
-                {roles.map((r) => (
+                {[...roles].sort((a, b) => a.title.localeCompare(b.title)).map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title}
                   </option>
@@ -823,6 +825,11 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           <GraduationCap className="h-5 w-5 text-[#4F8EF7]" />
         </div>
 
+        {filteredCourses.length === 0 && (
+          <p className="text-xs text-[#94A3B8]">
+            {activeSkillFilter ? "The catalogue has no course for this skill yet." : "No course needed: you meet every target you have."}
+          </p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((c) => (
             <div key={c.id} className="p-4 bg-[#0F1724] rounded-lg border border-[#2A384C] hover:border-[#4F8EF7] transition-all flex flex-col justify-between gap-3">
@@ -920,7 +927,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   className="w-full bg-[#0F1724] text-[#F0F4FF] text-xs font-semibold p-2.5 rounded-md border border-[#2A384C] focus:outline-none focus:ring-1 focus:ring-[#4F8EF7]"
                 >
                   <option value="">-- Choose Target Skill --</option>
-                  {skills.map((s) => (
+                  {[...skills].sort((a, b) => a.name.localeCompare(b.name)).map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>

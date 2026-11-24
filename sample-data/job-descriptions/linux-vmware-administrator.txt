@@ -1,0 +1,29 @@
+Job title: Linux & VMware Administrator
+Domain: Energy
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Runs servers and virtual infrastructure.
+
+What you will do
+- Patch and secure servers
+- Run vSphere clusters
+- Automate checks
+- Support on call
+
+Must have
+- Linux Administration
+- VMware vSphere
+- Shell Scripting
+- Ansible
+- Network Administration
+- PowerShell
+
+Good to have
+- OpenShift
+- Observability
+
+How we interview
+A technical discussion, then a short practical task.

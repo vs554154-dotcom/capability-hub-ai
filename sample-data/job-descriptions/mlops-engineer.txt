@@ -1,0 +1,31 @@
+Job title: MLOps Engineer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Takes models to production and keeps them healthy.
+
+What you will do
+- Build training and release pipelines
+- Version data and models
+- Monitor drift
+- Automate rollback
+
+Must have
+- MLOps
+- Python
+- Docker
+- Kubernetes
+- Amazon SageMaker
+- Apache Airflow
+- LLMOps
+
+Good to have
+- Terraform
+- Vertex AI
+- Prometheus & Grafana
+
+How we interview
+A technical discussion, then a short practical task.

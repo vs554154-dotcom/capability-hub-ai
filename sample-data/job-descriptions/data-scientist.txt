@@ -1,0 +1,33 @@
+Job title: Data Scientist
+Project: Store Demand Forecasting
+Client: Cartwell Commerce
+Business unit: Data & Analytics Services
+Domain: Retail
+Location: Remote
+Experience: 3-8 years
+Openings: 2
+
+About the role
+Builds models that support decisions. You will work on Store Demand Forecasting for Cartwell Commerce.
+
+What you will do
+- Frame the question
+- Build and test models
+- Explain results
+- Work with engineers to deploy
+
+Must have
+- Python
+- Machine Learning
+- Statistical Analysis
+- Scikit-learn
+- SQL
+- Time Series Forecasting
+
+Good to have
+- R Programming
+- Deep Learning
+- MLOps
+
+How we interview
+A technical discussion, then a short practical task.

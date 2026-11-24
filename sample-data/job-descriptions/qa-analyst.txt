@@ -1,0 +1,29 @@
+Job title: QA Analyst
+Domain: Healthcare
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Checks that software does what people need.
+
+What you will do
+- Design tests from requirements
+- Explore new features
+- Report defects well
+- Track coverage
+
+Must have
+- Manual Testing
+- Test Management
+- Jira
+- SQL
+- Postman & REST API Testing
+- Agile
+
+Good to have
+- Cypress
+- Business Analysis
+
+How we interview
+A technical discussion, then a short practical task.

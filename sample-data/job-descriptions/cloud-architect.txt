@@ -1,0 +1,34 @@
+Job title: Cloud Architect
+Project: Data Centre Exit Programme
+Client: Orion Steel
+Business unit: Manufacturing & Industrial AI
+Domain: Manufacturing
+Location: Hybrid / Kolkata
+Experience: 10-16 years
+Openings: 1
+
+About the role
+Designs secure, resilient and affordable cloud systems. You will work on Data Centre Exit Programme for Orion Steel.
+
+What you will do
+- Design target architectures
+- Plan migration waves
+- Review cost and security
+- Guide delivery teams
+
+Must have
+- Cloud Architecture
+- AWS
+- Azure
+- Cloud Migration
+- FinOps
+- Cloud Security
+- Solution Architecture
+
+Good to have
+- Kubernetes
+- Terraform
+- Technical Pre-Sales
+
+How we interview
+A technical discussion, then a short practical task.

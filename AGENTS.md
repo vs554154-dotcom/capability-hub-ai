@@ -134,6 +134,7 @@ not lost.
 - **Dev Server**: `scripts\dev-python.cmd` (Uvicorn with reload on `:8000`, serves API + `frontend/dist/`)
 - **Production Start**: `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT` (add `--workers N` for more cores; sessions and rate limits are shared through the database)
 - **Test suite** (no server needed): `backend/.venv/Scripts/python -m pytest backend/tests` — install with `pip install -r backend/requirements-dev.txt`
+- **Demo data**: edit `backend/seed/source/`, build with `python backend/scripts/build_demo_seed.py`, add to a database with `python backend/scripts/load_demo_data.py` (safe to run again). Never edit `demo_seed.json` or `skill_aliases.json` by hand: they are built
 - **Authorization gate** (against a running server): `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — must stay **65/65**
 
 **Frontend** — run from `frontend/` (Node is used only to build it):

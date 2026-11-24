@@ -26,8 +26,16 @@ DB_PATH = Path(
 # Seed rows loaded into any table that is still empty on startup.
 SEED_PATH = Path(__file__).resolve().parent.parent / "seed" / "seed.json"
 
+# A larger made-up company for demos, added to those rows unless SEED_DEMO_DATA is
+# "false" (see seed_data.py).
+DEMO_SEED_PATH = SEED_PATH.with_name("demo_seed.json")
+SEED_DEMO_DATA = os.getenv("SEED_DEMO_DATA", "true").lower() != "false"
+
 # Multiple-choice questions per skill, for assessments and knowledge checks.
 QUESTION_BANK_PATH = SEED_PATH.with_name("question_bank.json")
+
+# Other names a job description may use for a catalogue skill ("K8s" for Kubernetes).
+SKILL_ALIASES_PATH = SEED_PATH.with_name("skill_aliases.json")
 
 # Signs the session cookie. Unset, an insecure development fallback is used and
 # startup logs a warning.

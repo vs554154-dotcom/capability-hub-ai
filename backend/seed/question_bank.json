@@ -193,5 +193,835 @@
     ["What does the R in GROW stand for?", ["Reality", "Results", "Review", "Reward"], "GROW stands for Goal, Reality, Options and Will."],
     ["Which question is a coaching question?", ["What have you tried so far?", "Why did you not follow my plan?", "Can you finish this by Friday?", "Did you read the document I sent?"], "Open questions help the person think. The others check or instruct."],
     ["What is agreed in the Will stage?", ["What the person will do and by when", "How their last review was scored", "Which tools the team will buy", "Who will replace them on leave"], "The Will stage turns options into a commitment with a date."]
+  ],
+  "JavaScript": [
+    ["What does === compare?", ["Value and type", "Value only", "Type only", "Memory size"], "Strict equality does not convert types before comparing."],
+    ["What does an async function return?", ["A Promise", "A callback", "A thread", "A generator"], "Awaiting code receives the value the promise resolves to."],
+    ["Which keyword makes a block-scoped variable that can be reassigned?", ["let", "var", "const", "static"], "var is function-scoped and const cannot be reassigned."]
+  ],
+  "C#": [
+    ["Which keyword releases a disposable object when a block ends?", ["using", "lock", "yield", "fixed"], "using calls Dispose even if an exception is thrown."],
+    ["What does LINQ's Where method do?", ["Filters a sequence", "Sorts a sequence", "Groups a sequence", "Joins two sequences"], "Where keeps the items that match a condition."],
+    ["What does await do to the calling thread?", ["Frees it until the task ends", "Blocks it until the task ends", "Starts a new process", "Raises its priority"], "The rest of the method continues when the task completes."]
+  ],
+  "ASP.NET Core": [
+    ["Where are services registered for dependency injection?", ["In the service collection", "In the routing table", "In appsettings.json", "In the middleware pipeline"], "builder.Services holds the registrations."],
+    ["What runs in order on each HTTP request?", ["Middleware", "Migrations", "Tag helpers", "Data annotations"], "Each middleware can act before and after the next one."],
+    ["Which lifetime creates one instance per request?", ["Scoped", "Singleton", "Transient", "Static"], "Scoped services are shared within a single request."]
+  ],
+  "Entity Framework": [
+    ["What tracks changes to loaded entities?", ["The DbContext", "The DbSet name", "The connection string", "The migration file"], "SaveChanges writes what the context has tracked."],
+    ["Which call avoids tracking for read-only queries?", ["AsNoTracking", "Include", "Attach", "FromSqlRaw"], "Untracked queries use less memory."],
+    ["What does Include do?", ["Loads related data", "Adds an index", "Opens a transaction", "Skips filters"], "It loads navigation properties in the same query."]
+  ],
+  "Node.js": [
+    ["What handles many connections on one Node.js thread?", ["The event loop", "A thread per request", "A process per user", "The garbage collector"], "Non-blocking I/O returns to the event loop."],
+    ["Which file lists a project's dependencies?", ["package.json", "index.html", "node.config", "server.xml"], "npm reads package.json."],
+    ["What blocks the event loop?", ["A long CPU calculation", "An awaited database call", "A timer", "A network read"], "Synchronous work stops other requests."]
+  ],
+  "Express.js": [
+    ["What does next() do in middleware?", ["Passes control onward", "Ends the response", "Restarts the server", "Retries the request"], "Without it or a response, the request hangs."],
+    ["How many arguments does error-handling middleware take?", ["Four", "One", "Two", "Three"], "err, req, res and next."],
+    ["Which object holds URL parameters such as /users/:id?", ["req.params", "req.body", "res.locals", "app.settings"], "Query strings are in req.query."]
+  ],
+  "Go (Golang)": [
+    ["What starts a function concurrently?", ["The go keyword", "The async keyword", "A thread class", "A promise"], "It starts a goroutine."],
+    ["How do goroutines usually exchange data?", ["Channels", "Global files", "Callbacks", "Cookies"], "Channels pass values safely between goroutines."],
+    ["How are errors normally reported in Go?", ["As return values", "By throwing exceptions", "By global codes", "By panics only"], "Callers check the returned error."]
+  ],
+  "Rust": [
+    ["What does ownership prevent?", ["Use after free", "Slow compiles", "Long names", "Integer division"], "Each value has one owner, checked at compile time."],
+    ["What does the ? operator do?", ["Returns the error early", "Ignores the error", "Retries the call", "Unwraps or stops the program"], "It passes an Err up to the caller."],
+    ["How many mutable references to a value may exist at once?", ["One", "Two", "Any number", "None"], "This rule prevents data races."]
+  ],
+  "PHP": [
+    ["What does Composer manage?", ["Dependencies", "Sessions", "Templates", "Web servers"], "It installs the packages listed in composer.json."],
+    ["Which prevents SQL injection in PDO?", ["Prepared statements", "Output buffering", "Longer passwords", "Closing tags"], "Values are sent apart from the SQL text."],
+    ["Where is data sent by a POST form found?", ["$_POST", "$_GET", "$_SERVER", "$_ENV"], "It holds the submitted fields."]
+  ],
+  "Laravel": [
+    ["What is Eloquent?", ["The ORM", "The template engine", "The test runner", "The router"], "Eloquent models map to database tables."],
+    ["What do migrations describe?", ["Schema changes", "User sessions", "Page layouts", "Queue workers"], "They version the database structure."],
+    ["Which file type holds Blade templates?", [".blade.php", ".twig", ".phtml", ".ejs"], "Blade compiles to plain PHP."]
+  ],
+  "Ruby on Rails": [
+    ["What does Active Record provide?", ["Object-relational mapping", "Background jobs", "Asset bundling", "Rendering of templates as HTML pages"], "Models map to tables."],
+    ["Which principle asks you to follow defaults?", ["Convention over configuration", "Configuration over code", "Late binding", "Explicit is better than implicit"], "Names and places follow known conventions."],
+    ["Where do routes live?", ["config/routes.rb", "app/models", "db/schema.rb", "public/"], "The file maps URLs to controller actions."]
+  ],
+  "Scala": [
+    ["What does a case class give you?", ["Equality by value", "A new thread", "A database table", "Mutable fields only"], "It also gives pattern matching support."],
+    ["What does Option represent?", ["A value that may be absent", "A list of choices", "A command flag", "A function with several results"], "It is Some or None instead of null."],
+    ["Which keyword defines an immutable value?", ["val", "var", "def", "lazy"], "var can be reassigned."]
+  ],
+  "Kotlin": [
+    ["What does a ? after a type mean?", ["It may be null", "It is generic", "It is private", "It is a lambda"], "Nullable types must be checked before use."],
+    ["What does suspend mark?", ["A function that can pause", "A private field", "A static class", "A class that cannot be inherited"], "Suspend functions run in coroutines."],
+    ["Which class type is made to hold data?", ["data class", "sealed class", "inner class", "open class"], "It generates equals, copy and toString."]
+  ],
+  "C++": [
+    ["What does RAII tie to an object's lifetime?", ["A resource", "A thread name", "A header file", "A compiler flag"], "The destructor releases the resource."],
+    ["Which smart pointer has one owner?", ["unique_ptr", "shared_ptr", "weak_ptr", "auto_ptr"], "It cannot be copied, only moved."],
+    ["What does const on a member function promise?", ["It does not change the object", "It runs at compile time", "It is private", "It can be called only one time"], "The compiler checks the promise."]
+  ],
+  "Django": [
+    ["What does Django's ORM turn into SQL?", ["QuerySets", "Templates", "Middleware", "Forms"], "A QuerySet runs when it is evaluated."],
+    ["What protects forms from cross-site request forgery?", ["The CSRF token", "A longer URL", "A static file", "The admin page"], "The token proves the form came from the site."],
+    ["Which command applies schema changes?", ["migrate", "runserver", "collectstatic", "shell"], "makemigrations writes them and migrate applies them."]
+  ],
+  "FastAPI": [
+    ["What validates request bodies?", ["Pydantic models", "Jinja templates", "Cookies", "Celery tasks"], "Types declared in the model are checked."],
+    ["Where are the interactive docs served by default?", ["/docs", "/admin", "/home", "/static"], "FastAPI generates them from OpenAPI."],
+    ["What does Depends declare?", ["A dependency", "A database table", "A background thread", "A test case"], "FastAPI resolves it for each request."]
+  ],
+  "GraphQL": [
+    ["Who decides which fields a response contains?", ["The client", "The database", "The cache", "The proxy"], "The query names the fields."],
+    ["What changes data in GraphQL?", ["A mutation", "A fragment", "A subscription", "A directive"], "Queries only read."],
+    ["What problem can nested resolvers cause?", ["N+1 queries", "Type errors", "Cookie loss", "Duplicate IDs"], "Batching with a data loader avoids it."]
+  ],
+  "Apache Kafka": [
+    ["What keeps order in Kafka?", ["A partition", "A topic", "A broker", "A cluster"], "Messages are ordered inside one partition."],
+    ["What lets consumers share the work of a topic?", ["A consumer group", "A replica set", "A schema", "A producer key"], "Each partition goes to one consumer in the group."],
+    ["What records how far a consumer has read?", ["The offset", "The header", "The broker id", "The leader epoch"], "Committed offsets let it continue later."]
+  ],
+  "RabbitMQ": [
+    ["What routes messages to queues?", ["An exchange", "A cursor", "A consumer tag", "A vhost"], "Bindings connect exchanges to queues."],
+    ["What tells RabbitMQ that a message was handled?", ["An acknowledgement", "A heartbeat", "A binding", "A binding of the queue"], "Unacknowledged messages are delivered again."],
+    ["Where do rejected messages often go?", ["A dead-letter exchange", "The default log", "The producer", "A new virtual host"], "They can be inspected there later."]
+  ],
+  "Hibernate": [
+    ["What is lazy loading?", ["Loading data on first use", "Loading all data at start", "Loading in a thread", "Loading from disk only"], "Related data is fetched when it is accessed."],
+    ["Which annotation marks a persistent class?", ["@Entity", "@Bean", "@Service", "@Test"], "It maps the class to a table."],
+    ["What is the first-level cache tied to?", ["The session", "The whole server", "The browser", "The JDBC driver"], "Each session caches its own entities."]
+  ],
+  "Event-Driven Architecture": [
+    ["What does a producer know about its consumers?", ["Nothing", "Their addresses", "Their database", "Their language"], "That is what keeps them loosely coupled."],
+    ["Why should handlers be idempotent?", ["Events may arrive twice", "Events are encrypted", "Events are small", "Events never repeat"], "Handling twice must be harmless."],
+    ["What does event sourcing store?", ["Every change as an event", "Only the latest state", "Only errors", "Only user logins"], "State is rebuilt from the events."]
+  ],
+  "JUnit & Mockito": [
+    ["Which annotation runs before each test in JUnit 5?", ["@BeforeEach", "@BeforeAll", "@Test", "@Disabled"], "It prepares a fresh state."],
+    ["What does a mock replace?", ["A dependency", "The class under test", "The compiler", "The test report"], "Its behaviour is defined in the test."],
+    ["What does verify check?", ["That a call was made", "That a file exists", "That code compiles", "That memory is free"], "It can also check how many times."]
+  ],
+  "Angular": [
+    ["What connects a component class to its template?", ["Data binding", "A cookie", "A web worker", "A build flag"], "Values and events flow through bindings."],
+    ["What are Angular services mainly for?", ["Shared logic and data", "Page styling", "Routing only", "Templates and page styles"], "They are provided by dependency injection."],
+    ["Which library does Angular use for streams of values?", ["RxJS", "Redux", "Lodash", "jQuery"], "HTTP calls return observables."]
+  ],
+  "Vue.js": [
+    ["What does ref() create?", ["A reactive value", "A DOM event", "A route", "A component instance"], "Reading it in a template tracks changes."],
+    ["Which directive repeats an element?", ["v-for", "v-if", "v-bind", "v-on"], "It renders one element per item."],
+    ["What does a computed property do?", ["Caches a derived value", "Sends a request", "Mounts a component", "Validates a form"], "It recalculates when its sources change."]
+  ],
+  "HTML & CSS": [
+    ["Which element holds the main content of a page?", ["main", "div", "span", "b"], "Semantic elements help assistive technology."],
+    ["Which layout suits a grid of rows and columns?", ["CSS Grid", "Float", "Inline", "Table cells"], "Flexbox suits one direction."],
+    ["What do media queries adapt to?", ["The screen", "The server", "The database", "The language"], "They apply styles by width and other features."]
+  ],
+  "Tailwind CSS": [
+    ["How is styling mostly written in Tailwind?", ["Utility classes", "Inline scripts", "One global file", "Images"], "Classes such as p-4 are combined in markup."],
+    ["What does the md: prefix do?", ["Applies from a width up", "Makes text medium", "Adds margin down", "Applies only on tablets"], "It is a responsive variant."],
+    ["What keeps the final CSS small?", ["Only used classes are built", "Images are compressed", "Comments are kept", "Class names are made shorter"], "Unused classes are not generated."]
+  ],
+  "Redux": [
+    ["What describes a change in Redux?", ["An action", "A selector", "A component", "A hook"], "Reducers react to actions."],
+    ["What must a reducer be?", ["A pure function", "A class", "An async call", "A singleton"], "Same input, same output, no side effects."],
+    ["Where is the application state kept?", ["In the store", "In the URL", "In cookies", "In each button"], "There is one store."]
+  ],
+  "Web Accessibility": [
+    ["What gives an image meaning for a screen reader?", ["Alt text", "A border", "A file name", "A large size"], "It describes the image's purpose."],
+    ["How must every control be usable?", ["By keyboard", "By mouse only", "By voice only", "By touch only"], "Some people cannot use a pointer."],
+    ["What does the contrast ratio compare?", ["Text and background", "Two fonts", "Page widths", "Headings and body text"], "Low contrast is hard to read."]
+  ],
+  "Android Development": [
+    ["What describes an app's components and permissions?", ["AndroidManifest.xml", "build.gradle", "strings.xml", "settings.gradle.kts"], "The system reads the manifest."],
+    ["Which class survives a screen rotation?", ["ViewModel", "Activity", "Fragment view", "Toast"], "It keeps UI data across configuration changes."],
+    ["Where must long work not run?", ["On the main thread", "In a worker", "In a coroutine", "In a service thread"], "It would freeze the interface."]
+  ],
+  "iOS Development": [
+    ["What does ARC manage?", ["Memory", "Networking", "Screen layout", "App signing"], "It counts references to objects."],
+    ["What does weak prevent in closures?", ["Retain cycles", "Type errors", "Slow scrolling", "Crashes on launch"], "A weak reference does not keep the object alive."],
+    ["Which framework builds interfaces declaratively?", ["SwiftUI", "Core Data", "Combine", "XCTest"], "Views describe the result, not the steps."]
+  ],
+  "Flutter": [
+    ["What is everything on screen made of?", ["Widgets", "Pages", "Activities", "Views only"], "Widgets nest to build the interface."],
+    ["What does hot reload keep?", ["The app's state", "The old code", "The network cache", "The device log"], "Changes appear without restarting."],
+    ["Which call rebuilds a stateful widget?", ["setState", "initState", "dispose", "runApp"], "It marks the state as changed."]
+  ],
+  "React Native": [
+    ["What does React Native render?", ["Native components", "A web page", "Images only", "A hidden browser page"], "JSX maps to platform views."],
+    ["Which component suits long lists?", ["FlatList", "ScrollView", "Text", "Modal"], "It renders only the visible rows."],
+    ["Which file extension targets iOS only?", [".ios.js", ".web.js", ".android.js", ".native.css"], "The bundler picks the file by platform."]
+  ],
+  "Snowflake": [
+    ["What is separated from storage in Snowflake?", ["Compute", "Security", "Metadata", "Billing"], "Warehouses scale without moving data."],
+    ["What does Time Travel allow?", ["Querying past data", "Faster loads", "Free storage", "Scheduling queries"], "Earlier versions are kept for a period."],
+    ["What does a virtual warehouse do when suspended?", ["Uses no credits", "Deletes its tables", "Locks the account", "Keeps billing"], "It resumes when a query arrives."]
+  ],
+  "Power BI": [
+    ["What language defines measures?", ["DAX", "M", "Python", "XML"], "Power Query uses M for shaping data."],
+    ["Which model shape is recommended?", ["Star schema", "One flat table", "Circular joins", "Random links"], "Facts are surrounded by dimensions."],
+    ["What does row-level security restrict?", ["Which rows a user sees", "File size", "Refresh time", "Which reports are refreshed"], "Roles filter the data."]
+  ],
+  "Tableau": [
+    ["What is a dimension usually used for?", ["Grouping data", "Summing data", "Storing files", "Sending e-mail"], "Measures are aggregated by dimensions."],
+    ["What does an extract give?", ["A local data snapshot", "A live view only", "A new dashboard", "A copy of the workbook"], "It can speed up slow sources."],
+    ["What lets one sheet filter another on a dashboard?", ["A filter action", "A tooltip", "A caption", "A calculated field"], "Selecting marks passes the filter on."]
+  ],
+  "Apache Airflow": [
+    ["What is a DAG?", ["A graph of tasks", "A database", "A server log", "A user role"], "Tasks run in order of their dependencies."],
+    ["What does the scheduler do?", ["Starts tasks that are due", "Stores the results", "Draws charts", "Writes the code of each task"], "It checks dependencies and timing."],
+    ["Why should tasks be idempotent?", ["So a rerun is safe", "So they run faster", "So they need no logs", "So they skip checks"], "Retries should not duplicate data."]
+  ],
+  "dbt": [
+    ["What does a dbt model contain?", ["A select statement", "A Python class", "A dashboard", "A user list"], "dbt builds a table or view from it."],
+    ["What does ref() do?", ["Links one model to another", "Reads a CSV", "Creates a user", "Loads a raw file into the warehouse"], "It also sets the build order."],
+    ["What checks that a column has no nulls?", ["A test", "A seed", "A macro", "A snapshot"], "not_null is a built-in test."]
+  ],
+  "Amazon Redshift": [
+    ["How does Redshift store table data?", ["By column", "By row", "As JSON only", "In memory only"], "Columnar storage speeds up analytics."],
+    ["What does a distribution key affect?", ["Where rows are placed", "Who can sign in", "Backup time", "How rows are compressed"], "Good keys avoid moving data for joins."],
+    ["What loads large files from S3 fastest?", ["COPY", "INSERT per row", "UPDATE", "SELECT"], "COPY loads in parallel."]
+  ],
+  "Google BigQuery": [
+    ["What is on-demand pricing based on?", ["Data scanned", "Number of users", "Number of tables", "Query length"], "Selecting fewer columns costs less."],
+    ["What does partitioning a table reduce?", ["Data read", "Column count", "User rights", "Row size"], "Queries read only matching partitions."],
+    ["Who manages BigQuery's servers?", ["Google", "The analyst", "The DBA", "The network team"], "It is serverless."]
+  ],
+  "Hadoop": [
+    ["What stores files in Hadoop?", ["HDFS", "YARN", "Hive", "Oozie"], "Files are split into blocks across nodes."],
+    ["What does YARN manage?", ["Cluster resources", "Table schemas", "User passwords", "Web pages"], "It assigns containers to applications."],
+    ["Why are blocks replicated?", ["To survive a failed node", "To save space", "To sort data", "To make every file easier to compress"], "Copies are kept on other nodes."]
+  ],
+  "ETL Development": [
+    ["What does the T in ETL stand for?", ["Transform", "Transfer", "Test", "Trace"], "Data is shaped for its new use."],
+    ["What does an incremental load read?", ["Only changed data", "All data again", "Only errors", "Only headers"], "It uses a watermark or change flag."],
+    ["What is a staging area for?", ["Holding raw data before use", "Final reports", "User logins", "Showing finished reports to the business"], "It separates extraction from loading."]
+  ],
+  "Informatica": [
+    ["What defines how data moves in PowerCenter?", ["A mapping", "A ticket", "A dashboard", "A folder name"], "Mappings join sources, transformations and targets."],
+    ["What does a Lookup transformation do?", ["Finds related values", "Deletes rows", "Sends mail", "Joins two whole files"], "It reads a reference source."],
+    ["What runs mappings in order?", ["A workflow", "A parameter", "A repository", "A port"], "Workflows contain sessions and tasks."]
+  ],
+  "Data Modeling": [
+    ["What does a fact table hold?", ["Measurements", "Descriptions", "Users", "Settings"], "Dimensions describe the measurements."],
+    ["What does normalisation reduce?", ["Repeated data", "Query speed", "Security", "Table names"], "Each fact is stored once."],
+    ["What does a foreign key point to?", ["A row in another table", "A file", "A user", "A column in the same table"], "It keeps references valid."]
+  ],
+  "Data Governance": [
+    ["What does data lineage show?", ["Where data came from", "Who likes it", "Its price", "Who may read the data"], "It traces steps from source to report."],
+    ["Who is accountable for a data set's quality?", ["The data owner", "The newest analyst", "The vendor", "The help desk"], "Ownership makes someone responsible."],
+    ["What does a data catalogue list?", ["Data sets and their meaning", "Server temperatures", "Salaries", "Servers and the people who run them"], "People can find and trust data."]
+  ],
+  "Microsoft Excel": [
+    ["What does a PivotTable do?", ["Summarises data", "Sends mail", "Draws maps only", "Locks cells"], "Fields are grouped and totalled."],
+    ["Which function finds a value in another column?", ["XLOOKUP", "CONCAT", "ROUND", "TODAY"], "It searches one range and returns from another."],
+    ["What does $A$1 keep fixed when copied?", ["Row and column", "Row only", "Column only", "Nothing"], "Dollar signs make a reference absolute."]
+  ],
+  "Statistical Analysis": [
+    ["What does a small p-value suggest?", ["The result is unlikely by chance", "The sample is small", "The data is wrong", "The result will be the same next time"], "It does not measure the size of an effect."],
+    ["Which measure is least affected by outliers?", ["Median", "Mean", "Range", "Variance"], "It depends on the order, not on extremes."],
+    ["What does correlation not prove?", ["Causation", "Association", "Direction", "Strength"], "Two things may share another cause."]
+  ],
+  "R Programming": [
+    ["Which structure holds rows and columns of mixed types?", ["Data frame", "Matrix", "Vector", "Factor"], "Each column has its own type."],
+    ["What does the pipe operator pass on?", ["The result on its left", "A file path", "A package", "The name of the data set that is loaded"], "It feeds the next function."],
+    ["Which package draws layered charts?", ["ggplot2", "dplyr", "readr", "stringr"], "Charts are built in layers."]
+  ],
+  "Microsoft Fabric": [
+    ["What is OneLake?", ["One data lake for a tenant", "A chart type", "A pricing plan", "A separate data store for each workload"], "All workloads share it."],
+    ["Which file format do Fabric tables use?", ["Delta Parquet", "CSV", "XML", "Compressed JSON"], "It is an open columnar format."],
+    ["Which tool builds reports in Fabric?", ["Power BI", "Visio", "Access", "Paint"], "Reports read the same data."]
+  ],
+  "Looker": [
+    ["What does LookML define?", ["Dimensions and measures", "User photos", "Server ports", "How the dashboards are coloured and placed"], "It is the semantic model."],
+    ["What does an Explore let a user do?", ["Query without writing SQL", "Edit the database", "Create servers", "Change rows in the source tables"], "Looker writes the SQL."],
+    ["Why define a metric once in LookML?", ["So everyone gets the same number", "So it loads once", "So it is hidden", "So the database stores fewer columns of data"], "It becomes the single definition."]
+  ],
+  "SQL Server": [
+    ["What does a clustered index decide?", ["Row order on disk", "Login rights", "Backup name", "Which columns are unique"], "A table has only one."],
+    ["Which tool shows how a query will run?", ["The execution plan", "The error log", "The job list", "The linked server"], "It shows scans, seeks and joins."],
+    ["What does a transaction log allow?", ["Recovery to a point in time", "Faster logins", "Smaller tables", "Queries to read data without any locks"], "Changes are logged before they are written."]
+  ],
+  "Oracle Database": [
+    ["What is PL/SQL used for?", ["Procedural code in the database", "Page styling", "Network rules", "Moving data files between database servers"], "It adds logic to SQL."],
+    ["What groups related procedures?", ["A package", "A tablespace", "A redo log", "A synonym"], "It has a specification and a body."],
+    ["What holds data files together?", ["A tablespace", "A sequence", "A cursor", "A trigger"], "Tables are created in tablespaces."]
+  ],
+  "MySQL": [
+    ["Which engine supports transactions by default?", ["InnoDB", "MyISAM", "CSV", "Memory"], "InnoDB also supports foreign keys."],
+    ["What does EXPLAIN show?", ["How a query is executed", "Table sizes", "User rights", "How many rows were changed today"], "It helps to find missing indexes."],
+    ["What does replication copy?", ["Changes to other servers", "Passwords", "Screens", "Only the tables that were read most recently"], "Replicas apply the binary log."]
+  ],
+  "MongoDB": [
+    ["How is a record stored?", ["As a document", "As a row", "As a graph edge", "As a file"], "Documents are stored as BSON."],
+    ["What splits data across servers?", ["Sharding", "Indexing", "Journaling", "Profiling"], "A shard key decides the place."],
+    ["What does the aggregation pipeline do?", ["Processes documents in stages", "Backs up data", "Adds users", "Copies documents between two collections"], "Each stage passes documents on."]
+  ],
+  "Redis": [
+    ["Where does Redis keep its data while running?", ["In memory", "On tape", "In a browser", "In a queue server"], "That is why it is fast."],
+    ["What does a TTL set?", ["When a key expires", "Who owns a key", "Where a key lives", "How a key sorts"], "Expired keys are removed."],
+    ["Which structure suits a leaderboard?", ["Sorted set", "String", "Hash", "Stream"], "Members are ordered by score."]
+  ],
+  "Apache Cassandra": [
+    ["How are tables designed in Cassandra?", ["Around the queries", "Around joins", "Around screens", "Around users"], "Joins are not supported."],
+    ["What decides which node holds a row?", ["The partition key", "The row size", "The user", "The time zone"], "The key is hashed to a token."],
+    ["What does a consistency level set?", ["How many replicas must answer", "How fast disks spin", "Who may read", "How often each table is backed up"], "Higher levels wait for more replicas."]
+  ],
+  "Elasticsearch": [
+    ["What makes text search fast?", ["The inverted index", "Table joins", "Triggers", "Stored procedures"], "It maps words to documents."],
+    ["What splits an index across nodes?", ["Shards", "Aliases", "Pipelines", "Templates"], "Replicas are copies of shards."],
+    ["What turns text into searchable terms?", ["An analyzer", "A dashboard", "A snapshot", "A cluster name"], "It splits and normalises words."]
+  ],
+  "Database Administration": [
+    ["What proves that a backup works?", ["Restoring it", "Its file size", "Its name", "Its date"], "An untested backup may fail."],
+    ["What does an index usually slow down?", ["Writes", "Reads by key", "Sorting", "Filtering"], "Each write must update the index."],
+    ["What does least privilege mean?", ["Only the rights that are needed", "Rights for everyone", "No passwords", "Every user gets the rights of a colleague"], "It limits the damage of a mistake."]
+  ],
+  "Vector Databases": [
+    ["What does a vector database search by?", ["Similarity", "Alphabet", "Date only", "File size"], "Nearby vectors have similar meaning."],
+    ["What turns text into a vector?", ["An embedding model", "A compiler", "A hash table", "A spell checker"], "The numbers represent meaning."],
+    ["What does an approximate index trade?", ["A little accuracy for speed", "Security for cost", "Colour for size", "More storage space for a lower price"], "Exact search is slower on large sets."]
+  ],
+  "Deep Learning": [
+    ["What does backpropagation compute?", ["Gradients", "File sizes", "Labels", "Batch names"], "The gradients are used to update weights."],
+    ["What does dropout reduce?", ["Overfitting", "Training data", "Image size", "Labels"], "Some units are ignored during training."],
+    ["What is an epoch?", ["One pass over the data", "One layer", "One weight", "One update of the weights"], "Training usually takes several."]
+  ],
+  "PyTorch": [
+    ["What does autograd do?", ["Computes gradients", "Loads images", "Plots charts", "Moves data to the GPU"], "It records operations on tensors."],
+    ["Which call updates the weights?", ["optimizer.step", "loss.backward", "model.eval", "torch.save"], "backward only computes gradients."],
+    ["What does model.eval() change?", ["Dropout and batch norm", "The data set", "The learning rate", "Weights and gradients used"], "These layers act differently in evaluation."]
+  ],
+  "TensorFlow": [
+    ["Which API builds models layer by layer?", ["Keras", "TFLite", "TensorBoard", "XLA"], "It is TensorFlow's high-level API."],
+    ["What does TensorBoard show?", ["Training progress", "Source code", "User accounts", "Disk usage"], "It plots metrics and graphs."],
+    ["What is TFLite for?", ["Running models on devices", "Cleaning data", "Writing SQL", "Labelling images for training"], "Models are made smaller for phones and edge devices."]
+  ],
+  "Computer Vision": [
+    ["What does object detection return?", ["Boxes and classes", "Only one label", "A sound", "A text summary"], "Each object gets a position and class."],
+    ["Which layer type suits images?", ["Convolutional", "Recurrent", "Embedding", "Softmax only"], "Filters find local patterns."],
+    ["What does augmentation add?", ["Varied training images", "New labels", "More layers", "Images collected from new customers"], "Flips and crops help to generalise."]
+  ],
+  "LangChain": [
+    ["What does LangChain mainly connect?", ["Models, tools and data", "Servers and cables", "Phones and tablets", "Tables and forms"], "It composes steps into applications."],
+    ["What does a retriever return?", ["Relevant documents", "A trained model", "A user session", "A chart"], "They are added to the prompt."],
+    ["What is LangGraph suited to?", ["Steps with state and loops", "Static pages", "Image editing", "Short prompts with only one model call"], "Agents can branch and repeat."]
+  ],
+  "Retrieval-Augmented Generation": [
+    ["What is added to the prompt in RAG?", ["Retrieved passages", "More layers", "Random text", "The whole database"], "The model answers from them."],
+    ["What does chunking split?", ["Documents", "Servers", "Models", "Users"], "Smaller pieces are easier to match."],
+    ["What does RAG reduce most?", ["Made-up answers", "Network traffic", "Screen size", "Licence cost"], "Answers can point to a source."]
+  ],
+  "Prompt Engineering": [
+    ["What does giving examples in a prompt do?", ["Shows the wanted form", "Trains the weights", "Lowers the price", "Removes limits"], "It is called few-shot prompting."],
+    ["What does a system instruction set?", ["The model's role and rules", "The server port", "The font", "The length limit of the answer"], "It guides every answer."],
+    ["How should an answer for a program be requested?", ["In a fixed format", "As a story", "In capitals", "With a long explanation"], "A schema makes it easy to check."]
+  ],
+  "AI Agents": [
+    ["What lets an agent act on the world?", ["Tools", "Fonts", "Themes", "Cookies"], "It calls functions and reads the results."],
+    ["What should limit a risky action?", ["Human approval", "A longer prompt", "A faster model", "More tokens"], "People confirm what cannot be undone."],
+    ["What does an agent do after a tool call?", ["Reads the result and decides", "Always stops", "Retrains itself", "Calls the same tool again to be sure"], "It plans the next step."]
+  ],
+  "Large Language Models": [
+    ["What is a token?", ["A piece of text", "A password", "A server", "A whole sentence"], "Models read and write tokens."],
+    ["What does temperature control?", ["Randomness", "Speed", "Price", "Length only"], "Low values give steadier answers."],
+    ["What does fine-tuning change?", ["The model's weights", "The prompt only", "The user interface", "The database"], "It trains on new examples."]
+  ],
+  "Scikit-learn": [
+    ["What does fit do?", ["Learns from data", "Draws a chart", "Saves a file", "Splits text"], "predict then uses what was learned."],
+    ["Why split data into train and test sets?", ["To check on unseen data", "To save memory", "To sort rows", "To let the model train twice as fast"], "It shows how well the model generalises."],
+    ["What does a Pipeline combine?", ["Preparation and model", "Servers and users", "Tests and logs", "Charts and tables"], "The same steps run in training and use."]
+  ],
+  "Amazon SageMaker": [
+    ["What hosts a model for live predictions?", ["An endpoint", "A notebook", "A bucket", "A VPC"], "Applications call the endpoint."],
+    ["Where are model artifacts stored?", ["Amazon S3", "CloudWatch", "Route 53", "IAM"], "Training jobs write there."],
+    ["What grants a training job access to data?", ["An IAM role", "A key pair", "A subnet", "A tag"], "The job assumes the role."]
+  ],
+  "Vertex AI": [
+    ["What is Vertex AI?", ["Google Cloud's ML platform", "A spreadsheet", "A CDN", "Google Cloud's data warehouse service"], "It covers training, hosting and pipelines."],
+    ["What does Model Registry keep?", ["Model versions", "User photos", "Invoices", "Log files"], "Versions can be compared and deployed."],
+    ["What does an endpoint serve?", ["Predictions", "Images only", "Source code", "Passwords"], "Models are deployed to it."]
+  ],
+  "Azure OpenAI": [
+    ["What do you call to use a model?", ["A deployment", "A resource group", "A subnet", "A tag"], "Each deployment names a model."],
+    ["What checks prompts and answers for harm?", ["Content filters", "Load balancers", "Cost alerts", "Backup jobs"], "They run on input and output."],
+    ["How can access avoid API keys?", ["Managed identity", "Public links", "Shared passwords", "Cookies"], "Entra ID issues the token."]
+  ],
+  "Responsible AI": [
+    ["What can biased training data cause?", ["Unfair results", "Slow servers", "Broken links", "Larger fonts"], "Models learn the patterns in the data."],
+    ["What does explainability help people understand?", ["Why a result was given", "How to code", "Where data is stored", "Who pays"], "It supports trust and appeal."],
+    ["Who stays accountable for an AI decision?", ["People", "The model", "The GPU", "The data set"], "Responsibility cannot be handed to software."]
+  ],
+  "Time Series Forecasting": [
+    ["What is seasonality?", ["A pattern that repeats", "A single spike", "A missing value", "A slow rise over many years"], "Such as higher sales each December."],
+    ["How should a time series be split for testing?", ["By time order", "At random", "By value size", "By colour"], "The future must not leak into training."],
+    ["What does a naive forecast use?", ["The last value", "The average of all data", "A neural network", "Two models"], "It is a simple baseline."]
+  ],
+  "LLMOps": [
+    ["What should be versioned in LLM applications?", ["Prompts and models", "Only the logo", "Only logs", "User names and roles"], "A change in either can change answers."],
+    ["What does an evaluation set check?", ["Answer quality", "Server heat", "Font use", "Licence dates"], "Fixed questions make results comparable."],
+    ["What is a common cost driver?", ["Token use", "Disk space", "Screen time", "User count only"], "Long prompts cost more."]
+  ],
+  "AWS": [
+    ["Which service stores objects?", ["Amazon S3", "Amazon EC2", "Amazon VPC", "AWS IAM"], "Objects are kept in buckets."],
+    ["What does an Availability Zone give?", ["Isolated data centres", "A billing group", "A user role", "Servers close to each user"], "Using several protects against a site failure."],
+    ["Who secures the operating system on an EC2 instance?", ["The customer", "AWS", "The browser", "The region"], "This is the shared responsibility model."]
+  ],
+  "Google Cloud": [
+    ["What groups resources and billing?", ["A project", "A zone", "A label", "A subnet"], "Every resource belongs to a project."],
+    ["Which service runs containers without servers?", ["Cloud Run", "Compute Engine", "Cloud DNS", "Cloud Storage"], "It scales to zero."],
+    ["What grants permissions to a workload?", ["A service account", "A public IP", "A firewall tag", "A bucket name"], "Roles are given to the account."]
+  ],
+  "Serverless Computing": [
+    ["When is a function billed?", ["While it runs", "Every hour", "Per server", "Per user login"], "Idle time costs nothing."],
+    ["What is a cold start?", ["Delay on first run", "A failed deploy", "A full disk", "A lost event"], "A new environment must be prepared."],
+    ["Where should a function keep its state?", ["In an external store", "In local memory only", "In its file name", "In the URL"], "Each run may use a different instance."]
+  ],
+  "Helm": [
+    ["What is a Helm package called?", ["A chart", "A pod", "A role", "A node"], "It holds templates and default values."],
+    ["Which file sets default settings?", ["values.yaml", "Chart.lock", "notes.txt", "README"], "They can be overridden on install."],
+    ["What does helm rollback do?", ["Returns to an earlier release", "Deletes the cluster", "Updates Kubernetes", "Removes the chart and all of its data"], "Helm keeps a history of releases."]
+  ],
+  "Ansible": [
+    ["What does Ansible need on managed servers?", ["SSH and Python", "A paid agent", "A database", "A web server"], "It is agentless."],
+    ["What lists the servers to manage?", ["The inventory", "The vault", "The role", "The handler"], "Hosts can be grouped."],
+    ["What does idempotent mean for a task?", ["Repeating it changes nothing more", "It runs once only", "It never fails", "It runs on all servers at the same moment"], "The end state is the same."]
+  ],
+  "Jenkins": [
+    ["Which file describes a pipeline as code?", ["Jenkinsfile", "pom.xml", "Dockerfile", "config.ini"], "It is stored with the source."],
+    ["What runs the build steps?", ["An agent", "A plugin page", "A view", "A user"], "The controller schedules work on agents."],
+    ["Where should passwords be kept?", ["In credentials storage", "In the Jenkinsfile", "In the log", "In the job name"], "They are injected when needed."]
+  ],
+  "GitHub Actions": [
+    ["Where are workflows stored?", [".github/workflows", "/actions", "/jobs", ".git/hooks/workflows"], "They are YAML files."],
+    ["What triggers a workflow?", ["An event", "A README", "A label only", "A fork count"], "Such as a push or pull request."],
+    ["What keeps tokens safe in a workflow?", ["Secrets", "Comments", "Artifacts", "Badges"], "They are masked in logs."]
+  ],
+  "GitLab CI": [
+    ["Which file defines the pipeline?", [".gitlab-ci.yml", "Makefile", "pipeline.json", "README.md"], "It sits in the repository root."],
+    ["What runs the jobs?", ["A runner", "A tag", "A milestone", "A snippet"], "Runners pick up jobs."],
+    ["What decides when jobs run in order?", ["Stages", "Labels", "Issues", "Epics"], "Jobs in one stage run together."]
+  ],
+  "Argo CD": [
+    ["What is the source of truth in GitOps?", ["The Git repository", "The live cluster", "A wiki", "The dashboard"], "The cluster is made to match Git."],
+    ["What does OutOfSync mean?", ["Cluster differs from Git", "Server is down", "User is locked", "Pods are still starting up"], "A sync brings it back in line."],
+    ["What can automated sync with self-heal undo?", ["Manual changes", "Git commits", "User logins", "Backups"], "Drift is corrected."]
+  ],
+  "Prometheus & Grafana": [
+    ["How does Prometheus usually collect metrics?", ["By scraping targets", "By e-mail", "By FTP", "By agents pushing logs"], "It pulls from HTTP endpoints."],
+    ["What is PromQL?", ["A query language", "A chart type", "A log format", "A plugin store"], "It selects and combines metrics."],
+    ["What does Grafana mainly do?", ["Shows dashboards", "Stores passwords", "Builds images", "Signs code"], "It reads from many data sources."]
+  ],
+  "Site Reliability Engineering": [
+    ["What is an SLO?", ["A target for reliability", "A legal contract", "A server type", "A contract with a customer"], "It is measured by an SLI."],
+    ["What does an error budget allow?", ["Some failure within the target", "Unlimited outages", "Free servers", "Extra spending when a server goes down"], "It balances speed and stability."],
+    ["What should a post-incident review avoid?", ["Blame", "Facts", "Timelines", "Actions"], "Blameless reviews find causes."]
+  ],
+  "Linux Administration": [
+    ["Which command shows running processes?", ["ps", "ls", "cat", "chmod"], "top shows them live."],
+    ["What do permissions 640 give the group?", ["Read only", "Read and write", "Nothing", "Full control"], "4 means read."],
+    ["What manages services on most Linux systems?", ["systemd", "cron only", "fstab", "grub"], "systemctl starts and stops them."]
+  ],
+  "Shell Scripting": [
+    ["What does $? hold?", ["The last exit status", "The process name", "The user", "The path"], "0 means success."],
+    ["What does a pipe do?", ["Sends output to the next command", "Deletes a file", "Opens a port", "Runs the second command only if the first fails"], "It joins commands."],
+    ["What does set -e do?", ["Stops on an error", "Echoes lines", "Exports all", "Prints each command"], "The script ends when a command fails."]
+  ],
+  "PowerShell": [
+    ["What do cmdlets pass along the pipeline?", ["Objects", "Plain text only", "Files only", "Images"], "Properties stay available."],
+    ["Which verb-noun command lists services?", ["Get-Service", "List-Svc", "Show-All", "Find-Task"], "Verbs are standard in PowerShell."],
+    ["What lets a script run on many computers?", ["Remoting", "A loop only", "A theme", "A profile"], "Invoke-Command runs it remotely."]
+  ],
+  "OpenShift": [
+    ["What is OpenShift built on?", ["Kubernetes", "VMware", "Hadoop", "Docker Swarm"], "It adds tools and security."],
+    ["What exposes a service outside the cluster?", ["A route", "A label", "A quota", "A secret"], "It gives a host name."],
+    ["What limits resources in a project?", ["A quota", "A route", "A build", "A tag"], "It caps CPU, memory and objects."]
+  ],
+  "VMware vSphere": [
+    ["What is ESXi?", ["A hypervisor", "A backup tool", "A firewall", "A database"], "It runs virtual machines."],
+    ["What moves a running VM between hosts?", ["vMotion", "A snapshot", "A clone", "A template"], "Users notice no downtime."],
+    ["What does HA do after a host fails?", ["Restarts VMs elsewhere", "Deletes VMs", "Sends invoices", "Moves their disks to backup"], "Other hosts in the cluster take over."]
+  ],
+  "Cloud Migration": [
+    ["What is rehosting?", ["Moving with few changes", "Rewriting the app", "Retiring the app", "Replacing it with a SaaS product"], "It is also called lift and shift."],
+    ["What should come before moving a workload?", ["Finding its dependencies", "Deleting backups", "Closing accounts", "Closing the old data centre"], "Hidden links can break the move."],
+    ["What confirms that a migration worked?", ["Tests against agreed criteria", "A press release", "A new logo", "A lower bill in the first month after it"], "Performance and data are checked."]
+  ],
+  "Cloud Architecture": [
+    ["Why use more than one zone?", ["To survive a site failure", "To lower the price", "To hide data", "To reach more customers sooner"], "Workloads continue elsewhere."],
+    ["What does autoscaling match?", ["Capacity to demand", "Colours to brand", "Names to users", "Costs to zero"], "Resources follow the load."],
+    ["What keeps components loosely coupled?", ["Queues and events", "Shared passwords", "One big server", "Fixed IPs"], "A failure in one does not stop the others."]
+  ],
+  "FinOps": [
+    ["What makes spend visible by team?", ["Tagging", "Bigger servers", "Fewer users", "Longer contracts"], "Costs can be shown to owners."],
+    ["What lowers cost for steady workloads?", ["Commitments", "More regions", "Extra logging", "Manual checks"], "Reserved capacity is cheaper."],
+    ["What is right-sizing?", ["Matching size to real use", "Buying the largest", "Deleting data", "Buying capacity for one year"], "Idle capacity is removed."]
+  ],
+  "Observability": [
+    ["Which three signals are usual?", ["Logs, metrics and traces", "Users, roles and groups", "Builds, tests and tags", "Costs, plans and quotas"], "Together they explain behaviour."],
+    ["What does a trace follow?", ["One request across services", "A user's career", "A file copy", "All errors that one server has written"], "It shows where time is spent."],
+    ["What makes an alert useful?", ["It needs action", "It is frequent", "It is long", "It is hidden"], "Noise teaches people to ignore alerts."]
+  ],
+  "AWS CloudFormation": [
+    ["What does a template describe?", ["Resources", "Users' names", "Invoices", "Support cases"], "CloudFormation creates them as a stack."],
+    ["What previews changes to a stack?", ["A change set", "A snapshot", "A tag", "A policy"], "It lists what will change."],
+    ["What finds manual changes to resources?", ["Drift detection", "Cost Explorer", "Route 53", "Trusted tags"], "It compares with the template."]
+  ],
+  "Platform Engineering": [
+    ["Who are the platform's customers?", ["Development teams", "Shareholders", "Auditors", "The security auditors"], "It is run like a product."],
+    ["What is a golden path?", ["A supported way to build", "A fast network", "A paid plan", "The fastest route through the network"], "It makes the right way easy."],
+    ["What does self-service reduce?", ["Waiting for tickets", "Code reviews", "Security", "The need for code reviews"], "Teams create what they need."]
+  ],
+  "Network Security": [
+    ["What does a firewall do?", ["Filters traffic by rules", "Stores passwords", "Encrypts disks", "Encrypts files on a server"], "Unwanted traffic is blocked."],
+    ["What does segmentation limit?", ["An attacker's movement", "Internet speed", "Number of users", "The speed of a backup job"], "One breach does not reach everything."],
+    ["What does an IPS add to an IDS?", ["Blocking", "Storage", "Colour", "Backups"], "It stops what it detects."]
+  ],
+  "Cloud Security": [
+    ["What does CSPM look for?", ["Misconfigurations", "Broken screens", "Slow code", "Spelling errors"], "Such as a public storage bucket."],
+    ["What should a storage bucket be by default?", ["Private", "Public", "Shared", "Unnamed"], "Open buckets leak data."],
+    ["What records actions in a cloud account?", ["An audit log", "A cost report", "A template", "A tag"], "It shows who did what and when."]
+  ],
+  "SIEM": [
+    ["What does a SIEM bring together?", ["Security events", "Invoices", "Source code", "Photos"], "Events from many systems are analysed."],
+    ["What is a correlation rule?", ["A link between events", "A password rule", "A backup plan", "A limit on log storage"], "Together they suggest an attack."],
+    ["What is a false positive?", ["An alert with no real threat", "A missed attack", "A blocked user", "A real attack that the system did not see"], "Tuning reduces them."]
+  ],
+  "Penetration Testing": [
+    ["What must exist before testing starts?", ["Written permission", "A bug report", "Admin rights", "A list of found bugs"], "Without it the test is illegal."],
+    ["What does reconnaissance do?", ["Gathers information", "Fixes bugs", "Deletes logs", "Exploits a weakness"], "It maps the target."],
+    ["What makes a finding useful?", ["Steps to repeat and fix it", "A long title", "Many colours", "A longer list of the tools that were used"], "Teams can act on it."]
+  ],
+  "Application Security": [
+    ["What stops SQL injection?", ["Parameterised queries", "Longer passwords", "HTTPS only", "Encrypted connections"], "Input never becomes SQL."],
+    ["What does SAST examine?", ["Source code", "Network cables", "Running servers only", "User habits"], "DAST tests the running application."],
+    ["What prevents cross-site scripting?", ["Encoding output", "Faster servers", "Larger screens", "More cookies"], "Input is shown as text, not run."]
+  ],
+  "Identity & Access Management": [
+    ["What does MFA add?", ["A second proof", "A longer name", "A new account", "A backup"], "A stolen password is not enough."],
+    ["What does role-based access give rights to?", ["Roles", "Computers", "Files only", "Networks"], "People receive roles."],
+    ["What does single sign-on reduce?", ["Separate passwords", "Security logs", "User accounts", "Access to applications"], "One sign-in opens many systems."]
+  ],
+  "Incident Response": [
+    ["What comes right after detection and analysis?", ["Containment", "Celebration", "Retirement", "Procurement"], "The spread is stopped first."],
+    ["Why keep evidence unchanged?", ["For investigation", "To save space", "To go faster", "To please users"], "Its integrity may be checked later."],
+    ["What ends an incident well?", ["Lessons learned", "Silence", "New passwords only", "A longer log"], "The same cause should not return."]
+  ],
+  "Threat Hunting": [
+    ["What starts a hunt?", ["A hypothesis", "An invoice", "A backup", "A holiday"], "It is then tested against data."],
+    ["What does MITRE ATT&CK list?", ["Attackers' techniques", "Antivirus prices", "Firewall brands", "Known weak software"], "It gives a common language."],
+    ["What is dwell time?", ["How long an attacker stays hidden", "Time to boot", "Time to log in", "The time between two security patches"], "Hunting shortens it."]
+  ],
+  "Vulnerability Management": [
+    ["What does CVSS score?", ["Severity", "Price", "Age", "Popularity"], "Higher means more severe."],
+    ["What else decides what to fix first?", ["Exposure and exploitation", "The file name", "The vendor's size", "The date of the last full backup"], "A known exploit raises the priority."],
+    ["What confirms a fix?", ["A rescan", "An e-mail", "A meeting", "A new logo"], "The weakness should be gone."]
+  ],
+  "GRC & Compliance": [
+    ["What does ISO 27001 describe?", ["An information security system", "A coding style", "A network cable", "A list of approved encryption algorithms"], "It is a management standard."],
+    ["What can be done with a risk?", ["Avoid, reduce, share or accept", "Only ignore it", "Only report it", "Only reduce it or report it to the board"], "The choice is recorded."],
+    ["What does an audit need?", ["Evidence", "Opinions", "Promises", "Logos"], "Controls must be shown to work."]
+  ],
+  "DevSecOps": [
+    ["When should security checks run?", ["On every change", "Once a year", "After release only", "When hacked"], "Early fixes are cheaper."],
+    ["What does dependency scanning find?", ["Known weak libraries", "Slow queries", "Wrong fonts", "Functions without any tests"], "Third-party code is checked too."],
+    ["What keeps secrets out of code?", ["A secret manager", "A comment", "A private folder", "A long name"], "Values are read when the code runs."]
+  ],
+  "Zero Trust Architecture": [
+    ["What does zero trust assume?", ["No request is trusted by default", "The office is safe", "VPN users are safe", "Traffic inside the company network is safe"], "Each request is verified."],
+    ["What does least-privilege access limit?", ["The damage of a breach", "Internet speed", "Screen time", "How often people must sign in"], "People get only what they need."],
+    ["What is checked besides the user?", ["Device and context", "Salary", "Seniority", "Number of past sign-ins"], "Risk depends on the situation."]
+  ],
+  "Security Operations": [
+    ["What does a tier 1 analyst do first?", ["Triages alerts", "Writes policy", "Buys tools", "Trains staff"], "Real threats are passed on."],
+    ["What is a playbook?", ["Set steps for a case", "A game", "A contract", "A list of past incidents"], "It makes response consistent."],
+    ["What does MTTR measure?", ["Time to respond", "Team turnover", "Total tests run", "Traffic rate"], "Lower is better."]
+  ],
+  "Endpoint Security": [
+    ["What does EDR record?", ["Activity on devices", "Office visits", "Invoices", "Messages between teams"], "It helps to investigate attacks."],
+    ["What can isolating a device stop?", ["Spread to others", "Its updates forever", "Its warranty", "Its keyboard"], "It stays reachable for responders."],
+    ["Why patch endpoints quickly?", ["Known flaws are exploited", "To change icons", "To free licences", "Old patches stop working"], "Attackers use published weaknesses."]
+  ],
+  "Cryptography": [
+    ["What does asymmetric encryption use?", ["A key pair", "One shared key", "No key", "A password list"], "Public and private keys."],
+    ["What is a hash used to check?", ["Integrity", "Speed", "Colour", "Location"], "A change gives a different hash."],
+    ["Why add a salt to passwords?", ["Equal passwords differ", "To shorten them", "To show them", "Hashing becomes faster"], "Precomputed tables stop working."]
+  ],
+  "Salesforce Administration": [
+    ["What controls which records a user sees?", ["Sharing settings", "Page layouts", "Themes", "Reports"], "Org-wide defaults and rules decide."],
+    ["What automates a process without code?", ["Flow", "Apex", "Visualforce", "SOQL"], "Flow Builder is declarative."],
+    ["What bundles extra permissions for users?", ["A permission set", "A dashboard", "A queue", "An assignment rule"], "It adds to the profile."]
+  ],
+  "Apex": [
+    ["What must triggers be written to handle?", ["Many records at once", "One record only", "Only new users", "Only one record's change"], "Up to 200 records arrive together."],
+    ["What limits queries in one transaction?", ["Governor limits", "Page layouts", "Profiles", "Themes"], "Shared resources are protected."],
+    ["How much test coverage is needed to deploy?", ["75 percent", "10 percent", "50 percent", "100 percent"], "It is required for production."]
+  ],
+  "Lightning Web Components": [
+    ["Which decorator exposes a property to a parent?", ["@api", "@track", "@wire", "@test"], "The parent can then set it."],
+    ["What does @wire read?", ["Salesforce data", "Local files", "Cookies", "Logs"], "It calls an adapter or Apex."],
+    ["How does a child inform its parent?", ["By an event", "By a file", "By a record", "By CSS"], "CustomEvent is dispatched."]
+  ],
+  "SAP ABAP": [
+    ["What does a SELECT inside a loop usually cause?", ["Slow programs", "Syntax errors", "Locked users", "Lost transports"], "Read once and loop in memory."],
+    ["What carries changes between systems?", ["A transport request", "An IDoc", "A variant", "A background job variant"], "It moves from development to production."],
+    ["What is an internal table?", ["Data held in memory", "A database view", "A screen", "A user list"], "It lives while the program runs."]
+  ],
+  "SAP FICO": [
+    ["What does a cost centre collect?", ["Costs of an area", "Customer orders", "Stock", "User roles"], "It supports controlling."],
+    ["What links an account to the balance sheet?", ["The chart of accounts", "The plant", "The material", "The controlling area settings"], "It lists all general ledger accounts."],
+    ["Which process pays suppliers?", ["Accounts payable", "Accounts receivable", "Asset sales", "Payroll"], "Vendor invoices are settled."]
+  ],
+  "SAP MM": [
+    ["What starts buying in SAP MM?", ["A purchase requisition", "An invoice", "A delivery", "A supplier's delivery note"], "It may become a purchase order."],
+    ["What does a goods receipt update?", ["Stock", "Salaries", "Roles", "Routes"], "It also posts to finance."],
+    ["What is matched in three-way matching?", ["Order, receipt and invoice", "Plant, user and date", "Name, price and colour", "Tax, bank and route"], "Payment follows a match."]
+  ],
+  "SAP S/4HANA": [
+    ["What is S/4HANA built on?", ["An in-memory database", "A file server", "Spreadsheets", "A distributed file system"], "SAP HANA stores data by column."],
+    ["What is the Universal Journal?", ["One place for finance postings", "A diary", "A print log", "A log of every user's actions in the system"], "Finance and controlling share it."],
+    ["What is a greenfield project?", ["A new implementation", "An upgrade in place", "A data copy", "A test only"], "Processes are designed afresh."]
+  ],
+  "SAP Fiori": [
+    ["What do Fiori apps aim for?", ["Simple, role-based work", "More transactions", "Longer forms", "One screen for all processes"], "Each app fits a task."],
+    ["What does SAPUI5 provide?", ["Web UI controls", "A database", "A compiler", "Payroll rules"], "Apps are built from its controls."],
+    ["What usually supplies a Fiori app's data?", ["OData services", "FTP files", "E-mail", "Excel macros"], "Standard REST-style services."]
+  ],
+  "Workday HCM": [
+    ["What changes a worker's data under control?", ["A business process", "A report", "A theme", "A manager's calculated field"], "Steps and approvals apply."],
+    ["What groups workers for security?", ["Security groups", "Pay slips", "Calendars", "Job titles only"], "They decide access."],
+    ["What builds a custom list of data?", ["A report", "A tenant", "A tile", "A badge"], "The report writer selects fields."]
+  ],
+  "ServiceNow": [
+    ["What stores data in ServiceNow?", ["Tables", "Spreadsheets", "Files only", "Mailboxes"], "Every record belongs to a table."],
+    ["Where does a business rule run?", ["On the server", "In the browser", "On a phone", "In e-mail"], "Client scripts run in the browser."],
+    ["What moves customisations between instances?", ["Update sets", "Knowledge articles", "Incidents", "Tags"], "Changes are captured and moved."]
+  ],
+  "Microsoft Dynamics 365": [
+    ["Where is the data usually stored?", ["Dataverse", "Access", "Notepad", "SMTP"], "Tables are shared with Power Platform."],
+    ["What extends logic on the server?", ["A plug-in", "A chart", "A view", "A theme"], "It runs on events such as create."],
+    ["What groups components for moving?", ["A solution", "A lead", "A queue", "A case"], "Solutions are exported and imported."]
+  ],
+  "Power Platform": [
+    ["Which tool automates steps between apps?", ["Power Automate", "Power BI", "Power Pages", "Word"], "Flows react to triggers."],
+    ["What does a connector do?", ["Links to a service", "Draws a chart", "Prints a page", "Stores a theme"], "Apps and flows use it."],
+    ["What protects data between connectors?", ["Data loss prevention policies", "Bigger screens", "Faster flows", "A licence for each person who builds an app"], "Policies block unsafe mixes."]
+  ],
+  "Oracle ERP Cloud": [
+    ["What loads data in bulk?", ["File-based import", "Screen typing", "E-mail", "Fax"], "Templates feed interface tables."],
+    ["What defines who approves what?", ["Approval rules", "Font rules", "Print rules", "Backup rules"], "They route transactions."],
+    ["How often does Oracle release updates?", ["Quarterly", "Daily", "Every five years", "Never"], "Customers test each update."]
+  ],
+  "MuleSoft": [
+    ["What are the three layers of API-led design?", ["System, process, experience", "Red, green, blue", "Read, write, run", "Gateway, database, front end"], "Each has a clear purpose."],
+    ["What language transforms data?", ["DataWeave", "SQL", "CSS", "JavaScript"], "It maps between formats."],
+    ["What holds a message during a flow?", ["The Mule event", "The log", "The policy", "The worker"], "It has payload and variables."]
+  ],
+  "API Management": [
+    ["What does a gateway enforce?", ["Policies", "Colours", "Grammar", "Salaries"], "Such as limits and authentication."],
+    ["What protects an API from too many calls?", ["Rate limiting", "Caching images", "Longer URLs", "More logs"], "Extra calls are refused."],
+    ["Why version an API?", ["So old clients keep working", "To look newer", "To add cost", "So each new client can have its own address"], "Breaking changes need a new version."]
+  ],
+  "SharePoint": [
+    ["What organises files with metadata?", ["A document library", "A theme", "A web part", "A site collection theme"], "Columns describe the files."],
+    ["What does versioning keep?", ["Earlier copies", "Deleted users", "Search logs", "Page colours"], "Old versions can be restored."],
+    ["What places content on a page?", ["Web parts", "Triggers", "Schemas", "Pods"], "Each part shows something."]
+  ],
+  "Pega": [
+    ["What does Pega model work as?", ["Cases", "Tables", "Threads", "Charts"], "Stages and steps guide the work."],
+    ["What decides the next best offer?", ["Decision strategies", "Stylesheets", "Log levels", "Case life cycle stages"], "Rules and models are combined."],
+    ["What supports reuse across apps?", ["Built-on layers", "Copying files", "Printing", "E-mail"], "Rules are inherited."]
+  ],
+  "Robotic Process Automation": [
+    ["Which process suits a bot best?", ["Rule-based and repeated", "Creative work", "Rare cases", "Different in every single case"], "Clear rules are needed."],
+    ["What is an attended bot?", ["One that helps a person", "One on a server only", "One with no rules", "One that is off"], "A person starts it."],
+    ["What should a bot do on an unexpected screen?", ["Log it and stop safely", "Guess", "Delete data", "Try the next button it finds"], "A person then decides."]
+  ],
+  "Guidewire": [
+    ["Which product handles claims?", ["ClaimCenter", "PolicyCenter", "BillingCenter", "DataHub"], "Each product covers one area."],
+    ["What language is used for rules?", ["Gosu", "COBOL", "Swift", "R"], "It runs on the JVM."],
+    ["What does PolicyCenter manage?", ["Quotes and policies", "Payroll", "Servers", "Payments made to repairers"], "It covers the policy life cycle."]
+  ],
+  "COBOL & Mainframe": [
+    ["What does JCL describe?", ["How to run a job", "A screen layout", "A user", "A network"], "It names programs and files."],
+    ["Which division declares data in COBOL?", ["DATA DIVISION", "PROCEDURE DIVISION", "IDENTIFICATION DIVISION", "REPORT DIVISION"], "Variables and files are defined there."],
+    ["What does CICS handle?", ["Online transactions", "Batch printing", "Backups", "Nightly batch jobs"], "Many users work at once."]
+  ],
+  "SaaS Architecture": [
+    ["What is a tenant?", ["A customer's isolated space", "A server rack", "A developer", "A server that only one developer may use"], "Tenants share the product safely."],
+    ["What must never cross tenants?", ["Data", "Code", "Servers", "Logos"], "Isolation is the first duty."],
+    ["What does metering measure?", ["Usage for billing", "Network cable", "Staff hours", "Page colours"], "Plans depend on it."]
+  ],
+  "Adobe Experience Manager": [
+    ["What makes up a page in AEM?", ["Components", "Pods", "Triggers", "Pivots"], "Authors place them on templates."],
+    ["Where is content stored?", ["In the JCR repository", "In Excel", "In Redis only", "In the Dispatcher's cache"], "It is a tree of nodes."],
+    ["What caches pages in front of publish?", ["The Dispatcher", "The author", "The bundle", "The workflow"], "It also protects the server."]
+  ],
+  "E-Commerce Platforms": [
+    ["What is cart abandonment?", ["Leaving before paying", "A lost parcel", "A price error", "Returning an order later"], "Checkout changes can lower it."],
+    ["What must card payments comply with?", ["PCI DSS", "HIPAA", "WCAG", "SAFe"], "Card data is protected."],
+    ["What does headless commerce separate?", ["Front end and engine", "Buyer and seller", "Price and tax", "Stock and store"], "Any front end can use the API."]
+  ],
+  "CMS Development": [
+    ["What changes WordPress without editing core?", ["Plugins and hooks", "Deleting files", "New domains", "Cookies"], "Updates stay safe."],
+    ["What controls how a site looks?", ["The theme", "The role", "The cron job", "The feed"], "Content stays separate."],
+    ["Why keep a CMS updated?", ["Security fixes", "More users", "Longer pages", "New domains"], "Known flaws are attacked."]
+  ],
+  "Cypress": [
+    ["Where do Cypress tests run?", ["In the browser", "On a phone", "In a database", "In e-mail"], "They share the page's run loop."],
+    ["What does cy.intercept control?", ["Network requests", "Fonts", "Screenshots", "Git branches"], "Responses can be stubbed."],
+    ["What does Cypress do before failing an assertion?", ["Retries for a time", "Restarts the computer", "Skips the test", "Deletes data"], "Waiting is built in."]
+  ],
+  "Playwright": [
+    ["Which browsers does it cover?", ["Chromium, Firefox and WebKit", "Chrome only", "Edge only", "Only browsers that are built on Chromium"], "One API drives them all."],
+    ["What do locators do before acting?", ["Wait until ready", "Take a photo", "Clear cookies", "Log out"], "Auto-waiting reduces flaky tests."],
+    ["What records steps for debugging?", ["The trace viewer", "The linter", "The bundler", "The test generator"], "It shows each step."]
+  ],
+  "Appium": [
+    ["What does Appium drive?", ["Real apps on devices", "Only websites", "Databases", "Screens drawn by a web server"], "It uses the platform's own tools."],
+    ["What tells Appium which device to use?", ["Capabilities", "Cookies", "Themes", "Permissions"], "Such as platform and app path."],
+    ["Which platforms does it cover?", ["Android and iOS", "Windows only", "Linux only", "Consoles"], "One API for both."]
+  ],
+  "Performance Testing": [
+    ["What does a load test apply?", ["Expected traffic", "A virus", "A new theme", "The highest load possible"], "A stress test goes beyond it."],
+    ["Why report the 95th percentile?", ["Averages hide slow users", "It is always lower", "It is easier", "It shows the fastest users"], "One in twenty waits longer."],
+    ["What does a soak test find?", ["Slow leaks over time", "Typing errors", "Colour faults", "The highest possible load"], "It runs for hours."]
+  ],
+  "Manual Testing": [
+    ["What does exploratory testing combine?", ["Learning, design and running", "Coding and billing", "Sales and support", "Planning, coding and release"], "The tester adapts."],
+    ["What makes a defect report good?", ["Steps to repeat it", "A long title", "A guess", "Capital letters"], "Others can see the problem."],
+    ["What does regression testing check?", ["That old features still work", "New prices", "Staff changes", "That new features match the latest designs"], "Changes can break other parts."]
+  ],
+  "Cucumber & BDD": [
+    ["Which words begin a scenario's steps?", ["Given, When, Then", "If, Else, End", "Plan, Do, Check", "Try, Catch, Throw"], "They describe context, action and result."],
+    ["Who writes scenarios in BDD?", ["Business, dev and test together", "Only testers", "Only managers", "Testers alone, after the code is finished"], "It is shared understanding."],
+    ["What connects a step to code?", ["A step definition", "A pivot", "A pod", "A background section"], "The text matches a method."]
+  ],
+  "Test Management": [
+    ["What ranks what to test first?", ["Risk", "Alphabet", "Team size", "Age"], "Likely and costly failures come first."],
+    ["What does a traceability matrix link?", ["Requirements and tests", "Users and roles", "Servers and racks", "Defects and developers"], "Gaps become visible."],
+    ["What tells a team that testing may stop?", ["Exit criteria", "The clock only", "A holiday", "A new tool"], "They are agreed at the start."]
+  ],
+  "Product Management": [
+    ["What should a roadmap show?", ["Outcomes and priorities", "Every task by hour", "Salaries", "Every feature with a date"], "It explains why and when."],
+    ["What does an MVP test?", ["A key assumption", "All features", "The logo", "The budget"], "It is the smallest useful version."],
+    ["What shows product value best?", ["Customers' behaviour", "Lines of code", "Meetings held", "The number of features shipped"], "Use and retention tell the truth."]
+  ],
+  "Project Management": [
+    ["What is the critical path?", ["The longest chain of tasks", "The cheapest task", "The first task", "The tasks with the most people"], "A delay there delays the project."],
+    ["What controls changes to scope?", ["A change process", "A longer day", "A bigger team", "A new tool"], "Impact is agreed first."],
+    ["What does a risk register hold?", ["Risks, owners and responses", "Salaries", "Source code", "Completed tasks and the hours they took"], "It is reviewed often."]
+  ],
+  "Scrum": [
+    ["Who orders the product backlog?", ["The Product Owner", "The Scrum Master", "The tester", "The client's lawyer"], "One person is accountable."],
+    ["What is the daily scrum for?", ["Planning the next day's work", "Reporting to the boss", "Estimating costs", "Reporting progress to the manager"], "It takes 15 minutes."],
+    ["What must be true of an increment?", ["It meets the Definition of Done", "It is large", "It is sold", "It contains every item in the backlog"], "Quality is agreed."]
+  ],
+  "Scaled Agile": [
+    ["What does PI Planning align?", ["Many teams", "One developer", "Servers", "Invoices"], "Teams plan together."],
+    ["What is an Agile Release Train?", ["A team of teams", "A tool", "A report", "A meeting room"], "It delivers in a shared rhythm."],
+    ["What order does WSJF suggest first?", ["High value, small size", "Largest first", "Oldest first", "The largest and most visible"], "Cost of delay is divided by size."]
+  ],
+  "UX Design": [
+    ["What should come before screens?", ["Understanding users", "Choosing colours", "Buying fonts", "Writing code"], "Needs guide the design."],
+    ["What does a usability test watch?", ["People doing tasks", "Server logs only", "Sales calls", "Designers talking"], "Problems become visible."],
+    ["What is a wireframe?", ["A simple layout sketch", "A final design", "A network map", "A coded version of the page"], "It shows structure, not style."]
+  ],
+  "UI Design": [
+    ["What does a design system give?", ["Reusable, consistent parts", "Faster servers", "More fonts", "A final picture of every page in a product"], "Screens look and act alike."],
+    ["What does visual hierarchy guide?", ["Where the eye goes first", "Who may log in", "What is stored", "Which page a user opens next"], "Size, colour and space show importance."],
+    ["What does auto layout do in Figma?", ["Adjusts spacing to content", "Draws icons", "Writes text", "Aligns every frame to the same grid column"], "Frames resize by rules."]
+  ],
+  "Business Analysis": [
+    ["What does a requirement describe?", ["A need to be met", "A person's salary", "A server", "A price"], "It should be testable."],
+    ["What does gap analysis compare?", ["Now and the goal", "Two people", "Two logos", "Two teams' results"], "It shows what is missing."],
+    ["What do acceptance criteria decide?", ["When work is done", "Who is paid", "Which tool is used", "Where teams sit"], "They can be checked."]
+  ],
+  "ITIL": [
+    ["What is the aim of incident management?", ["Restore service quickly", "Find the root cause", "Buy servers", "Hire staff"], "Problem management finds causes."],
+    ["What does an SLA state?", ["Agreed service levels", "Source code", "Staff ages", "The tools that the team must use"], "It sets expectations."],
+    ["What does change enablement reduce?", ["Risk of changes", "Number of users", "Network speed", "Backups"], "Changes are assessed first."]
+  ],
+  "Technical Support": [
+    ["What should come first with a problem?", ["Understand and repeat it", "Reinstall everything", "Blame the user", "Close the ticket"], "Facts come before fixes."],
+    ["When should a ticket be escalated?", ["When skills or time run out", "Never", "Always", "Whenever the user asks for a manager"], "The next level takes over."],
+    ["What saves time for the next case?", ["A knowledge article", "A longer call", "A new queue", "A longer ticket title"], "Solutions are shared."]
+  ],
+  "Network Administration": [
+    ["What does a VLAN do?", ["Divides a network logically", "Speeds up disks", "Stores files", "Joins two networks over the internet"], "Traffic is kept apart."],
+    ["What does DHCP give a device?", ["An IP address", "A password", "A firewall", "A user"], "It also gives gateway and DNS."],
+    ["What does OSPF choose?", ["Routes", "Users", "Ports on a printer", "File names"], "It is a routing protocol."]
+  ],
+  "Solution Architecture": [
+    ["What should drive architecture choices?", ["Requirements and constraints", "Fashion", "The newest tool", "What the previous project happened to use"], "Trade-offs are explained."],
+    ["What records why a choice was made?", ["A decision record", "A log file", "A pay slip", "A ticket number"], "Later readers see the reasons."],
+    ["What are non-functional requirements?", ["Qualities such as speed", "Unwanted features", "Broken functions", "Features for a later phase"], "They include security and reliability."]
+  ],
+  "Technical Pre-Sales": [
+    ["What should discovery find?", ["The client's real problem", "The client's salary", "The office size", "The competitors' prices"], "Solutions follow needs."],
+    ["What does a proof of concept show?", ["That it works for the client", "The final price", "The contract", "That the full project will cost less"], "Success criteria are set first."],
+    ["What does an RFP ask for?", ["A proposal", "A refund", "A password", "A holiday"], "Answers are compared."]
+  ],
+  "Change Management": [
+    ["What helps people accept change?", ["Knowing why", "Surprise", "Silence", "Penalties"], "Awareness comes first."],
+    ["Who influences teams most in a change?", ["Their own manager", "The vendor", "The auditor", "The project sponsor alone"], "Messages land best from close leaders."],
+    ["What is measured after go-live?", ["Adoption", "Logo use", "Office size", "E-mail length"], "The change must be used."]
+  ],
+  "Technical Writing": [
+    ["Who should a document be written for?", ["Its reader", "Its writer", "The tool", "The boss"], "Their task comes first."],
+    ["What makes steps easy to follow?", ["One action per step", "Long paragraphs", "Hidden links", "Many adjectives"], "Readers do and check."],
+    ["Where should API docs live?", ["Close to the code", "In a drawer", "In chat only", "In the support ticket"], "They change together."]
+  ],
+  "Customer Success": [
+    ["What does onboarding aim for?", ["Early value", "A longer contract", "More tickets", "Fewer calls"], "First results keep customers."],
+    ["What does churn measure?", ["Customers who leave", "New hires", "Server errors", "Customers who upgrade"], "Lower is better."],
+    ["What is a health score based on?", ["Use and engagement", "Office size", "Logo colour", "The size of the contract"], "It warns of risk."]
+  ],
+  "Program Management": [
+    ["What does a programme deliver?", ["Benefits from several projects", "One task", "One server", "A single system built by one project team"], "Projects are coordinated."],
+    ["What do dependencies between projects need?", ["One owner and a date", "Silence", "More slides", "A shared folder for files"], "Unmanaged links cause delays."],
+    ["What does governance provide?", ["Clear decisions", "More e-mail", "New offices", "Free tools"], "People know who decides."]
+  ],
+  "Blockchain Development": [
+    ["What runs a smart contract?", ["The network's nodes", "One web server", "A browser tab", "The contract's author"], "All nodes get the same result."],
+    ["What is gas in Ethereum?", ["A fee for computation", "A token name", "A wallet", "The reward for a miner"], "Each operation costs gas."],
+    ["Why test contracts carefully?", ["They are hard to change", "They are slow", "They are private", "They cannot be read by others"], "Deployed code stays."]
+  ],
+  "IoT Development": [
+    ["Which protocol suits small devices?", ["MQTT", "FTP", "SMTP", "RDP"], "It is light and uses publish and subscribe."],
+    ["What does edge processing reduce?", ["Data sent to the cloud", "Device count", "Battery life", "The number of sensors that are needed"], "Work is done near the device."],
+    ["What must each device have for security?", ["Its own identity", "The same password", "A public IP", "A screen"], "One stolen key must not open all."]
+  ],
+  "Embedded C": [
+    ["What does volatile tell the compiler?", ["The value may change outside", "The value is constant", "The value is small", "The value must be kept in a register"], "Registers must be read each time."],
+    ["What should an interrupt handler be?", ["Short", "Long", "Recursive", "Printed"], "Other work must continue."],
+    ["What does an RTOS guarantee?", ["Predictable timing", "Unlimited memory", "Faster CPUs", "Web access"], "Tasks meet their deadlines."]
+  ],
+  "Unity Development": [
+    ["Which method runs once per frame?", ["Update", "Start", "Awake", "OnDestroy"], "FixedUpdate runs with physics."],
+    ["What is a prefab?", ["A reusable object", "A scene light", "A build target", "A shader file"], "Copies share its settings."],
+    ["Why multiply by Time.deltaTime?", ["Speed stays the same on any device", "Colours improve", "Memory is freed", "It makes each frame take the same time to draw"], "Frame rates differ."]
+  ],
+  "HL7 FHIR": [
+    ["What is the basic unit in FHIR?", ["A resource", "A table", "A segment", "A packet"], "Such as Patient or Observation."],
+    ["How are FHIR resources usually exchanged?", ["REST and JSON", "Fax", "FTP only", "Spreadsheets"], "It uses web standards."],
+    ["What does HL7 stand for?", ["Health Level Seven", "High Load 7", "Host Link 7", "Hospital Link Version 7"], "It names the application layer."]
+  ],
+  "Core Banking": [
+    ["What is double-entry bookkeeping?", ["Each debit has a credit", "Two users sign in", "Two backups", "Each user signs in twice"], "Accounts always balance."],
+    ["What does ISO 20022 define?", ["Financial messages", "Card plastic", "Branch hours", "Interest rates"], "It is a shared message standard."],
+    ["What does KYC check?", ["A customer's identity", "A server key", "A loan rate", "The balance of an account"], "It prevents fraud."]
+  ],
+  "Telecom OSS & BSS": [
+    ["What does BSS cover?", ["Customers and billing", "Radio masts", "Fibre cables", "Network faults and alarms"], "OSS covers the network."],
+    ["What does provisioning do?", ["Turns a service on", "Prints a bill", "Sells a phone", "Measures network use"], "Network elements are configured."],
+    ["What does mediation process?", ["Usage records", "Legal disputes", "Job offers", "Street maps"], "They feed billing."]
+  ],
+  "AUTOSAR": [
+    ["What does AUTOSAR separate?", ["Application and hardware", "Driver and seat", "Fuel and air", "Safety and comfort features"], "Software can be reused."],
+    ["What does the RTE connect?", ["Software components", "Wheels", "Batteries", "Vehicles and workshops"], "It carries their communication."],
+    ["Which bus is common in vehicles?", ["CAN", "USB", "HDMI", "SATA"], "Control units share messages on it."]
   ]
 }

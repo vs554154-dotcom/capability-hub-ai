@@ -1,0 +1,31 @@
+Job title: Mainframe Developer
+Project: Core Banking Modernisation
+Client: Cresta Bank
+Business unit: Banking & Financial Services
+Domain: Banking
+Location: Onsite / Mumbai
+Experience: 6-14 years
+Openings: 2
+
+About the role
+Keeps core mainframe systems running and modern. You will work on Core Banking Modernisation for Cresta Bank.
+
+What you will do
+- Maintain COBOL and JCL
+- Expose services
+- Support batch
+- Plan modernisation
+
+Must have
+- COBOL & Mainframe
+- SQL
+- Core Banking
+- REST APIs
+- Agile
+
+Good to have
+- Java
+- Cloud Migration
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,29 @@
+Job title: Data Governance Analyst
+Domain: Insurance
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Makes data trusted and understood.
+
+What you will do
+- Run the data catalogue
+- Define owners and rules
+- Measure quality
+- Support privacy
+
+Must have
+- Data Governance
+- Data Modeling
+- SQL
+- Stakeholder Management
+- GRC & Compliance
+- Technical Writing
+
+Good to have
+- Microsoft Fabric
+- Power BI
+
+How we interview
+A technical discussion, then a short practical task.

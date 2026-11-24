@@ -1,0 +1,36 @@
+Job title: GenAI Engineer
+Project: Claims Knowledge Assistant
+Client: Suraksha Insurance
+Business unit: AI & Automation Services
+Domain: Insurance
+Location: Remote
+Experience: 3-8 years
+Openings: 3
+
+About the role
+Builds applications on language models. You will work on Claims Knowledge Assistant for Suraksha Insurance.
+
+What you will do
+- Build RAG applications
+- Evaluate answers
+- Control cost and safety
+- Ship APIs
+
+Must have
+- Python
+- GenAI
+- Large Language Models
+- Retrieval-Augmented Generation
+- LangChain
+- Vector Databases
+- Prompt Engineering
+- FastAPI
+
+Good to have
+- AI Agents
+- Azure OpenAI
+- LLMOps
+- NLP
+
+How we interview
+A technical discussion, then a short practical task.

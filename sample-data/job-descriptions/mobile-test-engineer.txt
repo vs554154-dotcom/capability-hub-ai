@@ -1,0 +1,28 @@
+Job title: Mobile Test Engineer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Tests mobile apps on real devices.
+
+What you will do
+- Automate on Android and iOS
+- Test on a device farm
+- Check accessibility
+- Report crashes
+
+Must have
+- Appium
+- Android Development
+- Java
+- TestNG & Automation Frameworks
+- Manual Testing
+
+Good to have
+- iOS Development
+- Performance Testing
+
+How we interview
+A technical discussion, then a short practical task.

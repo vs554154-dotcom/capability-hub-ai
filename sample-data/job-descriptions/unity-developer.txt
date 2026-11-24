@@ -1,0 +1,28 @@
+Job title: Unity Developer
+Domain: Education
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds simulations, AR and games in Unity.
+
+What you will do
+- Build interactive scenes
+- Optimise for phones and headsets
+- Work with designers
+- Test on devices
+
+Must have
+- Unity Development
+- C#
+- UI Design
+- Git & Version Control
+- Performance Testing
+
+Good to have
+- C++
+- Android Development
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,29 @@
+Job title: Pega Developer
+Domain: Insurance
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds case management applications on Pega.
+
+What you will do
+- Model cases
+- Write decision rules
+- Integrate services
+- Test and deploy
+
+Must have
+- Pega
+- Java
+- SQL
+- REST APIs
+- Agile
+- Business Analysis
+
+Good to have
+- Robotic Process Automation
+- JavaScript
+
+How we interview
+A technical discussion, then a short practical task.

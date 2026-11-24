@@ -1,0 +1,29 @@
+Job title: SAP FICO Consultant
+Domain: Manufacturing
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Configures SAP finance and controlling.
+
+What you will do
+- Run finance workshops
+- Configure FICO
+- Test with the business
+- Support close
+
+Must have
+- SAP FICO
+- SAP S/4HANA
+- SAP MM
+- Business Analysis
+- Stakeholder Management
+- Change Management
+
+Good to have
+- Microsoft Excel
+- Power BI
+
+How we interview
+A technical discussion, then a short practical task.

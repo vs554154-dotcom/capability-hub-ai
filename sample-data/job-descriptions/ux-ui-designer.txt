@@ -1,0 +1,28 @@
+Job title: UX/UI Designer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Designs products around people.
+
+What you will do
+- Research users
+- Sketch and prototype
+- Test with people
+- Maintain the design system
+
+Must have
+- UX Design
+- UI Design
+- Web Accessibility
+- HTML & CSS
+- Stakeholder Management
+
+Good to have
+- React
+- Product Management
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,29 @@
+Job title: Oracle ERP Consultant
+Domain: Public Sector
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Implements Oracle's cloud ERP.
+
+What you will do
+- Run workshops
+- Configure finance and procurement
+- Load data
+- Test quarterly updates
+
+Must have
+- Oracle ERP Cloud
+- Oracle Database
+- Business Analysis
+- SQL
+- Stakeholder Management
+- Change Management
+
+Good to have
+- ETL Development
+- Project Management
+
+How we interview
+A technical discussion, then a short practical task.

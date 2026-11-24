@@ -1,0 +1,31 @@
+Job title: PHP Laravel Developer
+Domain: Education
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds and maintains web platforms in PHP and Laravel.
+
+What you will do
+- Build features in Laravel
+- Design MySQL tables
+- Add interactive screens in Vue.js
+- Keep the platform secure and updated
+
+Must have
+- PHP
+- Laravel
+- MySQL
+- Vue.js
+- JavaScript
+- HTML & CSS
+- REST APIs
+
+Good to have
+- CMS Development
+- Redis
+- Docker
+
+How we interview
+A technical discussion, then a short practical task.

@@ -1,0 +1,32 @@
+Job title: SAP ABAP Consultant
+Project: S/4HANA Conversion
+Client: Orion Steel
+Business unit: Enterprise Applications
+Domain: Manufacturing
+Location: Hybrid / Kolkata
+Experience: 5-10 years
+Openings: 2
+
+About the role
+Develops and improves SAP applications. You will work on S/4HANA Conversion for Orion Steel.
+
+What you will do
+- Write efficient ABAP
+- Build Fiori apps and OData services
+- Prepare for S/4HANA
+- Support releases
+
+Must have
+- SAP ABAP
+- SAP S/4HANA
+- SAP Fiori
+- REST APIs
+- SQL
+- Agile
+
+Good to have
+- SAP MM
+- Oracle Database
+
+How we interview
+A technical discussion, then a short practical task.

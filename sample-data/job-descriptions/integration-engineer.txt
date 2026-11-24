@@ -1,0 +1,30 @@
+Job title: Integration Engineer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Connects systems through APIs and events.
+
+What you will do
+- Design API layers
+- Build integrations
+- Secure and version APIs
+- Monitor traffic
+
+Must have
+- MuleSoft
+- API Management
+- REST APIs
+- Apache Kafka
+- Microservices
+- Event-Driven Architecture
+
+Good to have
+- HL7 FHIR
+- Java
+- Salesforce Administration
+
+How we interview
+A technical discussion, then a short practical task.

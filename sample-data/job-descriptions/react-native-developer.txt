@@ -1,0 +1,30 @@
+Job title: React Native Developer
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Builds cross-platform apps with React Native.
+
+What you will do
+- Build screens in React Native and TypeScript
+- Manage state with Redux
+- Integrate native modules
+- Keep the app fast on old phones
+
+Must have
+- React Native
+- JavaScript
+- Enterprise TypeScript Development
+- Redux
+- REST APIs
+- Git & Version Control
+
+Good to have
+- React
+- GraphQL
+- Appium
+
+How we interview
+A technical discussion, then a short practical task.

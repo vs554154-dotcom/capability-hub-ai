@@ -43,7 +43,7 @@ For full technical specifications, architecture details, API specs, and database
 ├── PROJECT_DOCUMENTATION.md
 ├── backend/
 │   ├── app/               # FastAPI: routers -> services -> repositories, migrations
-│   ├── seed/              # Data for an empty database, and the question bank
+│   ├── seed/              # Data for an empty database, the demo company, the question bank
 │   ├── tests/             # pytest suite (no server needed)
 │   └── scripts/           # Probes run against a live server (authorization gate)
 ├── frontend/
@@ -91,6 +91,16 @@ The backend is Python (FastAPI); Node is used only to build the frontend.
    backend/.venv/Scripts/python -m pytest backend/tests
    python backend/scripts/verify_authz_scenarios.py http://localhost:8000
    ```
+
+5. **Demo data**: a new database starts with a made-up company of 375 employees, 205
+   technologies and 49 client demands. To add it to a database you already have, or to
+   move its passed interview dates ahead before a demo:
+   ```bash
+   python backend/scripts/load_demo_data.py --refresh-dates
+   ```
+   To add a technology or a role, edit `backend/seed/source/`, then run
+   `python backend/scripts/build_demo_seed.py` and load again. Ready-made job descriptions
+   to paste or upload are in `sample-data/job-descriptions/`.
 
 Deployment: see [DEPLOY.md](./DEPLOY.md).
 

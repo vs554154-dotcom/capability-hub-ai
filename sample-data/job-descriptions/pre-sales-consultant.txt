@@ -1,0 +1,28 @@
+Job title: Pre-Sales Consultant
+Domain: SaaS
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Shapes winning, realistic proposals.
+
+What you will do
+- Run discovery
+- Build demos and proposals
+- Estimate effort
+- Hand over to delivery
+
+Must have
+- Technical Pre-Sales
+- Solution Architecture
+- Stakeholder Management
+- Cloud Architecture
+- Business Analysis
+
+Good to have
+- Technical Writing
+- FinOps
+
+How we interview
+A technical discussion, then a short practical task.

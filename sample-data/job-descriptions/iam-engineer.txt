@@ -1,0 +1,29 @@
+Job title: IAM Engineer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Runs identity, sign-in and access.
+
+What you will do
+- Run single sign-on and MFA
+- Automate joiners, movers and leavers
+- Certify access
+- Integrate applications
+
+Must have
+- Identity & Access Management
+- Zero Trust Architecture
+- PowerShell
+- Azure
+- Cryptography
+- GRC & Compliance
+
+Good to have
+- Java
+- ServiceNow
+
+How we interview
+A technical discussion, then a short practical task.

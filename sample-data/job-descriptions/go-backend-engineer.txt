@@ -1,0 +1,34 @@
+Job title: Go Backend Engineer
+Project: Network Events Gateway
+Client: Vantel Communications
+Business unit: Telecom & Cloud Operations
+Domain: Telecom
+Location: Remote
+Experience: 3-7 years
+Openings: 2
+
+About the role
+Writes fast, concurrent services and cloud tooling in Go. You will work on Network Events Gateway for Vantel Communications.
+
+What you will do
+- Build concurrent services in Go
+- Design message flows
+- Profile and tune for low latency
+- Ship containers to Kubernetes
+
+Must have
+- Go (Golang)
+- Microservices
+- Kubernetes
+- Redis
+- RabbitMQ
+- Event-Driven Architecture
+- Docker
+
+Good to have
+- GraphQL
+- AWS
+- Observability
+
+How we interview
+A technical discussion, then a short practical task.

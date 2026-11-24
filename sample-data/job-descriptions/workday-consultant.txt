@@ -1,0 +1,28 @@
+Job title: Workday Consultant
+Domain: Healthcare
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Implements HR processes in Workday.
+
+What you will do
+- Configure business processes
+- Build reports and integrations
+- Set up security
+- Support adoption
+
+Must have
+- Workday HCM
+- Business Analysis
+- REST APIs
+- Change Management
+- Stakeholder Management
+
+Good to have
+- Project Management
+- SQL
+
+How we interview
+A technical discussion, then a short practical task.

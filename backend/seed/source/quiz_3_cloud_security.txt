@@ -1,0 +1,150 @@
+# Three questions per technology: question | right answer | wrong | wrong | wrong | why
+
+## AWS
+Which service stores objects? | Amazon S3 | Amazon EC2 | Amazon VPC | AWS IAM | Objects are kept in buckets.
+What does an Availability Zone give? | Isolated data centres | A billing group | A user role | Servers close to each user | Using several protects against a site failure.
+Who secures the operating system on an EC2 instance? | The customer | AWS | The browser | The region | This is the shared responsibility model.
+## Google Cloud
+What groups resources and billing? | A project | A zone | A label | A subnet | Every resource belongs to a project.
+Which service runs containers without servers? | Cloud Run | Compute Engine | Cloud DNS | Cloud Storage | It scales to zero.
+What grants permissions to a workload? | A service account | A public IP | A firewall tag | A bucket name | Roles are given to the account.
+## Serverless Computing
+When is a function billed? | While it runs | Every hour | Per server | Per user login | Idle time costs nothing.
+What is a cold start? | Delay on first run | A failed deploy | A full disk | A lost event | A new environment must be prepared.
+Where should a function keep its state? | In an external store | In local memory only | In its file name | In the URL | Each run may use a different instance.
+## Helm
+What is a Helm package called? | A chart | A pod | A role | A node | It holds templates and default values.
+Which file sets default settings? | values.yaml | Chart.lock | notes.txt | README | They can be overridden on install.
+What does helm rollback do? | Returns to an earlier release | Deletes the cluster | Updates Kubernetes | Removes the chart and all of its data | Helm keeps a history of releases.
+## Ansible
+What does Ansible need on managed servers? | SSH and Python | A paid agent | A database | A web server | It is agentless.
+What lists the servers to manage? | The inventory | The vault | The role | The handler | Hosts can be grouped.
+What does idempotent mean for a task? | Repeating it changes nothing more | It runs once only | It never fails | It runs on all servers at the same moment | The end state is the same.
+## Jenkins
+Which file describes a pipeline as code? | Jenkinsfile | pom.xml | Dockerfile | config.ini | It is stored with the source.
+What runs the build steps? | An agent | A plugin page | A view | A user | The controller schedules work on agents.
+Where should passwords be kept? | In credentials storage | In the Jenkinsfile | In the log | In the job name | They are injected when needed.
+## GitHub Actions
+Where are workflows stored? | .github/workflows | /actions | /jobs | .git/hooks/workflows | They are YAML files.
+What triggers a workflow? | An event | A README | A label only | A fork count | Such as a push or pull request.
+What keeps tokens safe in a workflow? | Secrets | Comments | Artifacts | Badges | They are masked in logs.
+## GitLab CI
+Which file defines the pipeline? | .gitlab-ci.yml | Makefile | pipeline.json | README.md | It sits in the repository root.
+What runs the jobs? | A runner | A tag | A milestone | A snippet | Runners pick up jobs.
+What decides when jobs run in order? | Stages | Labels | Issues | Epics | Jobs in one stage run together.
+## Argo CD
+What is the source of truth in GitOps? | The Git repository | The live cluster | A wiki | The dashboard | The cluster is made to match Git.
+What does OutOfSync mean? | Cluster differs from Git | Server is down | User is locked | Pods are still starting up | A sync brings it back in line.
+What can automated sync with self-heal undo? | Manual changes | Git commits | User logins | Backups | Drift is corrected.
+## Prometheus & Grafana
+How does Prometheus usually collect metrics? | By scraping targets | By e-mail | By FTP | By agents pushing logs | It pulls from HTTP endpoints.
+What is PromQL? | A query language | A chart type | A log format | A plugin store | It selects and combines metrics.
+What does Grafana mainly do? | Shows dashboards | Stores passwords | Builds images | Signs code | It reads from many data sources.
+## Site Reliability Engineering
+What is an SLO? | A target for reliability | A legal contract | A server type | A contract with a customer | It is measured by an SLI.
+What does an error budget allow? | Some failure within the target | Unlimited outages | Free servers | Extra spending when a server goes down | It balances speed and stability.
+What should a post-incident review avoid? | Blame | Facts | Timelines | Actions | Blameless reviews find causes.
+## Linux Administration
+Which command shows running processes? | ps | ls | cat | chmod | top shows them live.
+What do permissions 640 give the group? | Read only | Read and write | Nothing | Full control | 4 means read.
+What manages services on most Linux systems? | systemd | cron only | fstab | grub | systemctl starts and stops them.
+## Shell Scripting
+What does $? hold? | The last exit status | The process name | The user | The path | 0 means success.
+What does a pipe do? | Sends output to the next command | Deletes a file | Opens a port | Runs the second command only if the first fails | It joins commands.
+What does set -e do? | Stops on an error | Echoes lines | Exports all | Prints each command | The script ends when a command fails.
+## PowerShell
+What do cmdlets pass along the pipeline? | Objects | Plain text only | Files only | Images | Properties stay available.
+Which verb-noun command lists services? | Get-Service | List-Svc | Show-All | Find-Task | Verbs are standard in PowerShell.
+What lets a script run on many computers? | Remoting | A loop only | A theme | A profile | Invoke-Command runs it remotely.
+## OpenShift
+What is OpenShift built on? | Kubernetes | VMware | Hadoop | Docker Swarm | It adds tools and security.
+What exposes a service outside the cluster? | A route | A label | A quota | A secret | It gives a host name.
+What limits resources in a project? | A quota | A route | A build | A tag | It caps CPU, memory and objects.
+## VMware vSphere
+What is ESXi? | A hypervisor | A backup tool | A firewall | A database | It runs virtual machines.
+What moves a running VM between hosts? | vMotion | A snapshot | A clone | A template | Users notice no downtime.
+What does HA do after a host fails? | Restarts VMs elsewhere | Deletes VMs | Sends invoices | Moves their disks to backup | Other hosts in the cluster take over.
+## Cloud Migration
+What is rehosting? | Moving with few changes | Rewriting the app | Retiring the app | Replacing it with a SaaS product | It is also called lift and shift.
+What should come before moving a workload? | Finding its dependencies | Deleting backups | Closing accounts | Closing the old data centre | Hidden links can break the move.
+What confirms that a migration worked? | Tests against agreed criteria | A press release | A new logo | A lower bill in the first month after it | Performance and data are checked.
+## Cloud Architecture
+Why use more than one zone? | To survive a site failure | To lower the price | To hide data | To reach more customers sooner | Workloads continue elsewhere.
+What does autoscaling match? | Capacity to demand | Colours to brand | Names to users | Costs to zero | Resources follow the load.
+What keeps components loosely coupled? | Queues and events | Shared passwords | One big server | Fixed IPs | A failure in one does not stop the others.
+## FinOps
+What makes spend visible by team? | Tagging | Bigger servers | Fewer users | Longer contracts | Costs can be shown to owners.
+What lowers cost for steady workloads? | Commitments | More regions | Extra logging | Manual checks | Reserved capacity is cheaper.
+What is right-sizing? | Matching size to real use | Buying the largest | Deleting data | Buying capacity for one year | Idle capacity is removed.
+## Observability
+Which three signals are usual? | Logs, metrics and traces | Users, roles and groups | Builds, tests and tags | Costs, plans and quotas | Together they explain behaviour.
+What does a trace follow? | One request across services | A user's career | A file copy | All errors that one server has written | It shows where time is spent.
+What makes an alert useful? | It needs action | It is frequent | It is long | It is hidden | Noise teaches people to ignore alerts.
+## AWS CloudFormation
+What does a template describe? | Resources | Users' names | Invoices | Support cases | CloudFormation creates them as a stack.
+What previews changes to a stack? | A change set | A snapshot | A tag | A policy | It lists what will change.
+What finds manual changes to resources? | Drift detection | Cost Explorer | Route 53 | Trusted tags | It compares with the template.
+## Platform Engineering
+Who are the platform's customers? | Development teams | Shareholders | Auditors | The security auditors | It is run like a product.
+What is a golden path? | A supported way to build | A fast network | A paid plan | The fastest route through the network | It makes the right way easy.
+What does self-service reduce? | Waiting for tickets | Code reviews | Security | The need for code reviews | Teams create what they need.
+## Network Security
+What does a firewall do? | Filters traffic by rules | Stores passwords | Encrypts disks | Encrypts files on a server | Unwanted traffic is blocked.
+What does segmentation limit? | An attacker's movement | Internet speed | Number of users | The speed of a backup job | One breach does not reach everything.
+What does an IPS add to an IDS? | Blocking | Storage | Colour | Backups | It stops what it detects.
+## Cloud Security
+What does CSPM look for? | Misconfigurations | Broken screens | Slow code | Spelling errors | Such as a public storage bucket.
+What should a storage bucket be by default? | Private | Public | Shared | Unnamed | Open buckets leak data.
+What records actions in a cloud account? | An audit log | A cost report | A template | A tag | It shows who did what and when.
+## SIEM
+What does a SIEM bring together? | Security events | Invoices | Source code | Photos | Events from many systems are analysed.
+What is a correlation rule? | A link between events | A password rule | A backup plan | A limit on log storage | Together they suggest an attack.
+What is a false positive? | An alert with no real threat | A missed attack | A blocked user | A real attack that the system did not see | Tuning reduces them.
+## Penetration Testing
+What must exist before testing starts? | Written permission | A bug report | Admin rights | A list of found bugs | Without it the test is illegal.
+What does reconnaissance do? | Gathers information | Fixes bugs | Deletes logs | Exploits a weakness | It maps the target.
+What makes a finding useful? | Steps to repeat and fix it | A long title | Many colours | A longer list of the tools that were used | Teams can act on it.
+## Application Security
+What stops SQL injection? | Parameterised queries | Longer passwords | HTTPS only | Encrypted connections | Input never becomes SQL.
+What does SAST examine? | Source code | Network cables | Running servers only | User habits | DAST tests the running application.
+What prevents cross-site scripting? | Encoding output | Faster servers | Larger screens | More cookies | Input is shown as text, not run.
+## Identity & Access Management
+What does MFA add? | A second proof | A longer name | A new account | A backup | A stolen password is not enough.
+What does role-based access give rights to? | Roles | Computers | Files only | Networks | People receive roles.
+What does single sign-on reduce? | Separate passwords | Security logs | User accounts | Access to applications | One sign-in opens many systems.
+## Incident Response
+What comes right after detection and analysis? | Containment | Celebration | Retirement | Procurement | The spread is stopped first.
+Why keep evidence unchanged? | For investigation | To save space | To go faster | To please users | Its integrity may be checked later.
+What ends an incident well? | Lessons learned | Silence | New passwords only | A longer log | The same cause should not return.
+## Threat Hunting
+What starts a hunt? | A hypothesis | An invoice | A backup | A holiday | It is then tested against data.
+What does MITRE ATT&CK list? | Attackers' techniques | Antivirus prices | Firewall brands | Known weak software | It gives a common language.
+What is dwell time? | How long an attacker stays hidden | Time to boot | Time to log in | The time between two security patches | Hunting shortens it.
+## Vulnerability Management
+What does CVSS score? | Severity | Price | Age | Popularity | Higher means more severe.
+What else decides what to fix first? | Exposure and exploitation | The file name | The vendor's size | The date of the last full backup | A known exploit raises the priority.
+What confirms a fix? | A rescan | An e-mail | A meeting | A new logo | The weakness should be gone.
+## GRC & Compliance
+What does ISO 27001 describe? | An information security system | A coding style | A network cable | A list of approved encryption algorithms | It is a management standard.
+What can be done with a risk? | Avoid, reduce, share or accept | Only ignore it | Only report it | Only reduce it or report it to the board | The choice is recorded.
+What does an audit need? | Evidence | Opinions | Promises | Logos | Controls must be shown to work.
+## DevSecOps
+When should security checks run? | On every change | Once a year | After release only | When hacked | Early fixes are cheaper.
+What does dependency scanning find? | Known weak libraries | Slow queries | Wrong fonts | Functions without any tests | Third-party code is checked too.
+What keeps secrets out of code? | A secret manager | A comment | A private folder | A long name | Values are read when the code runs.
+## Zero Trust Architecture
+What does zero trust assume? | No request is trusted by default | The office is safe | VPN users are safe | Traffic inside the company network is safe | Each request is verified.
+What does least-privilege access limit? | The damage of a breach | Internet speed | Screen time | How often people must sign in | People get only what they need.
+What is checked besides the user? | Device and context | Salary | Seniority | Number of past sign-ins | Risk depends on the situation.
+## Security Operations
+What does a tier 1 analyst do first? | Triages alerts | Writes policy | Buys tools | Trains staff | Real threats are passed on.
+What is a playbook? | Set steps for a case | A game | A contract | A list of past incidents | It makes response consistent.
+What does MTTR measure? | Time to respond | Team turnover | Total tests run | Traffic rate | Lower is better.
+## Endpoint Security
+What does EDR record? | Activity on devices | Office visits | Invoices | Messages between teams | It helps to investigate attacks.
+What can isolating a device stop? | Spread to others | Its updates forever | Its warranty | Its keyboard | It stays reachable for responders.
+Why patch endpoints quickly? | Known flaws are exploited | To change icons | To free licences | Old patches stop working | Attackers use published weaknesses.
+## Cryptography
+What does asymmetric encryption use? | A key pair | One shared key | No key | A password list | Public and private keys.
+What is a hash used to check? | Integrity | Speed | Colour | Location | A change gives a different hash.
+Why add a salt to passwords? | Equal passwords differ | To shorten them | To show them | Hashing becomes faster | Precomputed tables stop working.

@@ -12,14 +12,14 @@ transaction cannot leak into another request.
 """
 from __future__ import annotations
 
-import json
 import logging
 import sqlite3
 import threading
 from contextlib import contextmanager
 from typing import Any, Iterator, Sequence
 
-from .config import DB_PATH, SEED_PATH
+from . import seed_data
+from .config import DB_PATH
 from .migrations import current_version, migrate
 from .schema_sql import SEED_TABLE_ORDER
 
@@ -67,23 +67,18 @@ def _seed_empty_tables(conn: sqlite3.Connection) -> list[str]:
     a fresh one builds itself. Runs under the write lock, so two processes starting
     together cannot both decide a table is empty and both fill it.
     """
-    if not SEED_PATH.exists():
-        return []
-    seed: dict[str, list[dict[str, Any]]] = json.loads(SEED_PATH.read_text(encoding="utf-8"))
     seeded: list[str] = []
     conn.execute("BEGIN IMMEDIATE")
     try:
+        # The demo company is for a database that starts from nothing. One that already
+        # has people gets it with scripts/load_demo_data.py, when someone asks for it.
+        fresh = not conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        seed = seed_data.starting_rows(include_demo=fresh)
         for table in SEED_TABLE_ORDER:
             rows = seed.get(table) or []
             if not rows or conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]:
                 continue
-            columns = list(rows[0].keys())
-            placeholders = ", ".join("?" for _ in columns)
-            column_list = ", ".join(f'"{c}"' for c in columns)
-            conn.executemany(
-                f"INSERT OR IGNORE INTO {table} ({column_list}) VALUES ({placeholders})",
-                [tuple(row.get(c) for c in columns) for row in rows],
-            )
+            seed_data.insert_missing(conn, table, rows)
             seeded.append(table)
         conn.execute("COMMIT")
     except BaseException:

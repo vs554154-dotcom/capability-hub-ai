@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ResourceLearningProgress } from "../types";
-import { GraduationCap, Clock, Target, Calendar, CheckCircle2, Zap, BookOpen, Wrench, Plus, RefreshCw, Send, Sparkles, X, ChevronRight, Award } from "lucide-react";
+import { GraduationCap, Clock, Target, Calendar, CheckCircle2, Zap, BookOpen, Wrench, Plus, RefreshCw, Search, Send, Sparkles, X, ChevronRight, Award } from "lucide-react";
+
+const PAGE = 9;
 
 interface ResourceLearningTrackerProps {
   /** Called after a track is assigned, so the page around it can refresh. */
@@ -23,6 +25,8 @@ interface SuggestedTrack {
 export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = ({ onAssigned }) => {
   const [resources, setResources] = useState<ResourceLearningProgress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [shown, setShown] = useState(PAGE);
   const [assignSuccessMsg, setAssignSuccessMsg] = useState("");
   const [assignErrorMsg, setAssignErrorMsg] = useState("");
 
@@ -135,6 +139,10 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
     }
   };
 
+  const wanted = search.trim().toLowerCase();
+  const found = resources.filter(r => !wanted || [r.userName, r.userTitle, r.department, r.activeProject?.projectName]
+    .some(text => (text || "").toLowerCase().includes(wanted)));
+
   return (
     <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-lg space-y-6">
       
@@ -168,9 +176,24 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
         </button>
       </div>
 
+      {resources.length > PAGE && (
+        <label className="flex items-center gap-2 bg-[#0F1724] border border-[#2A384C] rounded-lg px-3 py-2">
+          <Search className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" aria-hidden="true" />
+          <input
+            id="tracker-search"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setShown(PAGE); }}
+            placeholder="Find by name, job title, department or project"
+            aria-label="Find a person in the learning tracker"
+            className="w-full bg-transparent text-xs text-[#F0F4FF] placeholder-[#555] focus:outline-none"
+          />
+          <span className="text-[11px] text-[#94A3B8] whitespace-nowrap">{found.length} of {resources.length}</span>
+        </label>
+      )}
+
       {/* Resource Learning Summary Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-        {resources.map((item) => {
+        {found.slice(0, shown).map((item) => {
           const statusBadge = item.status === "completed" ? (
             <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/40">
               Completed Track
@@ -279,6 +302,20 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
           );
         })}
       </div>
+
+      {found.length === 0 && resources.length > 0 && (
+        <p className="text-xs text-[#94A3B8]">No one matches "{search}".</p>
+      )}
+      {found.length > shown && (
+        <button
+          id="tracker-show-more"
+          type="button"
+          onClick={() => setShown(n => n + PAGE)}
+          className="w-full bg-[#0F1724] hover:bg-[#1E293B] text-[#4F8EF7] border border-[#4F8EF7]/50 text-xs font-mono font-bold py-2.5 px-4 rounded-lg cursor-pointer"
+        >
+          Show {Math.min(PAGE, found.length - shown)} more of {found.length}
+        </button>
+      )}
 
       {/* Assign Tailored Track Modal */}
       {selectedUserForAssign && (

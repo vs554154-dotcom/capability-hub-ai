@@ -1,0 +1,32 @@
+Job title: Healthcare Integration Engineer
+Project: Patient Data Exchange
+Client: CareNova Hospitals
+Business unit: Healthcare & Life Sciences
+Domain: Healthcare
+Location: Hybrid / Bengaluru
+Experience: 4-9 years
+Openings: 1
+
+About the role
+Connects hospital systems safely. You will work on Patient Data Exchange for CareNova Hospitals.
+
+What you will do
+- Build FHIR and HL7 interfaces
+- Protect patient data
+- Monitor messages
+- Work with clinicians
+
+Must have
+- HL7 FHIR
+- REST APIs
+- SQL
+- MuleSoft
+- Java
+- GRC & Compliance
+
+Good to have
+- Azure
+- Data Governance
+
+How we interview
+A technical discussion, then a short practical task.

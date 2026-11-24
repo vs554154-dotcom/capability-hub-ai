@@ -1,0 +1,32 @@
+Job title: IT Support Engineer
+Project: Managed Service Desk
+Client: CareNova Hospitals
+Business unit: IT Operations & Support
+Domain: Healthcare
+Location: Onsite / Chennai
+Experience: 1-5 years
+Openings: 4
+
+About the role
+Solves user and system problems. You will work on Managed Service Desk for CareNova Hospitals.
+
+What you will do
+- Resolve tickets
+- Write knowledge articles
+- Automate routine fixes
+- Escalate well
+
+Must have
+- Technical Support
+- ITIL
+- PowerShell
+- Network Administration
+- ServiceNow
+- Linux Administration
+
+Good to have
+- Microsoft Dynamics 365
+- Endpoint Security
+
+How we interview
+A technical discussion, then a short practical task.

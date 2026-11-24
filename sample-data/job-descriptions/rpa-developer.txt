@@ -1,0 +1,28 @@
+Job title: RPA Developer
+Domain: Banking
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Automates repetitive work.
+
+What you will do
+- Assess processes
+- Build and test bots
+- Handle exceptions
+- Report results
+
+Must have
+- Robotic Process Automation
+- SQL
+- Business Analysis
+- Power Platform
+- Microsoft Excel
+
+Good to have
+- Python
+- REST APIs
+
+How we interview
+A technical discussion, then a short practical task.

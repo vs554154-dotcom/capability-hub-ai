@@ -1,0 +1,28 @@
+Job title: Performance Test Engineer
+Domain: Retail
+Location: Hybrid
+Experience: 3-7 years
+Openings: 1
+
+About the role
+Proves systems are fast and stable.
+
+What you will do
+- Model real traffic
+- Run load and soak tests
+- Find bottlenecks
+- Advise on capacity
+
+Must have
+- Performance Testing
+- SQL
+- Linux Administration
+- Observability
+- Postman & REST API Testing
+
+Good to have
+- AWS
+- Java
+
+How we interview
+A technical discussion, then a short practical task.

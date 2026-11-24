@@ -104,6 +104,9 @@ def _is_timeout(exc: BaseException) -> bool:
     return isinstance(exc, httpx.TimeoutException)
 
 
+MIN_CALL_SECONDS = 10
+
+
 def _cool_down(exc: BaseException) -> float:
     """How long to pass over a model after `exc`, from the retry delay in the error."""
     details = getattr(exc, "details", None)
@@ -127,9 +130,12 @@ def generate(
     system_instruction: str | None = None,
     temperature: float = 0.7,
     as_json: bool = False,
+    within: float | None = None,
 ) -> str | None:
     """Generated text, or None so the caller can use its fallback. `as_json` asks the
-    model for JSON output, which it otherwise sometimes returns malformed.
+    model for JSON output, which it otherwise sometimes returns malformed. `within` is
+    for a caller whose fallback is good and whose user is waiting: fewer seconds than
+    GEMINI_TIMEOUT_SECONDS, over every model tried.
 
     Never raises: a Gemini outage or timeout must not turn into a 500 for the UI.
     """
@@ -138,10 +144,13 @@ def generate(
         return None
 
     models = _models_to_try()
-    deadline = time.monotonic() + GEMINI_TIMEOUT_SECONDS
+    allowed = min(GEMINI_TIMEOUT_SECONDS, within or GEMINI_TIMEOUT_SECONDS)
+    # Google refuses a deadline shorter than this.
+    least = MIN_CALL_SECONDS if allowed >= 2 * MIN_CALL_SECONDS else 1
+    deadline = time.monotonic() + allowed
     for i, model in enumerate(models):
         left = deadline - time.monotonic()
-        if left < 1:
+        if left < least * 0.95:
             break
         last = i == len(models) - 1
         try:
@@ -154,8 +163,8 @@ def generate(
                 # Half of what is left, so the next model still gets a real chance; the
                 # last one may use all of it. With one model the client's own bound holds.
                 http_options=(
-                    types.HttpOptions(timeout=int((left if last else left / 2) * 1000))
-                    if len(models) > 1 else None
+                    types.HttpOptions(timeout=int((left if last else max(left / 2, min(left, least))) * 1000))
+                    if len(models) > 1 or within else None
                 ),
             )
             response = client.models.generate_content(model=model, contents=prompt, config=config)
@@ -182,6 +191,7 @@ def generate_json(
     prompt: str,
     system_instruction: str | None = None,
     temperature: float = 0.4,
+    within: float | None = None,
 ) -> Any | None:
     """Generate and parse a JSON payload.
 
@@ -189,7 +199,7 @@ def generate_json(
     fences and fall back to the outermost {...} / [...] span before parsing.
     Returns None if nothing parseable comes back.
     """
-    raw = generate(prompt, system_instruction, temperature, as_json=True)
+    raw = generate(prompt, system_instruction, temperature, as_json=True, within=within)
     if not raw:
         return None
 
