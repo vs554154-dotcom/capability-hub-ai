@@ -150,11 +150,22 @@ def test_upcoming_interviews_are_counted_from_the_day_the_data_is_loaded():
 def test_passed_interviews_of_demo_demands_can_be_moved_ahead(demo):
     later = date.today() + timedelta(days=400)
     with sqlite3.connect(config.DB_PATH) as live:
-        base = live.execute("SELECT id, clientInterviewDate FROM project_demands WHERE id LIKE 'OPP-1%'").fetchall()
-        assert seed_data.refresh_demo_dates(live, later) == len(rows("project_demands"))
-        assert live.execute("SELECT MIN(clientInterviewDate) FROM project_demands WHERE id LIKE 'OPP-2%'").fetchone()[0] > later.isoformat()
-        assert live.execute("SELECT id, clientInterviewDate FROM project_demands WHERE id LIKE 'OPP-1%'").fetchall() == base
-        assert seed_data.refresh_demo_dates(live, later) == 0
+        live.execute("UPDATE project_demands SET status = 'CLOSED' WHERE id = 'OPP-1003'")
+        live.execute("INSERT INTO project_demands SELECT 'OPP-own', projectName, customerName, businessUnit, projectDescription, "
+                     "rawJobDescription, requiredSkills, preferredSkills, experienceRangeMin, experienceRangeMax, technologyStack, "
+                     "resourcesRequired, clientInterviewDate, expectedJoiningDate, projectPriority, location, domain, "
+                     "employmentType, additionalNotes, status, createdAt FROM project_demands WHERE id = 'OPP-1001'")
+        kept = "SELECT id, clientInterviewDate FROM project_demands WHERE id IN ('OPP-1003', 'OPP-own')"
+        before = live.execute(kept).fetchall()
+        samples = len(seed_data.sample_demands(later))
+        assert seed_data.refresh_demo_dates(live, later) == samples - 1                 # not the closed one
+        assert live.execute(kept).fetchall() == before                                  # nor a person's own
+        assert live.execute("SELECT MIN(clientInterviewDate) FROM project_demands "
+                            "WHERE id NOT IN ('OPP-1003', 'OPP-own')").fetchone()[0] > later.isoformat()
+        assert seed_data.refresh_demo_dates(live, later) == 0                           # dates ahead stay
+        priorities = dict(live.execute("SELECT projectPriority, MIN(clientInterviewDate) FROM project_demands "
+                                       "WHERE id LIKE 'OPP-1%' AND id != 'OPP-1003' GROUP BY 1").fetchall())
+        assert priorities["CRITICAL"] < priorities["HIGH"] < priorities["MEDIUM"]
         live.rollback()
 
 

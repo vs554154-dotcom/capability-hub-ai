@@ -52,7 +52,13 @@ def starting_rows(include_demo: bool = True, today: date | None = None) -> Rows:
     unless SEED_DEMO_DATA is off."""
     today = today or date.today()
     base = _read(config.SEED_PATH, today)
-    demo = demo_rows(today) if include_demo and config.SEED_DEMO_DATA else {}
+    demo: Rows = {}
+    if include_demo and config.SEED_DEMO_DATA:
+        # A demo starts with interviews ahead, also for the base demands.
+        demo = demo_rows(today)
+        base["project_demands"] = [
+            r for r in sample_demands(today) if r["id"] in {d["id"] for d in base.get("project_demands", [])}
+        ]
     return {t: (base.get(t) or []) + (demo.get(t) or []) for t in SEED_TABLE_ORDER}
 
 
@@ -86,12 +92,28 @@ def load_demo(conn: sqlite3.Connection, today: date | None = None) -> dict[str, 
     return {t: insert_missing(conn, t, rows[t]) for t in SEED_TABLE_ORDER if rows.get(t)}
 
 
+_DAYS_AHEAD = {"CRITICAL": 12, "HIGH": 20, "MEDIUM": 32, "LOW": 45}
+
+
+def sample_demands(today: date | None = None) -> list[dict[str, Any]]:
+    """The sample demands with upcoming dates. The base ones were written with fixed
+    dates; those are set from the priority, the more urgent the sooner, a day apart."""
+    today = today or date.today()
+    base = []
+    for n, row in enumerate(_read(config.SEED_PATH, today).get("project_demands", [])):
+        days = _DAYS_AHEAD.get(row["projectPriority"], 32) + n
+        time = row["clientInterviewDate"][10:] or "T10:00:00Z"
+        base.append({**row, "clientInterviewDate": f"{today + timedelta(days=days)}{time}",
+                     "expectedJoiningDate": f"{today + timedelta(days=days + 30)}T09:00:00Z"})
+    return base + demo_rows(today).get("project_demands", [])
+
+
 def refresh_demo_dates(conn: sqlite3.Connection, today: date | None = None) -> int:
-    """Give open demo demands whose interview date has passed their dates again,
-    counted from today. Other demands, and dates still ahead, are left alone."""
+    """Give open sample demands whose interview date has passed new dates, counted from
+    today. Demands people created, and dates still ahead, are left alone."""
     today = today or date.today()
     moved = 0
-    for row in demo_rows(today).get("project_demands", []):
+    for row in sample_demands(today):
         moved += conn.execute(
             "UPDATE project_demands SET clientInterviewDate = ?, expectedJoiningDate = ? "
             "WHERE id = ? AND status = 'OPEN' AND substr(clientInterviewDate, 1, 10) < ?",

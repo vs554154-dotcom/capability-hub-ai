@@ -1,7 +1,7 @@
 """Adds the demo data set to an existing database. Safe to run again.
 
     python backend/scripts/load_demo_data.py                    add what is missing
-    python backend/scripts/load_demo_data.py --refresh-dates    also move passed demo interview dates ahead
+    python backend/scripts/load_demo_data.py --refresh-dates    also move passed sample interview dates ahead
     python backend/scripts/load_demo_data.py --dry-run          say what would be added, change nothing
 
 The database is DATABASE_PATH, or capability-hub.db in the repository root. When there is
@@ -43,7 +43,7 @@ def back_up() -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Add the demo data set to the database.")
-    parser.add_argument("--refresh-dates", action="store_true", help="move passed demo interview dates ahead of today")
+    parser.add_argument("--refresh-dates", action="store_true", help="move passed interview dates of the sample demands ahead of today")
     parser.add_argument("--dry-run", action="store_true", help="show what would change, and change nothing")
     args = parser.parse_args()
 
@@ -75,7 +75,7 @@ def main() -> int:
     else:
         print("Nothing to add: the demo data is already there.")
     if args.refresh_dates:
-        print(f"Demo interview dates moved ahead: {moved}")
+        print(f"Sample interview dates moved ahead: {moved}")
     return 0
 
 
