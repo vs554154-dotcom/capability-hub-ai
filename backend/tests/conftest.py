@@ -44,6 +44,8 @@ os.environ.update({
     "SESSION_SECRET": "test-only-secret",
     "DEMO_MODE": "false",
     "GEMINI_API_KEY": "",          # AI endpoints use their deterministic fallbacks
+    "GEMINI_MODEL": "",            # the default, whatever the developer's .env says
+    "GEMINI_BACKUP_MODELS": "",    # one model, unless a test says otherwise
     "AUTH_RATE_LIMIT_MAX": "100000",
     "NODE_ENV": "test",
     "APP_URL": "",

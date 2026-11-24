@@ -77,7 +77,7 @@ export interface Evidence {
 }
  
 export interface CapabilityScore {
-  overallScore: number; // 0 to 100
+  overallScore: number | null; // 0 to 100; null when no skill has a target
   skillsBreakdown: {
     skillId: string;
     score: number; // 0 to 100
@@ -111,6 +111,13 @@ export interface TeamMemberCapability {
   riskStatus?: string;
   readiness?: string;
   quadrant?: string;
+  // Where they stand between handoff and deployment.
+  activeProject?: { id: string; projectName: string } | null;
+  level1Score?: number | null;
+  level1Taken?: boolean;
+  projectStepsDone?: number;
+  projectStepsTotal?: number;
+  postAssessmentStatus?: "pending_signoff" | "cleared" | "not_ready" | null;
 }
  
 export interface WeeklyLearningStep {
@@ -178,25 +185,66 @@ export interface ResumeEligibility {
   growthDetail: { skillId: string; skillName: string; baselineLevel: number; currentLevel: number }[];
 }
  
+// What an employee's active handoff tells the SkillGap agent.
+export interface ActiveProject {
+  demand: ProjectDemand;
+  missingSkills: string[];
+  jobDescription: string;
+  interviewPassed: boolean;
+}
+
+// Something a person still has to close, and which agents' records say so.
+export interface CapabilityGap {
+  skillId: string | null;
+  skillName: string;
+  current: number | null;
+  target: number | null;
+  sources: string[];
+}
+
+// A finished Level-1 assessment, scored and stored by the server. A null score means
+// that part was not taken or could not be graded.
+export interface SkillGapAssessment {
+  id: string;
+  userId: string;
+  demandId?: string | null;
+  mode: "project_hiring" | "self_upskilling";
+  roleTitle: string;
+  completedAt: string;
+  result: {
+    overallScore: number | null;
+    mcqScore: number | null;
+    mcqCorrect: number;
+    mcqTotal: number;
+    spokenScore: number | null;
+    practicalScore: number | null;
+    provisionalAnswers: number;
+    unanswered: number;
+    selfReportedWill: number | null;
+    weights: { mcqsWeight: number; scenariosWeight: number; practicalWeight: number };
+    gaps: { label: string; source: "mcq" | "spoken" | "communication"; skillId: string | null; skillName: string | null }[];
+  };
+}
+
 export interface ResourceLearningProgress {
   userId: string;
   userName: string;
   userTitle: string;
   userAvatar: string;
   department: string;
-  trackName: string;
-  targetDeadline: string;
-  deadlineType: "client_interview" | "project_deadline" | "learner_set" | "manager_assigned";
+  activeProject: { id: string; projectName: string; customerName: string } | null;
+  planIsForProject: boolean;
+  targetDeadline: string | null;
+  deadlineType: "client_interview" | "project_deadline" | "learner_set" | "manager_assigned" | null;
   totalSteps: number;
   completedSteps: number;
   overallProgressPercent: number;
-  averageQuizScore: number;
+  averageQuizScore: number | null;
   totalTimeSpentMins: number;
   microCount: number;
   inDepthCount: number;
   bestPracticeCount: number;
   status: "not_started" | "in_progress" | "completed";
-  lastActive: string;
   steps: WeeklyLearningStep[];
 }
  
@@ -250,7 +298,6 @@ export interface CandidateMatch {
   domainMatchPct: number;
   experienceMatchPct: number;
   capabilityReadiness: number;
-  confidenceScore: number;
   matchExplanation: string;
   missingSkills: string[];
   handOffRequired: boolean;

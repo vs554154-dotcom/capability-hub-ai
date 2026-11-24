@@ -95,12 +95,13 @@ class TestRepositoryLayout:
 
     def test_source_archive_is_not_in_public(self):
         # Vite copies public/ verbatim into dist/, the web root.
-        assert not (REPO_ROOT / "public" / "capability_hub_ai_source.zip").exists()
+        assert (REPO_ROOT / "frontend" / "public").is_dir()
+        assert not (REPO_ROOT / "frontend" / "public" / "capability_hub_ai_source.zip").exists()
         assert (REPO_ROOT / "private" / "capability_hub_ai_source.zip").exists()
 
     def test_server_bundle_is_not_built_into_the_web_root(self):
         # A server bundle was once written into dist/, publishing server source. The
         # build is now Vite alone; no script may bundle anything else.
-        scripts = json.loads((REPO_ROOT / "package.json").read_text("utf-8"))["scripts"]
+        scripts = json.loads((REPO_ROOT / "frontend" / "package.json").read_text("utf-8"))["scripts"]
         assert scripts["build"] == "vite build"
         assert not any("esbuild" in cmd or "--outfile" in cmd for cmd in scripts.values())

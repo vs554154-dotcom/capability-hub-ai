@@ -51,11 +51,7 @@ def list_demands(_: dict = Depends(require_auth)) -> dict[str, Any]:
 def create_demand(
     body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_manager_or_above)
 ) -> dict[str, Any]:
-    if not all(body.get(f) for f in ("projectName", "customerName", "businessUnit")):
-        raise HTTPException(
-            status_code=400, detail="Project Name, Customer Name, and Business Unit are required."
-        )
-    return {"success": True, "demand": demands.create_project_demand(body)}
+    return {"success": True, "demand": talent.create_demand(body)}
 
 
 @router.post("/project-demand/match")

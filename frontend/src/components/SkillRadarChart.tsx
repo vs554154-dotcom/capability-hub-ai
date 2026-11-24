@@ -42,7 +42,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({ skills }) => {
   }).join(" ");
 
   const targetPoints = skills.map((s, i) => {
-    const { x, y } = getCoordinates(i, s.target || 4);
+    const { x, y } = getCoordinates(i, s.target);
     return `${x},${y}`;
   }).join(" ");
 

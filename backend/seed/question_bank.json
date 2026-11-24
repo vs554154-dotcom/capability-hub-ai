@@ -1,0 +1,197 @@
+{
+  "Java": [
+    ["Which collection keeps its entries sorted by key?", ["TreeMap", "HashMap", "LinkedHashMap", "IdentityHashMap"], "TreeMap orders entries by key. HashMap keeps no order and LinkedHashMap keeps insertion order."],
+    ["Two objects are equal according to equals(). What must also be true?", ["Their hashCode() values are the same", "They are the same instance in memory", "Their toString() values are the same", "Both classes implement Comparable"], "Equal objects must return the same hashCode, or hash-based collections cannot find them."],
+    ["What does try-with-resources do when its block ends?", ["Closes each declared AutoCloseable", "Retries the block if it failed", "Rolls back any open transaction", "Sets each resource variable to null"], "Every resource declared in the try header is closed automatically, even when an exception is thrown."]
+  ],
+  "Java Core & OOP Principles": [
+    ["A field should be readable everywhere but changed only through checks. What is the usual design?", ["A private field with a getter and a checked setter", "A public field with a comment about valid values", "A static field shared by every instance", "A protected field changed by any subclass"], "Encapsulation hides the field and puts every change behind a method that can check it."],
+    ["What decides which overridden method runs when a call is made through a superclass reference?", ["The actual type of the object at run time", "The declared type of the reference variable", "The order in which the classes were loaded", "The access modifier of the superclass method"], "Overridden instance methods are dispatched on the run-time type. That is polymorphism."],
+    ["When is an interface a better choice than an abstract class?", ["When unrelated classes must share a contract", "When subclasses must share private fields", "When a constructor must run shared setup", "When a class must not be extended at all"], "A class can implement many interfaces, so an interface suits a contract shared by unrelated types."]
+  ],
+  "Spring Boot": [
+    ["Why is constructor injection usually preferred over field injection?", ["Dependencies are explicit and can be final", "It makes the application start in parallel", "It removes the need for a Spring context", "It lets circular dependencies resolve silently"], "Constructor injection shows what a class needs, allows final fields and makes unit testing simple."],
+    ["A @Transactional method is called by another method of the same class. What happens by default?", ["No transaction starts, because the proxy is bypassed", "A new transaction always starts for the inner call", "The application fails to start with an error", "The inner call runs on a separate thread"], "The default transaction support works through a proxy, and a self-call never goes through it."],
+    ["What does an auto-configuration class do when you define your own bean of the same type?", ["It normally backs off and your bean is used", "It replaces your bean with its own default", "It creates both and picks one at random", "It stops startup with a duplicate bean error"], "Auto-configuration is usually conditional on a missing bean, so your own definition takes over."]
+  ],
+  "React": [
+    ["What is the purpose of the key prop in a list?", ["It lets React match items between renders", "It sorts the list before it is rendered", "It makes each item available by reference", "It stops the list from rendering again"], "A stable key tells React which item is which, so state and DOM nodes stay with the right item."],
+    ["A value can be calculated from existing props during render. Where should it live?", ["Calculated in render, not copied into state", "In state, updated by an effect on each change", "In a ref, so changing it avoids a render", "In context, so that children can read it"], "Copying derived values into state creates two sources of truth that can disagree."],
+    ["When does the cleanup function returned by useEffect run?", ["Before the effect runs again and on unmount", "Only when the component throws an error", "Once, straight after the first render", "Each time any state in the app changes"], "Cleanup runs before the next run of the same effect and when the component unmounts."]
+  ],
+  "Microservices": [
+    ["An order must be saved and an event published, with neither lost. Which pattern fits?", ["Transactional outbox", "Two services sharing one table", "Fire-and-forget after the commit", "Client-side retries with no limit"], "The outbox stores the event in the same local transaction, and a relay publishes it afterwards."],
+    ["A downstream service is slow and callers are piling up. What does a circuit breaker do?", ["Fails fast for a while, then tests for recovery", "Queues every request until the service answers", "Sends each request twice to improve the odds", "Moves the downstream service to another host"], "An open circuit stops calls for a period, so a slow dependency cannot exhaust its callers."],
+    ["Consumers may receive the same message twice. What makes that safe?", ["Processing the message idempotently", "Using a larger message queue", "Adding more consumer instances", "Shortening the message timeout"], "At-least-once delivery means duplicates happen, so handling one twice must have no extra effect."]
+  ],
+  "REST APIs": [
+    ["Which HTTP method should be safe to repeat with the same final result when updating a resource?", ["PUT", "POST", "CONNECT", "PATCH in every case"], "PUT is defined as idempotent. POST is not, and PATCH only may be."],
+    ["A request is well formed and the caller is signed in, but is not allowed to see the record. Which status fits?", ["403 Forbidden", "401 Unauthorized", "400 Bad Request", "503 Service Unavailable"], "401 means not authenticated. 403 means authenticated but not permitted."],
+    ["A list endpoint can return millions of rows. Which approach stays stable while rows are being added?", ["Cursor-based pagination", "Returning everything, compressed", "Offset pagination with a large page", "Asking clients to call less often"], "A cursor continues from a known row, so inserted rows do not shift later pages."]
+  ],
+  "SQL": [
+    ["Which clause filters groups after aggregation?", ["HAVING", "WHERE", "ORDER BY", "DISTINCT"], "WHERE filters rows before grouping. HAVING filters the groups themselves."],
+    ["A LEFT JOIN is followed by a WHERE condition on a right-table column. What is the usual effect?", ["Rows with no match are removed", "Every left row is still returned", "The query returns duplicate left rows", "The join becomes a cross join"], "The unmatched rows hold NULL, which fails the condition, so it behaves like an inner join."],
+    ["An index exists on (customer_id, created_at). Which filter can use it best?", ["customer_id = 5 AND created_at > date", "created_at > date only", "UPPER(customer_id) = '5'", "status = 'open' only"], "A composite index is used from its leftmost column, and a function on the column defeats it."]
+  ],
+  "CI/CD": [
+    ["What is the main reason to build an artifact once and promote it through environments?", ["What was tested is exactly what is released", "It makes every environment use one database", "It removes the need for automated tests", "It lets developers skip code review"], "Rebuilding per environment can produce a different artifact from the one that passed the tests."],
+    ["How should a pipeline receive a production password?", ["From a secret store at run time", "From a file committed beside the code", "From a variable printed in the build log", "From the image, baked in at build time"], "Secrets belong in a secret store and are injected at run time, never committed or logged."],
+    ["What does a canary release do?", ["Sends a small share of traffic to the new version", "Runs the old and new versions on test data only", "Replaces every instance in a single step", "Deploys the new version with no users at all"], "A canary limits the effect of a bad release while real traffic shows whether it is healthy."]
+  ],
+  "CI/CD & Cloud Infrastructure": [
+    ["A deployment must be undone quickly and reliably. What helps most?", ["Versioned artifacts and a tested rollback step", "Manual notes on what was changed", "A longer maintenance window", "Larger virtual machines"], "Rolling back means redeploying a known artifact, which only works if it was kept and practised."],
+    ["What is the benefit of describing infrastructure as code?", ["Changes can be reviewed and repeated", "Servers no longer need patching", "Costs are always lower", "Networks no longer need rules"], "Infrastructure as code makes environments reproducible and puts each change through review."],
+    ["Which setup keeps a service running when one data centre zone fails?", ["Instances spread across several zones", "One large instance with daily backups", "A second instance in the same rack", "A bigger disk on the same machine"], "Spreading instances over zones removes a single zone as a point of failure."]
+  ],
+  "CI/CD Test Automation Pipelines": [
+    ["Which tests should run first in a pipeline?", ["Fast unit tests", "Full browser regression", "Overnight load tests", "Manual exploratory tests"], "Fast tests give the quickest feedback and stop the slower stages when something basic is broken."],
+    ["A test passes and fails without any code change. What is the right response?", ["Treat it as a defect and fix or quarantine it", "Retry it until it passes every time", "Delete the assertion that fails", "Raise the pipeline timeout"], "Unreliable tests hide real failures, so they are isolated and fixed rather than ignored."],
+    ["Why run browser tests headless in a pipeline?", ["Build agents usually have no display", "Headless browsers skip JavaScript", "It makes locators unnecessary", "It removes the need for test data"], "Headless mode runs the real browser engine without a screen, which suits build agents."]
+  ],
+  "Python": [
+    ["What is risky about def add(item, items=[])?", ["The same list is reused across calls", "The list is copied on each call", "The function cannot return a list", "The argument becomes read-only"], "Default values are created once, when the function is defined, so changes persist between calls."],
+    ["Which object is best for a very large sequence that is read once?", ["A generator", "A list", "A tuple", "A dictionary"], "A generator produces items one at a time instead of holding them all in memory."],
+    ["What does the with statement guarantee for an open file?", ["The file is closed, even after an error", "The file is locked for other processes", "The file is written to disk at once", "The file is opened in binary mode"], "The context manager closes the file when the block ends, however it ends."]
+  ],
+  "Spark": [
+    ["Which operation causes a shuffle?", ["groupByKey", "map", "filter", "select"], "Grouping moves rows with the same key to one partition, which needs a shuffle across the network."],
+    ["One key holds most of the rows and a join is very slow. What is the problem called?", ["Data skew", "Lazy evaluation", "Schema drift", "Checkpointing"], "Skew puts most of the work on a few tasks. Salting or a broadcast join can relieve it."],
+    ["When does Spark run a chain of transformations?", ["When an action is called", "As each line is executed", "When the session starts", "When the cluster is idle"], "Transformations are lazy. An action such as count or write triggers the work."]
+  ],
+  "Azure Data Factory": [
+    ["What does a linked service describe?", ["The connection to a data store or compute", "The order in which activities run", "The columns of the target table", "The schedule of a pipeline"], "A linked service holds the connection details, and a dataset describes the data inside it."],
+    ["A pipeline must load only rows changed since the last run. What is usually used?", ["A stored watermark value", "A larger integration runtime", "A second copy of the source", "A manual filter on each run"], "The last loaded timestamp or id is kept as a watermark and used to filter the next run."],
+    ["Data sits on a private network. What lets Data Factory reach it?", ["A self-hosted integration runtime", "A tumbling window trigger", "A parameterised dataset", "A mapping data flow"], "A self-hosted integration runtime runs inside the private network and moves the data."]
+  ],
+  "Databricks": [
+    ["What does Delta Lake add on top of data files?", ["ACID transactions through a transaction log", "Automatic encryption of notebooks", "A graphical dashboard designer", "A replacement for Spark executors"], "The Delta transaction log gives atomic writes, versioning and consistent reads."],
+    ["Many small files make a Delta table slow to read. What helps?", ["OPTIMIZE, which compacts the files", "VACUUM with no retention limit", "Restarting the cluster each day", "Converting the table to CSV"], "OPTIMIZE rewrites small files into larger ones. VACUUM only removes old, unreferenced files."],
+    ["Which layer of the medallion design holds cleaned, joined data?", ["Silver", "Bronze", "Gold", "Landing"], "Bronze is raw, silver is cleaned and conformed, and gold is ready for reporting."]
+  ],
+  "Azure": [
+    ["How should an app on Azure read a secret without storing a password?", ["A managed identity with Key Vault", "A connection string in the source code", "A shared admin account", "A public storage container"], "A managed identity lets the app authenticate to Key Vault with no stored credential."],
+    ["What is a resource group?", ["A container for resources managed together", "A network that joins two regions", "A group of users who share a role", "A billing agreement with Microsoft"], "Resources with a shared lifecycle are placed in one resource group and managed as a unit."],
+    ["Which choice protects an application from the loss of one datacentre in a region?", ["Availability zones", "A larger VM size", "A premium disk", "A resource lock"], "Availability zones are physically separate datacentres within one region."]
+  ],
+  "Kubernetes": [
+    ["What happens when a container's readiness probe fails?", ["It stops receiving traffic from the Service", "The container is restarted immediately", "The whole node is drained", "The Deployment is deleted"], "Readiness controls traffic. A failing liveness probe is what restarts the container."],
+    ["Which object gives a stable address to a changing set of Pods?", ["Service", "ConfigMap", "ReplicaSet", "Namespace"], "A Service selects Pods by label and gives them one stable address."],
+    ["A container uses more memory than its limit. What happens?", ["It is killed for running out of memory", "It is slowed down by the scheduler", "It is moved to a larger node", "Its limit is raised automatically"], "Exceeding a memory limit ends the container. Exceeding a CPU limit only throttles it."]
+  ],
+  "Docker": [
+    ["Why put dependency installation before copying the source code in a Dockerfile?", ["The dependency layer can be reused from cache", "The image will contain no dependencies", "The container will start as root", "The source code will be compressed"], "If the dependency files have not changed, the layer is reused and the build is faster."],
+    ["What is the benefit of a multi-stage build?", ["Build tools stay out of the final image", "Several containers run at once", "The image runs on any CPU type", "Volumes are created automatically"], "Only the built output is copied to the last stage, so the image is smaller and safer."],
+    ["Data must outlive the container. Where should it be written?", ["To a volume", "To the container's writable layer", "To an environment variable", "To the image during build"], "The writable layer is removed with the container, while a volume remains."]
+  ],
+  "Terraform": [
+    ["What is the state file for?", ["Mapping configuration to real resources", "Storing the provider's source code", "Listing every user with access", "Recording the cost of each resource"], "Terraform compares the state and the configuration to plan which changes are needed."],
+    ["Several people run Terraform on one project. What prevents conflicting changes?", ["A remote backend with state locking", "A separate state file on each laptop", "Running apply without a plan", "Editing resources in the portal first"], "A shared backend with locking lets only one run change the state at a time."],
+    ["What does terraform plan do?", ["Shows the changes without making them", "Creates resources in a test account", "Formats the configuration files", "Deletes resources no longer in use"], "Plan is a preview, and apply makes the changes."]
+  ],
+  "Azure DevOps": [
+    ["Where is a YAML pipeline definition kept?", ["In the repository, versioned with the code", "In the work item that requested it", "On the build agent's local disk", "In the subscription's billing settings"], "A YAML pipeline lives in the repository, so changes to it are reviewed like code."],
+    ["What can a branch policy enforce on main?", ["Reviews and a passing build before merge", "The hardware used by the developer", "The number of commits in a day", "The size of each work item"], "Branch policies can require reviewers, linked work items and a successful build."],
+    ["How do you require a person's approval before deploying to production?", ["An approval check on the environment", "A comment in the pipeline file", "A longer job timeout", "A second build agent"], "Checks on an environment pause the stage until the named approvers accept it."]
+  ],
+  "Machine Learning": [
+    ["Training accuracy is very high and validation accuracy is low. What is the problem?", ["Overfitting", "Underfitting", "Data encryption", "Class balance"], "The model has learned the training data too closely and does not generalise."],
+    ["Only 1% of cases are fraud. Why is accuracy a poor measure?", ["Predicting no fraud scores 99%", "Accuracy cannot be computed", "Accuracy ignores the majority class", "It needs a larger test set"], "With rare classes, precision and recall show what accuracy hides."],
+    ["Why must the scaler be fitted on the training data only?", ["To avoid leaking test information", "To make training run faster", "To keep all values positive", "To reduce the number of features"], "Fitting on all the data lets the test set influence training, which inflates the result."]
+  ],
+  "Azure ML": [
+    ["What is a registered model for?", ["Tracking versions so they can be deployed", "Storing the raw training data", "Scheduling the compute cluster", "Labelling images by hand"], "The registry keeps versioned models with their details, ready for deployment."],
+    ["Which option suits scoring a large file overnight?", ["A batch endpoint", "A real-time endpoint", "A compute instance notebook", "A data label project"], "Batch endpoints process large inputs without keeping an online service running."],
+    ["Why define an environment for a training job?", ["So the run uses the same packages each time", "So the data is copied to every node", "So costs are shared between teams", "So the model trains without code"], "A fixed environment makes a run reproducible."]
+  ],
+  "NLP": [
+    ["What does tokenization do?", ["Splits text into units a model can use", "Removes personal names from text", "Translates text into English", "Checks the grammar of a sentence"], "Tokens, whether words or parts of words, are the units that a language model reads."],
+    ["What is an embedding?", ["A vector that represents meaning", "A list of banned words", "A compressed text file", "A grammar rule"], "Texts with similar meaning have vectors that are close together."],
+    ["Which measure balances precision and recall?", ["F1 score", "Perplexity", "Token count", "Learning rate"], "F1 is the harmonic mean of precision and recall."]
+  ],
+  "GenAI": [
+    ["What is the main purpose of retrieval-augmented generation?", ["Grounding answers in supplied sources", "Training a new model for each question", "Making the model respond faster", "Removing the need for a prompt"], "Retrieved passages go into the prompt, so the answer can rest on them."],
+    ["A user's text tells the assistant to ignore its rules. What is this called?", ["Prompt injection", "Temperature drift", "Fine-tuning", "Context caching"], "Untrusted text can carry instructions, so it must be treated as data and limited in effect."],
+    ["Lowering the temperature setting does what?", ["Makes the output less random", "Reduces the length limit", "Shortens the context window", "Disables safety filters"], "A low temperature favours the most likely tokens, so repeated answers vary less."]
+  ],
+  "MLOps": [
+    ["Live input data slowly changes from the training data. What is this called?", ["Data drift", "Data masking", "Cross-validation", "Regularisation"], "Drift can lower quality without any code change, which is why it is monitored."],
+    ["What should be versioned so a model can be reproduced?", ["Code, data and parameters", "Only the final model file", "Only the training notebook", "Only the evaluation report"], "The same code on different data gives a different model, so all three matter."],
+    ["What does a shadow deployment do?", ["Runs the new model without using its answers", "Sends all users to the new model", "Trains the model on live traffic", "Hides the old model from logs"], "Shadow mode compares the new model on real traffic with no effect on users."]
+  ],
+  "Requirements Gathering": [
+    ["What makes a requirement testable?", ["A clear condition that can pass or fail", "Approval by a senior manager", "A detailed technical design", "A long written description"], "If nobody can say what would fail it, it cannot be tested."],
+    ["Two stakeholders give opposite requirements. What comes first?", ["Bring them together on the underlying goal", "Build whichever was asked for first", "Build both and let users choose", "Leave it for the testers to settle"], "Conflicts are resolved by agreeing on the goal before anything is built."],
+    ["What does a traceability matrix show?", ["How each requirement links to design and tests", "How long each task is expected to take", "Which developer wrote each module", "How much each feature will cost"], "Traceability shows that every requirement is covered and what a change will affect."]
+  ],
+  "Agile": [
+    ["What is the purpose of a sprint retrospective?", ["To improve how the team works", "To show the product to customers", "To estimate the next backlog items", "To report individual performance"], "The review looks at the product, and the retrospective looks at the way of working."],
+    ["Who orders the product backlog in Scrum?", ["The Product Owner", "The Scrum Master", "The development lead", "The project sponsor"], "The Product Owner is accountable for ordering the backlog by value."],
+    ["Why limit work in progress on a Kanban board?", ["To finish items sooner and expose blockers", "To keep every person equally busy", "To make estimates more precise", "To reduce the number of columns"], "Less work in progress shortens cycle time and shows where work is stuck."]
+  ],
+  "Jira": [
+    ["What does a Jira workflow define?", ["The statuses and transitions of an issue", "The people who may log in to Jira", "The layout of a dashboard", "The size of each story point"], "A workflow sets the statuses an issue can have and how it moves between them."],
+    ["Which query finds open bugs assigned to you?", ["type = Bug AND assignee = currentUser() AND resolution = Unresolved", "find bugs where me and open", "SELECT * FROM bugs WHERE open", "label:bug owner:me status:any"], "JQL uses field, operator and value, and currentUser() means the signed-in user."],
+    ["How is a large piece of work that spans several sprints usually recorded?", ["As an epic with child stories", "As one very long story", "As a comment on the board", "As a set of unrelated tasks"], "An epic groups the stories that deliver one larger outcome."]
+  ],
+  "Stakeholder Management": [
+    ["A stakeholder has high influence and low interest. What is the usual approach?", ["Keep them satisfied, without too much detail", "Include them in every daily meeting", "Leave them out until the end", "Send only the technical reports"], "The power and interest grid suggests keeping such people satisfied."],
+    ["A delivery date will be missed. When should stakeholders be told?", ["As soon as it is known, with options", "After the date has passed", "Only if they ask about it", "At the next yearly review"], "Early notice gives people time to choose between the options."],
+    ["What is the clearest way to avoid disputes over scope?", ["A written, agreed scope with change control", "A verbal promise in the first meeting", "A larger contingency budget", "Fewer people in each meeting"], "Agreed scope and a change process give both sides a shared reference."]
+  ],
+  "Enterprise TypeScript Development": [
+    ["What is the safer choice for a value of unknown shape?", ["unknown, narrowed before use", "any, used directly", "object, cast to any", "never, with a default"], "unknown must be narrowed before use, while any switches type checking off."],
+    ["What does a discriminated union need?", ["A common literal field in each member", "An abstract base class", "An index signature", "A default export"], "The shared literal field lets the compiler narrow to one member."],
+    ["What do TypeScript types do at run time?", ["Nothing, because they are removed", "Validate each API response", "Convert values between types", "Throw an error on a mismatch"], "Types are erased when compiled, so external data still needs run-time checks."]
+  ],
+  "Next.js App Architecture": [
+    ["In the App Router, what are components by default?", ["Server Components", "Client Components", "Static HTML files", "API routes"], "Components under app/ run on the server unless marked with 'use client'."],
+    ["A component uses useState and a click handler. What must it have?", ["The 'use client' directive", "A getServerSideProps function", "A middleware file", "A route handler"], "State and event handlers need the component to run in the browser."],
+    ["Where should a secret API key be used?", ["In server code only", "In a variable prefixed NEXT_PUBLIC_", "In a Client Component", "In the public folder"], "Anything prefixed NEXT_PUBLIC_ or sent to a Client Component reaches the browser."]
+  ],
+  "Gemini API Integration": [
+    ["Where should the Gemini API key be kept?", ["On the server, read from the environment", "In the browser's local storage", "In the frontend bundle", "In the page's query string"], "A key in the browser can be copied by any visitor, so calls go through the server."],
+    ["The application needs JSON it can parse. What is the more reliable approach?", ["Request structured output and validate it", "Ask politely and parse without checks", "Raise the temperature setting", "Split the reply on each comma"], "Structured output narrows the format, and validation still protects the application."],
+    ["The model call fails or times out. What should the application do?", ["Fall back and say that it did so", "Show the user a raw stack trace", "Retry without limit until it works", "Return an invented answer"], "A bounded call with an honest fallback keeps the product usable and truthful."]
+  ],
+  "PostgreSQL & Vector Database Optimization": [
+    ["Which command shows how PostgreSQL really ran a query?", ["EXPLAIN ANALYZE", "SHOW TABLES", "VACUUM FULL", "CREATE STATISTICS"], "EXPLAIN shows the plan, and ANALYZE runs it and reports the real timings."],
+    ["What does an approximate vector index such as HNSW trade away?", ["Some recall, for much faster search", "All writes, for exact answers", "Storage, for perfect accuracy", "Transactions, for encryption"], "Approximate search may miss a few nearest neighbours but is far faster on large sets."],
+    ["Dead rows build up after many updates. What reclaims the space?", ["VACUUM", "REFRESH", "TRUNCATE", "ANALYZE only"], "PostgreSQL keeps old row versions until VACUUM marks their space for reuse."]
+  ],
+  "System Design & Scalability": [
+    ["Reads are far more frequent than writes and can be slightly stale. What helps most?", ["A cache with a sensible expiry", "A larger transaction log", "Synchronous writes to every region", "A stricter database lock"], "Caching takes read load away from the database where slight staleness is acceptable."],
+    ["What makes it easy to add more application servers?", ["Keeping the servers stateless", "Storing sessions in local memory", "Giving each server its own database", "Writing uploads to the local disk"], "If any server can handle any request, capacity grows by adding servers."],
+    ["A sudden burst of work exceeds processing capacity. What smooths it out?", ["A queue between producer and worker", "A shorter request timeout", "A second load balancer", "A bigger response payload"], "A queue absorbs the burst and lets workers process at a steady rate."]
+  ],
+  "Git & Version Control": [
+    ["How do you undo a commit that others have already pulled?", ["git revert", "git reset --hard then force push", "git clean", "git stash drop"], "Revert adds a new commit that undoes the change without rewriting shared history."],
+    ["What does git rebase do to the commits it moves?", ["Creates new commits with new ids", "Merges them into a single tag", "Deletes them from the remote", "Signs them with your key"], "Rebased commits are rewritten, which is why shared branches should not be rebased."],
+    ["A password was committed and pushed. What is the first step?", ["Change the password", "Delete the branch", "Add the file to .gitignore", "Rename the repository"], "Once pushed the secret is exposed, so it must be changed. Cleaning history comes after."]
+  ],
+  "Selenium Automation Framework": [
+    ["What is the benefit of the Page Object Model?", ["Locators and actions for a page stay in one place", "Tests run without opening a browser", "Assertions are written automatically", "Test data is created by the page"], "When the page changes, only its page object needs updating."],
+    ["An element appears a moment after the page loads. What is the best wait?", ["An explicit wait for its condition", "A fixed sleep of ten seconds", "A retry of the whole test", "No wait with a longer locator"], "An explicit wait continues as soon as the condition holds and fails clearly if it never does."],
+    ["Which locator is usually the most stable?", ["A dedicated test id", "An absolute XPath", "The third child of a div", "A long chain of CSS classes"], "An attribute meant for tests does not change with the layout or styling."]
+  ],
+  "Postman & REST API Testing": [
+    ["What is an environment in Postman for?", ["Holding values such as base URLs per target", "Running requests inside a container", "Storing responses permanently", "Limiting who can view a collection"], "One collection can run against test or staging by switching the environment."],
+    ["How do you run a Postman collection from a pipeline?", ["With Newman", "With a browser extension", "With a monitor screenshot", "With a saved cURL file"], "Newman is the command-line runner for Postman collections."],
+    ["What does JSON schema validation check?", ["The structure and types of a response", "The speed of the network", "The age of the API key", "The order of the test scripts"], "It confirms that the fields exist and have the right types, beyond checking one value."]
+  ],
+  "TestNG & Automation Frameworks": [
+    ["What is a DataProvider used for?", ["Running one test with many inputs", "Connecting tests to a database", "Sharing a browser between suites", "Printing an HTML report"], "A DataProvider supplies rows of arguments, and the test runs once for each row."],
+    ["Parallel tests share one static WebDriver and fail randomly. What fixes it?", ["A separate driver for each thread", "A longer implicit wait", "A faster machine", "A larger suite file"], "Drivers are not thread-safe, and ThreadLocal gives each thread its own."],
+    ["What does a soft assertion do?", ["Records the failure and continues the test", "Ignores the failure completely", "Retries the assertion three times", "Passes when the value is close"], "Soft assertions collect failures, which are reported when assertAll is called."]
+  ],
+  "Strategic AI Product Management": [
+    ["What should be agreed before building an AI feature?", ["How success and failure will be measured", "Which model is the newest", "How many prompts will be written", "What colour the assistant will be"], "Without agreed measures, nobody can tell whether the feature is useful or safe to release."],
+    ["An AI feature is sometimes wrong. What design choice matters most?", ["Letting people check and correct it", "Hiding which answers come from AI", "Showing a confident tone each time", "Removing the feedback button"], "Review and correction limit the harm of mistakes and give data for improving the feature."],
+    ["Which is a good first use case for an AI feature?", ["Frequent work where mistakes are easy to spot", "Rare decisions that cannot be undone", "Work with no available data", "Tasks with no clear owner"], "Frequent, checkable work gives quick learning at low risk."]
+  ],
+  "Manager-as-Coach Framework": [
+    ["What does the R in GROW stand for?", ["Reality", "Results", "Review", "Reward"], "GROW stands for Goal, Reality, Options and Will."],
+    ["Which question is a coaching question?", ["What have you tried so far?", "Why did you not follow my plan?", "Can you finish this by Friday?", "Did you read the document I sent?"], "Open questions help the person think. The others check or instruct."],
+    ["What is agreed in the Will stage?", ["What the person will do and by when", "How their last review was scored", "Which tools the team will buy", "Who will replace them on leave"], "The Will stage turns options into a commitment with a date."]
+  ]
+}

@@ -26,6 +26,9 @@ DB_PATH = Path(
 # Seed rows loaded into any table that is still empty on startup.
 SEED_PATH = Path(__file__).resolve().parent.parent / "seed" / "seed.json"
 
+# Multiple-choice questions per skill, for assessments and knowledge checks.
+QUESTION_BANK_PATH = SEED_PATH.with_name("question_bank.json")
+
 # Signs the session cookie. Unset, an insecure development fallback is used and
 # startup logs a warning.
 SESSION_SECRET = os.getenv("SESSION_SECRET") or "dev-insecure-secret-change-me"
@@ -56,6 +59,15 @@ def _positive_seconds(name: str, default: float) -> float:
 # above normal generation time: long reports have been observed to take over 90s.
 # A misconfigured value fails at startup rather than silently removing the bound.
 GEMINI_TIMEOUT_SECONDS = _positive_seconds("GEMINI_TIMEOUT_SECONDS", 120.0)
+
+# The model every agent uses, and the ones tried in order when Google answers that it
+# is overloaded, out of quota or gone. Set the second to an empty string for none.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3.6-flash"
+GEMINI_BACKUP_MODELS = [
+    name.strip()
+    for name in os.getenv("GEMINI_BACKUP_MODELS", "gemini-3.5-flash,gemini-flash-lite-latest,gemini-3.1-flash-lite").split(",")
+    if name.strip() and name.strip() != GEMINI_MODEL
+]
 
 SESSION_COOKIE_NAME = "chub_sid"
 SESSION_MAX_AGE_SECONDS = 60 * 60 * 8  # 8 hours
@@ -88,8 +100,8 @@ DEV_ORIGINS = [
 # Built frontend - the public web root. Everything under it is served to any
 # browser, so nothing private may live here. Overridable so tests can point it at
 # a controlled tree.
-DIST_DIR = Path(os.getenv("DIST_DIR") or (REPO_ROOT / "dist"))
+DIST_DIR = Path(os.getenv("DIST_DIR") or (REPO_ROOT / "frontend" / "dist"))
 
 # Files that exist for gated endpoints only (e.g. the Leadership source download).
-# Deliberately outside both public/ and dist/, so no static route can reach them.
+# Deliberately outside frontend/, whose public/ and dist/ are served to everyone.
 PRIVATE_DIR = Path(os.getenv("PRIVATE_DIR") or (REPO_ROOT / "private"))

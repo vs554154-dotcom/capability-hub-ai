@@ -1,10 +1,10 @@
 # Cursor & Kiro Agent Rules for CyBridge
 
 - Always inspect `AGENTS.md` and `.kiro/instructions.md` before making architectural modifications. `AGENTS.md` is the source of truth; `ARCHITECTURE.md` describes how the system works.
-- There is one backend: Python/FastAPI in `backend/app/`. Backend changes go there, respecting its layers (routers → services → repositories). Node only builds the frontend.
+- There is one backend: Python/FastAPI in `backend/app/`. Backend changes go there, respecting its layers (routers → services → repositories). The React app is in `frontend/`; Node only builds it.
 - Keep all Gemini API calls server-side — `backend/app/ai.py` (`google-genai`, model `gemini-3.6-flash`). Never expose `GEMINI_API_KEY` to the browser.
 - Schema changes are new migrations in `backend/app/migrations.py`; never edit `backend/app/schema_sql.py`.
-- Verify frontend changes with `npm run lint` (`tsc --noEmit`) and `npm run build`.
-- Verify backend changes with `backend/.venv/Scripts/python -m pytest backend/tests` and `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — it must stay 59/59.
-- Build pages from the shared primitives in `src/components/ui/` and the theme tokens in `src/index.css`, so all six themes apply.
+- Verify frontend changes from `frontend/` with `npm run lint` (`tsc --noEmit`) and `npm run build`.
+- Verify backend changes with `backend/.venv/Scripts/python -m pytest backend/tests` and `python backend/scripts/verify_authz_scenarios.py http://localhost:8000` — it must stay 65/65.
+- Build pages from the shared primitives in `frontend/src/components/ui/` and the theme tokens in `frontend/src/index.css`, so all six themes apply.
 - Keep camera and microphone access in the interview agent graceful: ask, explain, and fall back when permission is denied.

@@ -14,9 +14,9 @@ from __future__ import annotations
 from typing import Any
 
 from ..database import transaction
-from ..errors import NotFound
+from ..errors import Invalid, NotFound
 from ..numeric import js_round
-from ..repositories import catalog, evidence, learning, user_skills, users
+from ..repositories import assessments, catalog, demands, evidence, learning, skillgap, user_skills, users
 
 
 def skill_score(levels: list[dict[str, Any]], approved_evidence: int) -> int:
@@ -108,10 +108,12 @@ def capability_report(user_id: str) -> dict[str, Any]:
                 met_count += 1
                 met = True
 
-        # A skill with no target counts as fully satisfied (100), which is why the
-        # average is generous by design.
+        # Only skills with a target count toward the score. (Every catalogue skill
+        # without one used to count as 100%, so a person with 9 targets out of 39
+        # skills scored about 40 points higher than their levels justified.)
         ratio = min(100, js_round((current / target) * 100)) if target > 0 else 100
-        score_accumulator += ratio
+        if target > 0:
+            score_accumulator += ratio
 
         breakdown.append({
             "skillId": sk["id"],
@@ -125,22 +127,30 @@ def capability_report(user_id: str) -> dict[str, Any]:
             "lastUpdated": held["lastUpdated"] if held else "-",
         })
 
-    average_ratio = js_round(score_accumulator / len(breakdown)) if breakdown else 0
     approved = sum(1 for e in submitted if e["status"] == "approved")
     pending = sum(1 for e in submitted if e["status"] == "pending")
 
     # Up to 15 points for human-validated proof.
     progress_bonus = min(15, approved * 5)
-    final_score = min(100, max(0, js_round(average_ratio * 0.85 + progress_bonus)))
-    met_percentage = js_round((met_count / total_requirements) * 100) if total_requirements else 0
-
     role_title = role["title"] if role else "selected role"
-    explainability = (
-        f"The score of {final_score}% is derived from:\n"
-        f"- Match ratio of current vs required levels for the '{role_title}' role: {average_ratio}%.\n"
-        f"- Professional evidence threshold: {approved} verified submission(s) ({progress_bonus}% index bonus).\n"
-        f"- Target goals successfully attained: {met_count} of {total_requirements} requirements ({met_percentage}% met)."
-    )
+    if total_requirements:
+        average_ratio = js_round(score_accumulator / total_requirements)
+        final_score: int | None = min(100, max(0, js_round(average_ratio * 0.85 + progress_bonus)))
+        met_percentage = js_round((met_count / total_requirements) * 100)
+        explainability = (
+            f"The score of {final_score}% is derived from:\n"
+            f"- Current against target level over the {total_requirements} skill(s) with a target "
+            f"for the '{role_title}' role: {average_ratio}%.\n"
+            f"- Professional evidence threshold: {approved} verified submission(s) ({progress_bonus}% index bonus).\n"
+            f"- Target goals successfully attained: {met_count} of {total_requirements} requirements ({met_percentage}% met)."
+        )
+    else:
+        # Nothing to be ready for: not measured, rather than a score made up of
+        # skills nobody asked for.
+        final_score = None
+        explainability = (
+            "Not measured: no skill has a target level yet. Choose a target role to set them."
+        )
 
     return {
         "overallScore": final_score,
@@ -154,6 +164,25 @@ def capability_report(user_id: str) -> dict[str, Any]:
             "evidenceCount": approved,
             "pendingValidation": pending,
         },
+    }
+
+
+def _flow_position(user_id: str) -> dict[str, Any]:
+    """Where someone stands between handoff and deployment, for the manager's board."""
+    handoff = assessments.get_latest_handoff(user_id)
+    demand = demands.get_project_demand_by_id(handoff["demandId"]) if handoff else None
+    level1 = skillgap.latest_completed(user_id)
+    post = assessments.get_latest_post_assessment(user_id, demand["id"]) if demand else None
+    steps = [
+        s for s in learning.get_learning_plan(user_id) if demand and s.get("demandId") == demand["id"]
+    ]
+    return {
+        "activeProject": {"id": demand["id"], "projectName": demand["projectName"]} if demand else None,
+        "level1Score": level1["result"]["overallScore"] if level1 else None,
+        "level1Taken": level1 is not None,
+        "projectStepsDone": sum(1 for s in steps if s["status"] == "completed"),
+        "projectStepsTotal": len(steps),
+        "postAssessmentStatus": post["status"] if post else None,
     }
 
 
@@ -201,6 +230,7 @@ def team_rollup(manager_id: str) -> list[dict[str, Any]]:
                 "approvedEvidenceCount": approved,
                 "experienceYears": member.get("experienceYears"),
                 "riskStatus": risk,
+                **_flow_position(member["id"]),
             })
     return result
 
@@ -230,11 +260,13 @@ def review_evidence(
 ) -> dict[str, Any] | None:
     """Record a manager's verdict. Approval promotes the skill one level (capped at 5)
     and marks it validated; any other verdict returns it to "learning". The verdict
-    and the level change commit together."""
+    and the level change commit together, and each submission is reviewed once: a
+    second approval used to raise the level again."""
     with transaction():
         if evidence.get_evidence_by_id(evidence_id) is None:
             return None
-        evidence.set_review(evidence_id, reviewer_id, status, comment)
+        if not evidence.set_review(evidence_id, reviewer_id, status, comment):
+            raise Invalid("This evidence has already been reviewed.")
         updated = evidence.get_evidence_by_id(evidence_id)
 
         held = next(

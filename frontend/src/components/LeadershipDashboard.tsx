@@ -4,6 +4,7 @@ import {
   ListChecks, Scale, ShieldAlert, Sparkles, Target, TrendingUp,
 } from "lucide-react";
 import { Meter, PageHeader, SectionCard, StatTile, Tag, scoreTone } from "./ui/Page";
+import { Markdown } from "./ui/Markdown";
 import { TrendChart } from "./ui/TrendChart";
 
 interface LeadershipDashboardProps {
@@ -36,6 +37,9 @@ interface Overview {
     skillName: string; openDemands: number; resourcesNeeded: number;
     ready: number; developing: number; balance: number; strategy: string;
   }[];
+  pipeline: {
+    handedOff: number; assessed: number; trackAssigned: number; trained: number; cleared: number; resumeReady: number;
+  };
   projection: {
     openGaps: number; employeesWithGaps: number;
     currentEri: number | null; projectedEri: number | null; coverage: number;
@@ -178,6 +182,22 @@ export const LeadershipDashboard: React.FC<LeadershipDashboardProps> = ({
           )}
         </SectionCard>
       </div>
+
+      {/* What the demand-to-deployment agents have recorded so far */}
+      <SectionCard
+        title="Deployment pipeline"
+        subtitle="People handed off to client projects, and how far each stage has got. Counted per person and project."
+        icon={Target}
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          <StatTile label="Handed off" value={overview.pipeline.handedOff} hint="to a project" />
+          <StatTile label="Assessed" value={overview.pipeline.assessed} hint="Level-1 taken for it" />
+          <StatTile label="Track assigned" value={overview.pipeline.trackAssigned} hint="for the project" />
+          <StatTile label="Trained" value={overview.pipeline.trained} hint="every step completed" />
+          <StatTile label="Cleared" value={overview.pipeline.cleared} hint="by their manager" />
+          <StatTile label="Resume ready" value={overview.pipeline.resumeReady} hint="all checks passed" />
+        </div>
+      </SectionCard>
 
       {/* 2. What the index is made of */}
       <SectionCard
@@ -339,9 +359,9 @@ export const LeadershipDashboard: React.FC<LeadershipDashboardProps> = ({
           }
         >
           {analyticsReport ? (
-            <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto whitespace-pre-wrap"
+            <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto"
                  style={{ background: "var(--surface-2)", border: "1px solid var(--line)", color: "var(--text-dim)" }}>
-              {analyticsReport}
+              <Markdown>{analyticsReport}</Markdown>
             </div>
           ) : (
             <div className="rounded-xl p-8 text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--line)" }}>

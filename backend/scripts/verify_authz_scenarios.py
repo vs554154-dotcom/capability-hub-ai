@@ -112,6 +112,7 @@ expect("reads own profile", emp.call("GET", "/api/users/" + EMP_ID)[0], 200)
 expect("reads own capability", emp.call("GET", "/api/users/" + EMP_ID + "/capability")[0], 200)
 expect("reads own learning plan", emp.call("GET", "/api/users/" + EMP_ID + "/learning-plan")[0], 200)
 expect("reads own evidence", emp.call("GET", "/api/evidence")[0], 200)
+expect("reads own SkillGap result", emp.call("GET", "/api/users/" + EMP_ID + "/skillgap-assessment")[0], 200)
 expect("reads shared catalogues", emp.call("GET", "/api/skills")[0], 200)
 
 # --------------------------------------------------------------------------- #
@@ -142,6 +143,8 @@ expect("employee -> validate evidence", emp.call("POST", "/api/validation", {
     "evidenceId": "x", "reviewerId": EMP_ID, "status": "approved", "comment": "x"})[0], 403)
 expect("employee -> assign learning track", emp.call("POST", "/api/learning-plan/assign", {
     "userId": EMP_ID, "targetDeadline": "2026-12-01", "steps": [{"title": "x"}]})[0], 403)
+expect("employee -> build a learning track", emp.call("POST", "/api/learning-plan/suggest",
+                                                      {"userId": EMP_ID})[0], 403)
 expect("employee -> create project demand", emp.call("POST", "/api/project-demand/create", {
     "projectName": "x", "customerName": "y", "businessUnit": "z"})[0], 403)
 expect("employee -> manager insight", emp.call("POST", "/api/manager/insight",
@@ -165,6 +168,10 @@ expect("manager -> foreign employee capability",
        mgr.call("GET", "/api/users/" + FOREIGN_EMP + "/capability")[0], 403)
 expect("manager -> foreign employee learning plan",
        mgr.call("GET", "/api/users/" + FOREIGN_EMP + "/learning-plan")[0], 403)
+expect("manager -> foreign employee SkillGap result",
+       mgr.call("GET", "/api/users/" + FOREIGN_EMP + "/skillgap-assessment")[0], 403)
+expect("manager -> build a track for a foreign employee",
+       mgr.call("POST", "/api/learning-plan/suggest", {"userId": FOREIGN_EMP})[0], 403)
 expect("manager -> submit evidence AS foreign employee",
        mgr.call("POST", "/api/evidence", {
            "userId": FOREIGN_EMP, "skillId": "sk_26", "title": "impersonation probe",
@@ -205,6 +212,18 @@ expect("employee cannot submit evidence as another user",
            "description": "d", "evidenceText": "t"})[0], 403)
 expect("employee cannot change another user's target role",
        emp.call("POST", "/api/users/" + MGR_ID + "/target-role", {"roleId": "role_2"})[0], 403)
+# A SkillGap assessment is answered only by the person it was made for, whose id never
+# comes from the request. Built by the employee, then tried by their own manager.
+_s, made = emp.call("POST", "/api/agent/generate-jd-assessment", {
+    "assessmentMode": "self_upskilling", "targetRole": "Engineer",
+    "targetSkillsToUpgrade": "Java", "userId": MGR_ID})
+aid = (made or {}).get("assessment", {}).get("id") if isinstance(made, dict) else None
+expect("manager cannot answer a report's assessment",
+       mgr.call("POST", "/api/agent/assessment-answer", {
+           "assessmentId": aid, "questionId": "mcq_1", "optionIndex": 0})[0], 404)
+expect("manager cannot finish a report's assessment",
+       mgr.call("POST", "/api/agent/complete-skillgap-assessment",
+                {"assessmentId": aid, "userId": EMP_ID, "overallScore": 100})[0], 404)
 
 # --------------------------------------------------------------------------- #
 print("\nSCENARIO 6 - direct API access with no session (must be refused)")

@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from ..database import execute, query_all, query_one
+from ..database import execute, query_all, query_one, transaction
 from ._common import compact, now_iso, random_id
 
 
@@ -63,12 +63,16 @@ def insert(
     return evidence_id
 
 
-def set_review(evidence_id: str, reviewer_id: str, status: str, comment: str) -> None:
-    execute(
-        """
-        UPDATE evidences
-           SET status = ?, reviewedBy = ?, reviewComment = ?, reviewedAt = ?
-         WHERE id = ?
-        """,
-        (status, reviewer_id, comment, now_iso(), evidence_id),
-    )
+def set_review(evidence_id: str, reviewer_id: str, status: str, comment: str) -> bool:
+    """Record the verdict on a pending submission. False if it was not pending: the
+    condition is part of the update, so two reviews at once cannot both succeed."""
+    with transaction() as conn:
+        cursor = conn.execute(
+            """
+            UPDATE evidences
+               SET status = ?, reviewedBy = ?, reviewComment = ?, reviewedAt = ?
+             WHERE id = ? AND status = 'pending'
+            """,
+            (status, reviewer_id, comment, now_iso(), evidence_id),
+        )
+        return cursor.rowcount == 1

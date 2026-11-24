@@ -46,10 +46,10 @@ def get_courses() -> list[dict[str, Any]]:
             "description": r["description"],
             "type": r["type"],
             "url": r["url"] or None,
-            "rating": r["rating"] or 4.9,
-            "enrollmentCount": r["enrollmentCount"] or "180,000+ Learners",
-            "lastUpdated": r["lastUpdated"] or "Updated June 2026",
-            "isLatest2026": bool(r["isLatest2026"]) if r["isLatest2026"] is not None else True,
+            "rating": r["rating"] or None,
+            "enrollmentCount": r["enrollmentCount"] or None,
+            "lastUpdated": r["lastUpdated"] or None,
+            "isLatest2026": bool(r["isLatest2026"]) if r["isLatest2026"] is not None else None,
         })
         for r in query_all("SELECT * FROM courses")
     ]

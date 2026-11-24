@@ -31,7 +31,7 @@ def _map(r: sqlite3.Row) -> dict[str, Any]:
         "learningType": col("learningType") or "in_depth",
         "estimatedDuration": col("estimatedDuration") or "1 hour",
         "phaseLabel": col("phaseLabel") or f"Phase {r['weekNumber']}",
-        "targetDeadline": col("targetDeadline") or "2026-08-15",
+        "targetDeadline": col("targetDeadline") or None,
         "deadlineType": col("deadlineType") or "client_interview",
         "quizScore": col("quizScore") or 0,
         "timeSpentMins": col("timeSpentMins") or 0,

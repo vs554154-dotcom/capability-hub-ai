@@ -8,7 +8,7 @@ backend: the Architecture Decision in [`AGENTS.md`](../AGENTS.md).
 ## Where this folder must live
 
 `app/config.py` resolves the repo root as `Path(__file__).parents[2]`, so this
-folder sits at **`<repo>/backend/`**, alongside `dist/` and the repo-root `.env`.
+folder sits at **`<repo>/backend/`**, alongside `frontend/` and the repo-root `.env`.
 
 Configuration comes from the environment and the repo-root `.env`; every setting and
 its default is in `.env.example`. `SESSION_SECRET` is worth setting; `DEMO_MODE`
@@ -24,9 +24,9 @@ python -m uvicorn backend.app.main:app --reload --reload-dir backend/app --port 
 ```
 
 Run from the **repo root**, not from `backend/`. The built frontend is served from
-`dist/`, which exists after `npm run build`.
+`frontend/dist/`, which exists after `npm run build` in `frontend/`.
 
-For frontend work, run `npm run dev` as well: Vite serves the app with hot reload on
+For frontend work, run `npm run dev` in `frontend/` as well: Vite serves the app with hot reload on
 `:5173` and proxies `/api` to this server, so the browser sees one origin and the
 session cookie works unchanged. `API_TARGET` points the proxy elsewhere.
 
@@ -48,6 +48,7 @@ restart, and a fresh deployment builds itself.
 | 3 | `rate_limits`: sign-in attempt counters shared by every worker. |
 | 4 | `eri_snapshots`: one Enterprise Readiness Index reading per day, for its trend. |
 | 5 | Data only: corrects one seeded job title, where it is still the original value. |
+| 6 | `skillgap_assessments`: Level-1 assessments and the scores the server gave them. |
 
 To change the schema, add a migration; never edit `schema_sql.py` (a test fails if
 it changes).
@@ -61,16 +62,16 @@ Hashes are bcrypt at cost factor 10; those written by the former Node server's
 
 ```bash
 backend/.venv/Scripts/python -m pytest backend/tests                       # no server needed
-python backend/scripts/verify_authz_scenarios.py http://localhost:8000      # the gate: 59/59
+python backend/scripts/verify_authz_scenarios.py http://localhost:8000      # the gate: 65/65
 python backend/scripts/verify_auth.py http://localhost:8000                 # 14 probes
 python backend/scripts/verify_ai.py http://localhost:8000                   # AI endpoints
 ```
 
-**`pytest`** — 98 tests, in-process against an isolated database: object-level
-authorization, path traversal, migrations, sessions, rate limits, the readiness
+**`pytest`** — 159 tests, in-process against an isolated database: the five
+agents alone and as one flow, object-level authorization, path traversal, migrations, sessions, rate limits, the readiness
 index, and Gemini through the real SDK against a local stand-in.
 
-**`verify_authz_scenarios`** — 59 checks across six scenarios, run against a live
+**`verify_authz_scenarios`** — 65 checks across six scenarios, run against a live
 server: employee, manager and leadership features, an employee reaching for manager
 data, a manager reaching into another team, user-id manipulation, and anonymous
 access. The gate for any backend change.
@@ -85,7 +86,7 @@ a bare `userId` login is rejected.
 `app/ai.py` wraps the `google-genai` SDK. The client is optional: every AI endpoint
 falls back to deterministic, recognisable text on a missing key or a failed call,
 returning HTTP 200, because the UI assumes these endpoints always answer. Every call
-is bounded by `GEMINI_TIMEOUT_SECONDS` and never retried. `generate_json()` strips
+is bounded by `GEMINI_TIMEOUT_SECONDS`; a busy model hands over to a backup one. `generate_json()` strips
 ``` fences and recovers the outermost JSON span, because models routinely wrap
 structured output in prose.
 
@@ -126,6 +127,7 @@ backend/
     schema_sql.py        the frozen version-1 baseline: DDL for 12 tables
     ai.py  security.py  ratelimit.py  config.py  errors.py  numeric.py
   seed/seed.json         rows loaded into empty tables on first boot
+  seed/question_bank.json  multiple-choice questions per skill
   tests/                 pytest suite - in-process, isolated database
   scripts/               probes run against a live server
   requirements.txt  requirements-dev.txt

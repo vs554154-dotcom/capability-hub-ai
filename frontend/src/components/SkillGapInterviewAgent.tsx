@@ -46,13 +46,20 @@ import {
   TrendingUp,
   Plus
 } from "lucide-react";
-import { User } from "../types";
+import { ActiveProject, CapabilityGap, SkillGapAssessment, User } from "../types";
 import { parseUploadedFile, ParsedFileInfo } from "../utils/fileParser";
 
+// The right option and its explanation arrive only once a question has been answered:
+// the server keeps the key and scores the answers.
 interface MCQ {
   id: string;
   question: string;
   options: string[];
+  skillArea?: string;
+}
+
+interface McqOutcome {
+  correct: boolean;
   correctIndex: number;
   explanation: string;
 }
@@ -92,6 +99,7 @@ export interface PracticalExercise {
 }
 
 interface Assessment {
+  id: string;
   assessmentMode?: "project_hiring" | "self_upskilling";
   currentDesignation?: string;
   targetRole?: string;
@@ -103,17 +111,29 @@ interface Assessment {
   mcqs: MCQ[];
   videoQuestions: VideoQuestion[];
   practicalExercise?: PracticalExercise;
-  /** Set when no model was reachable: generic questions, not built from the JD. */
+  /** Set when no model was reachable: the questions come from the question bank. */
   _fallback?: boolean;
 }
 
-// The gaps the evaluations actually returned, merged across answers. The final report
-// used to show the same fixed gap lists to every candidate, and to add fixed gaps to
-// every request it sent the Learning Concierge.
-const collectGaps = (evals: Record<string, AnswerEvaluation>) => ({
-  technical: Array.from(new Set(Object.values(evals).flatMap(e => e.technicalGaps || e.missingConcepts || []))),
-  communication: Array.from(new Set(Object.values(evals).flatMap(e => e.communicationGaps || []))),
-});
+const postJson = async (url: string, body: unknown) => {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
+  return data;
+};
+
+const WILL_SECTIONS = [
+  ["sec1_intent", 30], ["sec2_behavior", 25], ["sec3_adaptability", 20],
+  ["sec4_commitment", 15], ["sec5_engagement", 10],
+] as const;
+type WillKey = (typeof WILL_SECTIONS)[number][0];
+const NO_WILL: Record<WillKey, number | null> = {
+  sec1_intent: null, sec2_behavior: null, sec3_adaptability: null, sec4_commitment: null, sec5_engagement: null,
+};
 
 interface AnswerEvaluation {
   overallScore: number;
@@ -138,12 +158,9 @@ interface AnswerEvaluation {
 
 interface SkillGapInterviewAgentProps {
   currentUser: User;
+  /** The project this person was handed off to, with the skills it still misses. */
+  project?: ActiveProject | null;
   onNavigateToDashboard?: () => void;
-  initialRoleTitle?: string;
-  initialJobDescription?: string;
-  autoStartAssessment?: boolean;
-  candidateName?: string;
-  onCloseModal?: () => void;
   onRedirectToConcierge?: (identifiedGaps: string[], targetRole?: string) => void;
 }
 
@@ -192,32 +209,46 @@ Key Requirements:
 
 export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   currentUser,
+  project,
   onNavigateToDashboard,
-  initialRoleTitle,
-  initialJobDescription,
-  autoStartAssessment,
-  candidateName,
-  onCloseModal,
   onRedirectToConcierge
 }) => {
   // Mode / Step State
   const [step, setStep] = useState<"input" | "assessment" | "results">("input");
   
   // Assessment Intent & Context State (Project Hiring vs Self-Upskilling)
-  const [assessmentMode, setAssessmentMode] = useState<"project_hiring" | "self_upskilling">("project_hiring");
+  const [assessmentMode, setAssessmentMode] = useState<"project_hiring" | "self_upskilling">(
+    project ? "project_hiring" : "self_upskilling"
+  );
+  // Whether the assessment is for the project handed to this person, not another JD.
+  const [forProject, setForProject] = useState(!!project);
   const [currentDesignation, setCurrentDesignation] = useState<string>(
     currentUser.title || "Senior Software Engineer"
   );
-  const [targetSkillsToUpgrade, setTargetSkillsToUpgrade] = useState<string>(
-    "Gemini API & RAG, Event-Driven Microservices, System Architecture"
-  );
+  // Starts as this person's own largest gaps, once they are loaded.
+  const [targetSkillsToUpgrade, setTargetSkillsToUpgrade] = useState<string>("");
+  const [knownGaps, setKnownGaps] = useState<CapabilityGap[]>([]);
+  const [lastAssessment, setLastAssessment] = useState<SkillGapAssessment | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/users/${currentUser.id}/skillgap-assessment`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return;
+        setKnownGaps(data.gaps);
+        setLastAssessment(data.assessment);
+        const names = data.gaps.filter((g: CapabilityGap) => g.skillId).slice(0, 4).map((g: CapabilityGap) => g.skillName);
+        setTargetSkillsToUpgrade(prev => prev || names.join(", "));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUser.id]);
 
   // Input State
-  // Starts as the person's own target role, by title. (This used to show the role's
-  // internal id - "role_1" - or a made-up "Senior GenAI Solutions Architect".)
-  const [targetRole, setTargetRole] = useState(initialRoleTitle || "");
+  // Starts as the project handed to this person, else their own target role by title.
+  const [targetRole, setTargetRole] = useState(project?.demand.projectName || "");
   useEffect(() => {
-    if (initialRoleTitle || !currentUser.targetRoleId) return;
+    if (project || !currentUser.targetRoleId) return;
     let cancelled = false;
     fetch("/api/roles")
       .then(res => (res.ok ? res.json() : []))
@@ -227,10 +258,17 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [currentUser.targetRoleId, initialRoleTitle]);
-  const [jobDescription, setJobDescription] = useState(
-    initialJobDescription || PRESET_JDS[0].jd
-  );
+  }, [currentUser.targetRoleId, project]);
+  const [jobDescription, setJobDescription] = useState(project?.jobDescription || "");
+  // The handoff is looked up after sign-in, so it can arrive after this screen opens.
+  const applyProject = () => {
+    if (!project) return;
+    setAssessmentMode("project_hiring");
+    setForProject(true);
+    setTargetRole(project.demand.projectName);
+    setJobDescription(project.jobDescription);
+  };
+  useEffect(applyProject, [project?.demand.id]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -269,6 +307,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
       const parsed = await parseUploadedFile(file);
       setUploadedJdFile(parsed);
       if (parsed.extractedText.trim().length > 20) {
+        setForProject(false);
         setJobDescription(parsed.extractedText);
       }
     } catch (err: any) {
@@ -278,11 +317,6 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (initialRoleTitle) setTargetRole(initialRoleTitle);
-    if (initialJobDescription) setJobDescription(initialJobDescription);
-  }, [initialRoleTitle, initialJobDescription]);
-
   // Assessment State
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [activeTab, setActiveTab] = useState<"framework" | "mcq" | "video" | "practical" | "will">("framework");
@@ -291,18 +325,33 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   const [practicalCode, setPracticalCode] = useState("");
   const [practicalScore, setPracticalScore] = useState<number | null>(null);
   const [practicalFeedback, setPracticalFeedback] = useState<string | null>(null);
+  const [practicalProvisional, setPracticalProvisional] = useState(false);
+  const [practicalError, setPracticalError] = useState<string | null>(null);
   const [isEvaluatingPractical, setIsEvaluatingPractical] = useState(false);
 
-  // MCQ State
+  // MCQ State: the option chosen, and the server's verdict once it is checked.
   const [mcqAnswers, setMcqAnswers] = useState<Record<string, number>>({});
-  const [mcqSubmitted, setMcqSubmitted] = useState<Record<string, boolean>>({});
+  const [mcqOutcomes, setMcqOutcomes] = useState<Record<string, McqOutcome>>({});
+  const [mcqError, setMcqError] = useState<string | null>(null);
+  const [checkingMcq, setCheckingMcq] = useState<string | null>(null);
+
+  // The finished assessment, as scored and stored by the server.
+  const [finished, setFinished] = useState<SkillGapAssessment | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
 
   // Video / Audio Interview State
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [spokenTranscript, setSpokenTranscript] = useState("");
+  // Kept per question: one shared answer box carried the last question's answer into
+  // the next one.
+  const [transcripts, setTranscripts] = useState<Record<string, string>>({});
+  const activeQuestionId = assessment?.videoQuestions[currentVideoIdx]?.id ?? "";
+  const spokenTranscript = transcripts[activeQuestionId] ?? "";
+  const setSpokenTranscript = (text: string) =>
+    setTranscripts(prev => ({ ...prev, [activeQuestionId]: text }));
   // Shown when speech cannot be transcribed, so the candidate knows to type instead.
   const [transcriptHint, setTranscriptHint] = useState("");
   const [isSpeechSpeaking, setIsSpeechSpeaking] = useState(false);
@@ -312,13 +361,8 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   const [audioLevel, setAudioLevel] = useState(0);
 
   // Will & Behavioral Motivation State (5 Targeted Questions across 5 Sections)
-  const [willAnswers, setWillAnswers] = useState({
-    sec1_intent: 100,      // Career Intent (30%)
-    sec2_behavior: 100,    // Learning Behavior (25%)
-    sec3_adaptability: 100, // Adaptability & Resilience (20%)
-    sec4_commitment: 100,  // Learning Commitment (15%)
-    sec5_engagement: 100   // Voluntary Engagement (10%)
-  });
+  // Unanswered until chosen. (Every answer used to start at 100%.)
+  const [willAnswers, setWillAnswers] = useState<Record<WillKey, number | null>>(NO_WILL);
 
   // Video and Speech References
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -327,6 +371,13 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
   const recognitionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animFrameRef = useRef<number | null>(null);
+
+  // Each stage starts at its top; the button that leads to it is at the bottom.
+  useEffect(() => {
+    if (step !== "input") {
+      document.getElementById("skillgap-stage")?.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+  }, [step, activeTab]);
 
   // Clean up media streams on unmount
   useEffect(() => {
@@ -440,7 +491,9 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
 
   // Speech-to-Text Recording logic
   const startRecording = () => {
-    setSpokenTranscript("");
+    // What is already written is kept, and speech is added after it. (Starting to record
+    // used to clear a typed answer, even when no microphone was available.)
+    const written = spokenTranscript.trim();
     setTranscriptHint("");
     setIsRecording(true);
 
@@ -463,7 +516,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
           for (let i = 0; i < event.results.length; i++) {
             currentResult += event.results[i][0].transcript;
           }
-          setSpokenTranscript(currentResult);
+          setSpokenTranscript([written, currentResult.trim()].filter(Boolean).join(" "));
         };
 
         recognition.onerror = (event: any) => {
@@ -508,17 +561,36 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     }
   };
 
+  const resetAnswers = () => {
+    setMcqAnswers({});
+    setMcqOutcomes({});
+    setMcqError(null);
+    setTranscripts({});
+    setEvaluations({});
+    setEvalError(null);
+    setCurrentVideoIdx(0);
+    setPracticalCode("");
+    setPracticalScore(null);
+    setPracticalFeedback(null);
+    setPracticalProvisional(false);
+    setPracticalError(null);
+    setWillAnswers(NO_WILL);
+    setFinished(null);
+    setFinishError(null);
+  };
+
   // Generate Assessment from JD / Skill Gap Context via Backend
-  const handleGenerateAssessment = async (overrideRole?: string, overrideJd?: string) => {
-    const roleToUse = overrideRole || targetRole;
-    const jdToUse = overrideJd || jobDescription;
-    
-    if (assessmentMode === "project_hiring" && !jdToUse.trim()) {
+  const handleGenerateAssessment = async () => {
+    if (!targetRole.trim()) {
+      setGenerationError("A target role is required.");
+      return;
+    }
+    if (assessmentMode === "project_hiring" && !jobDescription.trim()) {
       setGenerationError("Job Description is required for Project Hiring assessment mode.");
       return;
     }
-    if (assessmentMode === "self_upskilling" && (!roleToUse.trim() || !targetSkillsToUpgrade.trim())) {
-      setGenerationError("Target Role and Target Skills to Upgrade are required for Self-Upskilling mode.");
+    if (assessmentMode === "self_upskilling" && !targetSkillsToUpgrade.trim()) {
+      setGenerationError("Target Skills to Upgrade are required for Self-Upskilling mode.");
       return;
     }
 
@@ -526,29 +598,22 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     setGenerationError(null);
 
     try {
-      const res = await fetch("/api/agent/generate-jd-assessment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assessmentMode,
-          currentDesignation,
-          targetRole: roleToUse,
-          jobDescription: assessmentMode === "project_hiring" ? jdToUse : undefined,
-          targetSkillsToUpgrade: assessmentMode === "self_upskilling" ? targetSkillsToUpgrade : undefined,
-          candidateResume: uploadedResume?.extractedText || undefined
-        })
+      const projectMode = assessmentMode === "project_hiring";
+      const data = await postJson("/api/agent/generate-jd-assessment", {
+        assessmentMode,
+        currentDesignation,
+        targetRole,
+        jobDescription: projectMode ? jobDescription : undefined,
+        demandId: projectMode && forProject ? project?.demand.id : undefined,
+        targetSkillsToUpgrade: projectMode ? undefined : targetSkillsToUpgrade,
+        candidateResume: uploadedResume?.extractedText || undefined
       });
-
-      const data = await res.json();
-      if (data.success && data.assessment) {
-        setAssessment(data.assessment);
-        setStep("assessment");
-        setActiveTab("mcq");
-        // The camera starts when the candidate records an answer or turns it on -
-        // not as soon as the questions appear.
-      } else {
-        throw new Error(data.error || "Failed to generate assessment.");
-      }
+      resetAnswers();
+      setAssessment(data.assessment);
+      setStep("assessment");
+      setActiveTab("mcq");
+      // The camera starts when the candidate records an answer or turns it on -
+      // not as soon as the questions appear.
     } catch (err: any) {
       setGenerationError(err?.message || "Error generating assessment.");
     } finally {
@@ -556,41 +621,38 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     }
   };
 
-  // Auto-start assessment if requested
-  useEffect(() => {
-    if (autoStartAssessment && (initialJobDescription || jobDescription) && step === "input" && !isGenerating && !assessment) {
-      handleGenerateAssessment(initialRoleTitle || targetRole, initialJobDescription || jobDescription);
+  // Check one multiple-choice answer. The server records the first answer.
+  const handleCheckMcq = async (q: MCQ) => {
+    const optionIndex = mcqAnswers[q.id];
+    if (!assessment || optionIndex === undefined) return;
+    setCheckingMcq(q.id);
+    setMcqError(null);
+    try {
+      const data = await postJson("/api/agent/assessment-answer", {
+        assessmentId: assessment.id, questionId: q.id, optionIndex
+      });
+      setMcqOutcomes(prev => ({
+        ...prev,
+        [q.id]: { correct: data.correct, correctIndex: data.correctIndex, explanation: data.explanation }
+      }));
+    } catch (err: any) {
+      setMcqError(err?.message || "The answer could not be checked.");
+    } finally {
+      setCheckingMcq(null);
     }
-  }, [autoStartAssessment]);
+  };
 
   // Evaluate candidate's spoken answer via Backend
   const handleEvaluateAnswer = async (q: VideoQuestion) => {
-    if (!spokenTranscript.trim() || !jobDescription) return;
+    if (!assessment || !spokenTranscript.trim()) return;
     setIsEvaluating(true);
     setEvalError(null);
 
     try {
-      const res = await fetch("/api/agent/evaluate-interview-answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobDescription,
-          questionTitle: q.title,
-          questionText: q.question,
-          keyRubrics: q.keyRubrics,
-          candidateAnswer: spokenTranscript
-        })
+      const data = await postJson("/api/agent/evaluate-interview-answer", {
+        assessmentId: assessment.id, questionId: q.id, candidateAnswer: spokenTranscript
       });
-
-      const data = await res.json();
-      if (data.success && data.evaluation) {
-        setEvaluations(prev => ({
-          ...prev,
-          [q.id]: data.evaluation
-        }));
-      } else {
-        throw new Error(data.error || "Failed to evaluate response.");
-      }
+      setEvaluations(prev => ({ ...prev, [q.id]: data.evaluation }));
     } catch (err: any) {
       setEvalError(err?.message || "Failed to process evaluation.");
     } finally {
@@ -598,140 +660,61 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     }
   };
 
-  // Evaluate practical exercise solution
+  // Evaluate practical exercise solution. A failed request says so; it used to show a
+  // made-up score of 85 or 82.
   const handleEvaluatePractical = async () => {
     if (!practicalCode.trim() || !assessment?.practicalExercise) return;
     setIsEvaluatingPractical(true);
+    setPracticalError(null);
     try {
-      const res = await fetch("/api/agent/evaluate-interview-answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobDescription: jobDescription || assessment.roleTitle,
-          questionTitle: `Practical Exercise: ${assessment.practicalExercise.title}`,
-          questionText: assessment.practicalExercise.problemStatement,
-          keyRubrics: assessment.practicalExercise.evaluationRubrics,
-          candidateAnswer: practicalCode
-        })
+      const { evaluation } = await postJson("/api/agent/evaluate-interview-answer", {
+        assessmentId: assessment.id, questionId: "practical", candidateAnswer: practicalCode
       });
-
-      const data = await res.json();
-      if (data.success && data.evaluation) {
-        setPracticalScore(data.evaluation.overallScore || 85);
-        setPracticalFeedback(data.evaluation.feedback || "Solution evaluated against enterprise rubrics.");
-      } else {
-        setPracticalScore(85);
-        setPracticalFeedback("Solution evaluated against core framework rubrics.");
-      }
-    } catch {
-      setPracticalScore(82);
-      setPracticalFeedback("Evaluated based on structural compliance and rubric completeness.");
+      setPracticalScore(evaluation.overallScore);
+      setPracticalFeedback(evaluation.feedback);
+      setPracticalProvisional(!!evaluation._fallback);
+    } catch (err: any) {
+      setPracticalError(err?.message || "The solution could not be evaluated.");
     } finally {
       setIsEvaluatingPractical(false);
     }
   };
 
-  // Calculate Will & Motivation Score % based on 5 Weighted Sections
-  const calculateWillScore = () => {
-    const sec1 = willAnswers.sec1_intent;
-    const sec2 = willAnswers.sec2_behavior;
-    const sec3 = willAnswers.sec3_adaptability;
-    const sec4 = willAnswers.sec4_commitment;
-    const sec5 = willAnswers.sec5_engagement;
+  // Self-reported Will, once all five questions are answered.
+  const calculateWillScore = (): number | null =>
+    WILL_SECTIONS.some(([key]) => willAnswers[key] === null)
+      ? null
+      : Math.round(WILL_SECTIONS.reduce((sum, [key, weight]) => sum + (willAnswers[key] as number) * weight, 0) / 100);
 
-    const totalWill = Math.round((sec1 * 0.30) + (sec2 * 0.25) + (sec3 * 0.20) + (sec4 * 0.15) + (sec5 * 0.10));
-    return {
-      totalWill,
-      sec1: Math.round(sec1),
-      sec2: Math.round(sec2),
-      sec3: Math.round(sec3),
-      sec4: Math.round(sec4),
-      sec5: Math.round(sec5)
-    };
-  };
+  const unansweredCount = assessment
+    ? assessment.mcqs.filter(q => !mcqOutcomes[q.id]).length
+      + assessment.videoQuestions.filter(q => !evaluations[q.id]).length
+    : 0;
 
-  // Compute Combined Score Summary (Skill + Will Matrix)
-  const calculateCombinedResults = () => {
-    if (!assessment) return { totalScore: 0, mcqScore: 0, videoScore: 0, practicalScore: 0, skillScore: 0, willScore: 0, quadrant: "Deploy Now" };
-
-    let totalMcqs = assessment.mcqs.length;
-    let correctMcqs = 0;
-    assessment.mcqs.forEach(m => {
-      if (mcqAnswers[m.id] === m.correctIndex) {
-        correctMcqs++;
-      }
-    });
-    const mcqScore = totalMcqs > 0 ? Math.round((correctMcqs / totalMcqs) * 100) : 0;
-
-    const evaluatedKeys = Object.keys(evaluations);
-    let videoScore = 0;
-    if (evaluatedKeys.length > 0) {
-      const sum = evaluatedKeys.reduce((acc, k) => acc + evaluations[k].overallScore, 0);
-      videoScore = Math.round(sum / evaluatedKeys.length);
-    } else {
-      videoScore = 78; // Baseline demo if skipped
+  // Finish: the server scores the stored answers and keeps the result, which the
+  // Concierge, the manager and analytics then read.
+  const handleFinish = async () => {
+    if (!assessment) return;
+    setIsFinishing(true);
+    setFinishError(null);
+    try {
+      const data = await postJson("/api/agent/complete-skillgap-assessment", {
+        assessmentId: assessment.id,
+        willAnswers: calculateWillScore() === null ? undefined : willAnswers
+      });
+      stopCameraStream();
+      setFinished(data.assessment);
+      setLastAssessment(data.assessment);
+      setStep("results");
+    } catch (err: any) {
+      setFinishError(err?.message || "The assessment could not be finished.");
+    } finally {
+      setIsFinishing(false);
     }
-
-    const pScore = practicalScore !== null ? practicalScore : (assessment.practicalExercise ? 85 : 0);
-
-    const mcqWeight = (assessment.assessmentTypeWeightage?.mcqsWeight ?? 30) / 100;
-    const scenarioWeight = (assessment.assessmentTypeWeightage?.scenariosWeight ?? 40) / 100;
-    const practicalWeight = (assessment.assessmentTypeWeightage?.practicalWeight ?? 30) / 100;
-
-    let skillScore = 0;
-    if (practicalWeight > 0 && assessment.practicalExercise) {
-      skillScore = Math.round((mcqScore * mcqWeight) + (videoScore * scenarioWeight) + (pScore * practicalWeight));
-    } else {
-      const normMcqWeight = mcqWeight / (mcqWeight + scenarioWeight);
-      const normScenarioWeight = scenarioWeight / (mcqWeight + scenarioWeight);
-      skillScore = Math.round((mcqScore * normMcqWeight) + (videoScore * normScenarioWeight));
-    }
-
-    const willRes = calculateWillScore();
-    const willScore = willRes.totalWill;
-
-    // Quadrant, on the same 60/60 line and with the same names as the manager's
-    // Skill-vs-Will matrix (this used 65 and different names, so a practice result could
-    // disagree with the matrix for the same scores).
-    let quadrant: string;
-    if (skillScore >= 60 && willScore >= 60) quadrant = "Deploy Now";
-    else if (skillScore < 60 && willScore >= 60) quadrant = "Accelerate Learning";
-    else if (skillScore >= 60 && willScore < 60) quadrant = "Retain & Coach";
-    else quadrant = "Intervention Required";
-
-    const totalScore = Math.round((skillScore * 0.6) + (willScore * 0.4));
-    return {
-      totalScore,
-      skillScore,
-      willScore,
-      mcqScore,
-      videoScore,
-      practicalScore: pScore,
-      correctMcqs,
-      totalMcqs,
-      willBreakdown: willRes,
-      quadrant,
-      weights: {
-        mcqsWeight: Math.round(mcqWeight * 100),
-        scenariosWeight: Math.round(scenarioWeight * 100),
-        practicalWeight: Math.round(practicalWeight * 100)
-      }
-    };
   };
 
   // --- STAGE 1: INPUT ASSESSMENT CONTEXT ---
   if (step === "input") {
-    const PRESET_UPGRADE_SKILLS = [
-      "Gemini API & RAG Architectures",
-      "Event-Driven Microservices & Outbox Pattern",
-      "System Architecture & Scalability",
-      "Kubernetes, Docker & CI/CD Pipelines",
-      "React 18 & Advanced TypeScript Patterns",
-      "Zero-Trust Security & mTLS Integration",
-      "GraphQL & RESTful API Gateway Design",
-      "PostgreSQL Query & Index Performance"
-    ];
-
     return (
       <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl max-w-5xl mx-auto space-y-6 animate-fade-in">
         {/* Header */}
@@ -748,11 +731,19 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 </span>
               </div>
               <p className="text-xs text-[#94A3B8] mt-1">
-                Verifies candidate capability gaps using 1st-level theoretical video Q&A and MCQs. Configured for Project Hiring fitment or Self-Driven Career Upskilling.
+                Finds your capability gaps with multiple-choice and spoken questions, for a project or for your own growth. Your result is saved and passed to the Learning Concierge and your manager.
               </p>
             </div>
           </div>
         </div>
+
+        {lastAssessment && (
+          <p className="text-xs text-[#94A3B8]">
+            Your last result: <strong className="text-[#F0F4FF]">{lastAssessment.roleTitle}</strong>{" "}
+            {lastAssessment.result.overallScore !== null ? `${lastAssessment.result.overallScore}%` : "not graded"} on{" "}
+            {new Date(lastAssessment.completedAt).toLocaleDateString()}. A new one replaces it.
+          </p>
+        )}
 
         {/* Assessment Purpose Mode Selector */}
         <div className="bg-[#0F1724] border border-[#2A384C] rounded-lg p-4 space-y-3">
@@ -828,16 +819,38 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 Select Preset Role or Provide Custom Job Description
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {project && (
+                  <button
+                    id="assess-for-project"
+                    type="button"
+                    onClick={applyProject}
+                    className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer md:col-span-3 ${
+                      forProject
+                        ? "bg-[#0F1724] border-[#10B981] text-[#F0F4FF] shadow-md shadow-[#10B981]/10"
+                        : "bg-[#0F1724]/40 border-[#2A384C] text-[#94A3B8] hover:border-[#10B981]/50"
+                    }`}
+                  >
+                    <span className="text-xs font-bold block text-[#F0F4FF]">
+                      Your project: {project.demand.projectName} ({project.demand.customerName})
+                    </span>
+                    <span className="text-[10px] text-[#94A3B8] mt-1 block font-mono">
+                      {project.missingSkills.length > 0
+                        ? `Asks first about the skills you are missing: ${project.missingSkills.join(", ")}`
+                        : "You meet every required skill; the questions cover them all."}
+                    </span>
+                  </button>
+                )}
                 {PRESET_JDS.map((preset, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => {
+                      setForProject(false);
                       setTargetRole(preset.title);
                       setJobDescription(preset.jd);
                     }}
                     className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-                      targetRole === preset.title
+                      !forProject && targetRole === preset.title
                         ? "bg-[#0F1724] border-[#4F8EF7] text-[#F0F4FF] shadow-md shadow-[#4F8EF7]/10"
                         : "bg-[#0F1724]/40 border-[#2A384C] text-[#94A3B8] hover:border-[#4F8EF7]/50"
                     }`}
@@ -956,10 +969,13 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 
                 <div className="mt-2.5">
                   <span className="text-[10px] font-mono text-[#94A3B8] block mb-1.5">
-                    Click to add preset technical upgrade skills:
+                    Click to add one of your gaps:
                   </span>
+                  {knownGaps.length === 0 && (
+                    <span className="text-[10px] text-[#94A3B8]">No open gap is on record for you. Type any skill above.</span>
+                  )}
                   <div className="flex flex-wrap gap-1.5">
-                    {PRESET_UPGRADE_SKILLS.map((skill, idx) => (
+                    {knownGaps.map(g => g.skillName).map((skill, idx) => (
                       <button
                         key={idx}
                         type="button"
@@ -1165,7 +1181,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     const currentEval = evaluations[currentQuestion?.id];
 
     return (
-      <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl max-w-6xl mx-auto space-y-6 animate-fade-in">
+      <div id="skillgap-stage" className="scroll-mt-32 bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl max-w-6xl mx-auto space-y-6 animate-fade-in">
         
         {/* Top Header & Tab Controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#2A384C] pb-4 gap-4">
@@ -1194,8 +1210,9 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
 
             {assessment._fallback && (
               <p role="status" className="mt-2 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
-                The AI model was unavailable, so these are generic practice questions, not questions
-                built from your job description. Treat the scores as a rough practice signal only.
+                The AI model was unavailable. The multiple-choice questions come from the question bank
+                for these skills and are scored as usual. Spoken answers can only be graded
+                provisionally, so they are not counted.
               </p>
             )}
             
@@ -1283,7 +1300,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                       Role Assessment Framework Matrix Strategy
                     </h3>
                     <p className="text-[11px] text-[#94A3B8] mt-0.5">
-                      Role Category: <strong className="text-[#4F8EF7] font-mono">{assessment.roleCategory || "CUSTOM"}</strong> — Configured according to enterprise role purpose and competency weighting.
+                      How this assessment is scored, and the weighting each role is usually given.
                     </p>
                   </div>
                 </div>
@@ -1297,21 +1314,21 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 <div className="bg-[#141E30] p-3.5 rounded-lg border border-[#2A384C]">
                   <span className="text-[10px] font-mono text-[#94A3B8] block">Part 1: Concept MCQs Weightage</span>
                   <span className="text-xl font-mono font-bold text-[#4F8EF7] block mt-1">
-                    {assessment.assessmentTypeWeightage?.mcqsWeight ?? 30}%
+                    {assessment.assessmentTypeWeightage?.mcqsWeight}%
                   </span>
                   <span className="text-[10px] text-[#64748B] block mt-1">{assessment.mcqs.length} Domain & Competency MCQs</span>
                 </div>
                 <div className="bg-[#141E30] p-3.5 rounded-lg border border-[#2A384C]">
                   <span className="text-[10px] font-mono text-[#94A3B8] block">Part 2: Spoken Scenario Video Weightage</span>
                   <span className="text-xl font-mono font-bold text-[#4F8EF7] block mt-1">
-                    {assessment.assessmentTypeWeightage?.scenariosWeight ?? 40}%
+                    {assessment.assessmentTypeWeightage?.scenariosWeight}%
                   </span>
                   <span className="text-[10px] text-[#64748B] block mt-1">{assessment.videoQuestions.length} Spoken JD Situation & Risk Qs</span>
                 </div>
                 <div className="bg-[#141E30] p-3.5 rounded-lg border border-[#2A384C]">
                   <span className="text-[10px] font-mono text-[#94A3B8] block">Part 3: Practical Exercise Weightage</span>
                   <span className="text-xl font-mono font-bold text-[#10B981] block mt-1">
-                    {assessment.assessmentTypeWeightage?.practicalWeight ?? (assessment.practicalExercise ? 40 : 0)}%
+                    {assessment.assessmentTypeWeightage?.practicalWeight}%
                   </span>
                   <span className="text-[10px] text-[#64748B] block mt-1">
                     {assessment.practicalExercise ? `${assessment.practicalExercise.type.toUpperCase()} Practical Challenge` : "N/A"}
@@ -1332,7 +1349,6 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                         <th className="p-3">SSA (Systems Analyst)</th>
                         <th className="p-3">SSE (Software Engineer)</th>
                         <th className="p-3">TA (Technical Architect)</th>
-                        <th className="p-3">Active Assessment Target</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#2A384C]/60 text-[#F0F4FF]">
@@ -1341,42 +1357,36 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                         <td className="p-3 text-[#4F8EF7] font-mono">40%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">10%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">10%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.requirementsAnalysis ?? 20}%</td>
                       </tr>
                       <tr className={assessment.roleCategory === "SSE" ? "bg-[#4F8EF7]/10 font-bold" : ""}>
                         <td className="p-3 font-mono">Design</td>
                         <td className="p-3 text-[#94A3B8] font-mono">20%</td>
                         <td className="p-3 text-[#4F8EF7] font-mono">25%</td>
                         <td className="p-3 text-[#4F8EF7] font-mono">35%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.design ?? 25}%</td>
                       </tr>
                       <tr className={assessment.roleCategory === "SSE" ? "bg-[#4F8EF7]/10 font-bold" : ""}>
                         <td className="p-3 font-mono">Coding</td>
                         <td className="p-3 text-[#94A3B8] font-mono">5%</td>
                         <td className="p-3 text-[#4F8EF7] font-mono">35%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">10%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.coding ?? 20}%</td>
                       </tr>
                       <tr className={assessment.roleCategory === "TA" ? "bg-[#4F8EF7]/10 font-bold" : ""}>
                         <td className="p-3 font-mono">Architecture</td>
                         <td className="p-3 text-[#94A3B8] font-mono">5%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">15%</td>
                         <td className="p-3 text-[#4F8EF7] font-mono">30%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.architecture ?? 20}%</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono">Problem Solving</td>
                         <td className="p-3 text-[#94A3B8] font-mono">15%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">10%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">10%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.problemSolving ?? 10}%</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono">Communication</td>
                         <td className="p-3 text-[#94A3B8] font-mono">15%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">5%</td>
                         <td className="p-3 text-[#94A3B8] font-mono">5%</td>
-                        <td className="p-3 font-mono text-[#10B981]">{assessment.weightage?.communication ?? 5}%</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1404,15 +1414,23 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 Part 1 — Core Concept Multiple Choice Validation
               </h3>
               <span className="text-xs text-[#94A3B8] font-mono">
-                {Object.keys(mcqSubmitted).length} of {assessment.mcqs.length} Answered
+                {Object.keys(mcqOutcomes).length} of {assessment.mcqs.length} Answered
               </span>
             </div>
+            <p className="text-[11px] text-[#94A3B8]">Your first checked answer to each question is the one that counts.</p>
+            {assessment.mcqs.length === 0 && (
+              <p className="text-xs text-[#94A3B8]">There are no multiple-choice questions for these skills. Continue with the interview.</p>
+            )}
+            {mcqError && (
+              <div role="alert" className="p-2.5 bg-red-950/40 border border-red-500/40 text-red-300 rounded text-xs">{mcqError}</div>
+            )}
 
             <div className="space-y-5">
               {assessment.mcqs.map((q, qIdx) => {
                 const selected = mcqAnswers[q.id];
-                const isSubmitted = mcqSubmitted[q.id];
-                const isCorrect = selected === q.correctIndex;
+                const outcome = mcqOutcomes[q.id];
+                const isSubmitted = !!outcome;
+                const isCorrect = !!outcome?.correct;
 
                 return (
                   <div key={q.id} className="bg-[#0F1724] border border-[#2A384C] rounded-lg p-5 space-y-4">
@@ -1440,7 +1458,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                         let optionStyle = "bg-[#141E30]/60 border-[#2A384C] text-[#94A3B8] hover:border-[#4F8EF7]/40";
 
                         if (isSubmitted) {
-                          if (optIdx === q.correctIndex) {
+                          if (optIdx === outcome.correctIndex) {
                             optionStyle = "bg-[#10B981]/20 border-[#10B981] text-[#F0F4FF]";
                           } else if (isThisOptionSelected) {
                             optionStyle = "bg-red-950/40 border-red-500 text-red-300";
@@ -1469,17 +1487,18 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
 
                     {!isSubmitted && selected !== undefined && (
                       <button
-                        onClick={() => setMcqSubmitted(prev => ({ ...prev, [q.id]: true }))}
-                        className="py-1.5 px-3 bg-[#4F8EF7] text-[#0F1724] font-mono font-bold text-[11px] rounded transition-colors cursor-pointer"
+                        onClick={() => handleCheckMcq(q)}
+                        disabled={checkingMcq === q.id}
+                        className="py-1.5 px-3 bg-[#4F8EF7] text-[#0F1724] font-mono font-bold text-[11px] rounded transition-colors cursor-pointer disabled:opacity-50"
                       >
-                        Check Answer
+                        {checkingMcq === q.id ? "Checking..." : "Check Answer"}
                       </button>
                     )}
 
                     {isSubmitted && (
                       <div className="p-3 bg-[#141E30] border-l-2 border-[#4F8EF7] text-[11px] text-[#94A3B8] leading-relaxed rounded-r font-mono">
-                        <strong className="text-[#F0F4FF] block mb-0.5">JD Architectural Explanation:</strong>
-                        {q.explanation}
+                        <strong className="text-[#F0F4FF] block mb-0.5">Explanation:</strong>
+                        {outcome.explanation}
                       </div>
                     )}
                   </div>
@@ -1564,7 +1583,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                     TEXT ACCESSIBLE
                   </span>
                   <p className="text-[11px] text-[#94A3B8] leading-tight">
-                    Camera & mic are optional. Written responses receive identical evaluation from Gemini AI.
+                    Camera and microphone are optional. Typed and spoken answers are evaluated the same way: from the text.
                   </p>
                 </div>
 
@@ -1809,7 +1828,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                         <div className="space-y-1 pt-1">
                           <span className="text-[10px] font-mono font-bold text-amber-400 uppercase block">Identified Technical Gaps:</span>
                           <ul className="space-y-1 text-[11px] text-[#94A3B8]">
-                            {(currentEval.technicalGaps || currentEval.missingConcepts.filter(m => !m.toLowerCase().includes('soft') && !m.toLowerCase().includes('speech'))).map((m, idx) => (
+                            {(currentEval.technicalGaps || currentEval.missingConcepts).map((m, idx) => (
                               <li key={idx} className="flex items-start gap-1.5">
                                 <AlertCircle className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />
                                 <span>{m}</span>
@@ -1858,7 +1877,6 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                             ...(currentEval.technicalGaps || currentEval.missingConcepts),
                             ...(currentEval.communicationGaps || [])
                           ];
-                          if (onCloseModal) onCloseModal();
                           onRedirectToConcierge(allGaps, assessment?.roleTitle || targetRole);
                         }}
                         className="w-full mt-3 py-2.5 px-3 bg-[#4F8EF7]/15 hover:bg-[#4F8EF7]/25 border border-[#4F8EF7]/40 text-[#F0F4FF] font-mono font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-2 group"
@@ -1917,7 +1935,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                     <h3 className="text-sm font-bold text-[#F0F4FF]">{assessment.practicalExercise.title}</h3>
                   </div>
                   <p className="text-xs text-[#94A3B8] mt-1">
-                    Role-specific hands-on validation challenge weighted at {assessment.assessmentTypeWeightage?.practicalWeight || 40}% of Level-1 Technical Assessment.
+                    Role-specific hands-on challenge, weighted at {assessment.assessmentTypeWeightage?.practicalWeight}% of this assessment.
                   </p>
                 </div>
                 {practicalScore !== null && (
@@ -2023,13 +2041,18 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                 </button>
               </div>
 
+              {practicalError && (
+                <div role="alert" className="p-2.5 bg-red-950/40 border border-red-500/40 text-red-300 rounded text-xs">{practicalError}</div>
+              )}
+
               {/* Practical Evaluation Feedback Box */}
               {practicalFeedback && (
                 <div className="p-4 bg-[#141E30] border-l-4 border-[#10B981] rounded-r-lg space-y-2 animate-fade-in">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-[#10B981] uppercase flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4" /> Evaluation Completed — Score: {practicalScore}%
+                      <CheckCircle2 className="h-4 w-4" /> Evaluation completed - score: {practicalScore}%
                     </span>
+                    {practicalProvisional && <span className="tag tone-warn">Provisional - not counted</span>}
                   </div>
                   <p className="text-xs text-[#94A3B8] font-mono leading-relaxed">
                     {practicalFeedback}
@@ -2058,16 +2081,16 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
               <div>
                 <h3 className="text-xs font-mono font-bold text-[#A855F7] uppercase tracking-wider flex items-center gap-2">
                   <Heart className="h-4 w-4 text-[#A855F7]" />
-                  Part 3 — Candidate Will, Motivation & Adaptability Assessment (5 Core Dimensions)
+                  Part 4 - Will, motivation and adaptability (5 questions, optional)
                 </h3>
                 <p className="text-xs text-[#94A3B8] mt-1">
-                  Evaluates career intent, learning behavior, adaptability, learning commitment, and voluntary engagement.
+                  Your own view, kept beside your result. The Will score your manager sees is worked out from what you do, not from these answers.
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-xs font-mono text-[#94A3B8]">Current Will Index:</span>
+                <span className="text-xs font-mono text-[#94A3B8]">Self-reported Will:</span>
                 <span className="text-lg font-mono font-bold text-[#A855F7] ml-2 bg-[#A855F7]/10 px-2.5 py-1 rounded border border-[#A855F7]/30">
-                  {calculateWillScore().totalWill}%
+                  {calculateWillScore() === null ? "-" : `${calculateWillScore()}%`}
                 </span>
               </div>
             </div>
@@ -2080,7 +2103,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <h4 className="text-xs font-bold text-[#F0F4FF] uppercase tracking-wider">Section 1: Career Intent (30% Weight)</h4>
                 </div>
                 <span className="text-[10px] font-mono text-[#4F8EF7] bg-[#4F8EF7]/10 px-2 py-0.5 rounded border border-[#4F8EF7]/30">
-                  Score: {calculateWillScore().sec1}%
+                  {willAnswers.sec1_intent === null ? "Not answered" : `Score: ${willAnswers.sec1_intent}%`}
                 </span>
               </div>
               <div className="space-y-2">
@@ -2119,7 +2142,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <h4 className="text-xs font-bold text-[#F0F4FF] uppercase tracking-wider">Section 2: Learning Behavior (25% Weight)</h4>
                 </div>
                 <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded border border-[#10B981]/30">
-                  Score: {calculateWillScore().sec2}%
+                  {willAnswers.sec2_behavior === null ? "Not answered" : `Score: ${willAnswers.sec2_behavior}%`}
                 </span>
               </div>
               <div className="space-y-2">
@@ -2159,7 +2182,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <h4 className="text-xs font-bold text-[#F0F4FF] uppercase tracking-wider">Section 3: Adaptability & Resilience (20% Weight)</h4>
                 </div>
                 <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">
-                  Score: {calculateWillScore().sec3}%
+                  {willAnswers.sec3_adaptability === null ? "Not answered" : `Score: ${willAnswers.sec3_adaptability}%`}
                 </span>
               </div>
               <div className="space-y-2">
@@ -2198,7 +2221,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <h4 className="text-xs font-bold text-[#F0F4FF] uppercase tracking-wider">Section 4: Learning Commitment (15% Weight)</h4>
                 </div>
                 <span className="text-[10px] font-mono text-[#A855F7] bg-[#A855F7]/10 px-2 py-0.5 rounded border border-[#A855F7]/30">
-                  Score: {calculateWillScore().sec4}%
+                  {willAnswers.sec4_commitment === null ? "Not answered" : `Score: ${willAnswers.sec4_commitment}%`}
                 </span>
               </div>
               <div className="space-y-2">
@@ -2237,7 +2260,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
                   <h4 className="text-xs font-bold text-[#F0F4FF] uppercase tracking-wider">Section 5: Voluntary Engagement (10% Weight)</h4>
                 </div>
                 <span className="text-[10px] font-mono text-rose-400 bg-rose-400/10 px-2 py-0.5 rounded border border-rose-400/30">
-                  Score: {calculateWillScore().sec5}%
+                  {willAnswers.sec5_engagement === null ? "Not answered" : `Score: ${willAnswers.sec5_engagement}%`}
                 </span>
               </div>
               <div className="space-y-2">
@@ -2268,16 +2291,21 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+              {unansweredCount > 0 && (
+                <span role="status" className="text-[11px] text-amber-400">
+                  {unansweredCount} question{unansweredCount === 1 ? "" : "s"} not answered yet. Once a part is started, its unanswered questions count as 0.
+                </span>
+              )}
+              {finishError && <span role="alert" className="text-[11px] text-rose-400">{finishError}</span>}
               <button
-                onClick={() => {
-                  stopCameraStream();
-                  setStep("results");
-                }}
-                className="py-3 px-6 bg-[#A855F7] hover:bg-[#9333EA] text-[#F0F4FF] font-mono font-bold text-xs rounded-md transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[#A855F7]/20"
+                id="finish-assessment"
+                onClick={handleFinish}
+                disabled={isFinishing}
+                className="py-3 px-6 bg-[#A855F7] hover:bg-[#9333EA] text-[#F0F4FF] font-mono font-bold text-xs rounded-md transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[#A855F7]/20 disabled:opacity-50"
               >
                 <Award className="h-4 w-4" />
-                <span>View Complete Executive Scorecard (Skill + Will Matrix)</span>
+                <span>{isFinishing ? "Saving your result..." : "Finish and save my result"}</span>
               </button>
             </div>
           </div>
@@ -2287,154 +2315,95 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
     );
   }
 
-  // --- STAGE 3: RESULTS SCORECARD & ROADMAP ---
-  const results = calculateCombinedResults();
+  // --- STAGE 3: THE STORED RESULT ---
+  if (!finished) return null;
+  const result = finished.result;
+  const shown = (value: number | null) => (value === null ? "-" : `${value}%`);
+  const gapStreams: [string, typeof result.gaps, string][] = [
+    ["1. Technical gaps", result.gaps.filter(g => g.source !== "communication"), "#4F8EF7"],
+    ["2. Communication gaps", result.gaps.filter(g => g.source === "communication"), "#A855F7"],
+  ];
 
   return (
-    <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl max-w-5xl mx-auto space-y-6 animate-fade-in">
-      
+    <div id="skillgap-stage" className="scroll-mt-32 bg-[#141E30] border border-[#2A384C] rounded-lg p-6 shadow-xl max-w-5xl mx-auto space-y-6 animate-fade-in">
+
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#2A384C] pb-4">
+      <div className="flex items-center justify-between border-b border-[#2A384C] pb-4 gap-4">
         <div>
           <span className="text-[10px] font-mono font-bold bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 px-2 py-0.5 rounded uppercase">
-            SkillGap-to-Growth Executive Scorecard
+            Level-1 result - saved
           </span>
-          <h2 className="text-base font-bold text-[#F0F4FF] mt-1">{assessment?.roleTitle || targetRole}</h2>
+          <h2 className="text-base font-bold text-[#F0F4FF] mt-1">{finished.roleTitle}</h2>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-mono font-extrabold text-[#10B981]">{results.totalScore}%</span>
-          <span className="text-[10px] font-mono text-[#94A3B8] block">Combined Readiness Score</span>
-        </div>
-      </div>
-
-      {/* Summary Score Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
-          <span className="text-xs font-mono text-[#94A3B8] block">Technical Skill Score</span>
-          <span className="text-2xl font-mono font-bold text-[#4F8EF7] mt-1 block">{results.skillScore}%</span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">MCQs ({results.mcqScore}%) + Video ({results.videoScore}%)</span>
-        </div>
-
-        <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
-          <span className="text-xs font-mono text-[#94A3B8] block">Self-reported Will</span>
-          <span className="text-2xl font-mono font-bold text-[#A855F7] mt-1 block">{results.willScore}%</span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">From 5 behaviour questions</span>
-        </div>
-
-        <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
-          <span className="text-xs font-mono text-[#94A3B8] block">Skill-vs-Will Matrix Position</span>
-          <span className="text-xs font-mono font-bold text-amber-400 mt-2 block leading-tight">{results.quadrant}</span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">2×2 quadrant</span>
-        </div>
-
-        <div className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
-          <span className="text-xs font-mono text-[#94A3B8] block">Overall Readiness Status</span>
-          <span className={`text-sm font-mono font-bold mt-2 block ${results.totalScore >= 75 ? "text-[#10B981]" : "text-amber-400"}`}>
-            {results.totalScore >= 75 ? "Target Ready (Qualified)" : "Upskilling Gap (~3w)"}
+          <span id="assessment-overall" className="text-2xl font-mono font-extrabold text-[#10B981]">
+            {result.overallScore === null ? "Not graded" : `${result.overallScore}%`}
           </span>
-          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">Combined Score: {results.totalScore}%</span>
+          <span className="text-[10px] font-mono text-[#94A3B8] block">Overall score</span>
         </div>
       </div>
 
-      {/* Will & Motivation Section Breakdown Card */}
-      {results.willBreakdown && (
-        <div className="bg-[#0F1724] border border-[#2A384C] rounded-lg p-4 space-y-3">
-          <div className="flex items-center justify-between border-b border-[#2A384C] pb-2">
-            <div className="flex items-center gap-2">
-              <Heart className="h-4 w-4 text-[#A855F7]" />
-              <h3 className="text-xs font-bold text-[#F0F4FF]">Part 3: Will & Motivation Section Breakdown</h3>
-            </div>
-            <span className="text-[10px] font-mono text-[#A855F7] bg-[#A855F7]/10 px-2 py-0.5 rounded border border-[#A855F7]/30">
-              Total Will Index: {results.willScore}%
-            </span>
+      {/* One tile per part. A part not taken shows a dash and is left out of the score. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {([
+          ["Multiple choice", shown(result.mcqScore), result.mcqScore === null ? "Not taken" : `${result.mcqCorrect} of ${result.mcqTotal} right`],
+          ["Spoken answers", shown(result.spokenScore), result.spokenScore === null
+            ? (result.provisionalAnswers ? "Provisional - not counted" : "Not taken") : `Weight ${result.weights.scenariosWeight}%`],
+          ["Practical", shown(result.practicalScore), result.practicalScore === null ? "Not taken" : `Weight ${result.weights.practicalWeight}%`],
+          ["Self-reported Will", shown(result.selfReportedWill), result.selfReportedWill === null ? "Not answered" : "From 5 questions"],
+        ] as [string, string, string][]).map(([label, value, hint]) => (
+          <div key={label} className="bg-[#0F1724] border border-[#2A384C] p-4 rounded-lg text-center">
+            <span className="text-xs font-mono text-[#94A3B8] block">{label}</span>
+            <span className="text-2xl font-mono font-bold text-[#4F8EF7] mt-1 block">{value}</span>
+            <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">{hint}</span>
           </div>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C] text-center">
-              <span className="text-[10px] text-[#94A3B8] block">Sec 1: Career Intent (30%)</span>
-              <span className="text-sm font-mono font-bold text-[#4F8EF7] mt-1 block">{results.willBreakdown.sec1}%</span>
-            </div>
-            <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C] text-center">
-              <span className="text-[10px] text-[#94A3B8] block">Sec 2: Learning Behavior (25%)</span>
-              <span className="text-sm font-mono font-bold text-[#10B981] mt-1 block">{results.willBreakdown.sec2}%</span>
-            </div>
-            <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C] text-center">
-              <span className="text-[10px] text-[#94A3B8] block">Sec 3: Adaptability (20%)</span>
-              <span className="text-sm font-mono font-bold text-amber-400 mt-1 block">{results.willBreakdown.sec3}%</span>
-            </div>
-            <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C] text-center">
-              <span className="text-[10px] text-[#94A3B8] block">Sec 4: Commitment (15%)</span>
-              <span className="text-sm font-mono font-bold text-[#A855F7] mt-1 block">{results.willBreakdown.sec4}%</span>
-            </div>
-            <div className="bg-[#141E30] p-2.5 rounded border border-[#2A384C] text-center col-span-2 sm:col-span-1">
-              <span className="text-[10px] text-[#94A3B8] block">Sec 5: Engagement (10%)</span>
-              <span className="text-sm font-mono font-bold text-rose-400 mt-1 block">{results.willBreakdown.sec5}%</span>
-            </div>
-          </div>
-        </div>
+      {(result.unanswered > 0 || result.provisionalAnswers > 0) && (
+        <p role="status" className="text-[11px] text-[#94A3B8]">
+          {result.unanswered > 0 && `${result.unanswered} question${result.unanswered === 1 ? " was" : "s were"} not answered. `}
+          {result.provisionalAnswers > 0 && `${result.provisionalAnswers} answer${result.provisionalAnswers === 1 ? " was" : "s were"} graded without the AI model and not counted.`}
+        </p>
       )}
 
-      {/* Recommended Roadmap Actions & Concierge Handoff */}
+      {/* Gaps and the handoff to the Concierge */}
       <div className="bg-[#0F1724] border border-[#2A384C] rounded-lg p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-[#4F8EF7]" />
-            <h3 className="text-xs font-bold text-[#F0F4FF]">Gaps found in your answers</h3>
-          </div>
-          <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 px-2.5 py-0.5 rounded border border-[#10B981]/30">
-            Tech + Soft Skills Auto-Handoff Ready
-          </span>
+        <div className="flex items-center gap-2 border-b border-[#2A384C] pb-3">
+          <BookOpen className="h-4 w-4 text-[#4F8EF7]" />
+          <h3 className="text-xs font-bold text-[#F0F4FF]">Gaps found in your answers</h3>
         </div>
 
-        {(() => {
-          const gaps = collectGaps(evaluations);
-          const streams: [string, string[], string][] = [
-            ["1. Technical gaps", gaps.technical, "#4F8EF7"],
-            ["2. Communication gaps", gaps.communication, "#A855F7"],
-          ];
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {streams.map(([title, items, colour]) => (
-                <div key={title} className="bg-[#141E30] p-3.5 rounded-lg border space-y-2.5" style={{ borderColor: `${colour}4D` }}>
-                  <strong className="text-xs font-bold text-[#F0F4FF] block border-b border-[#2A384C] pb-2">{title}</strong>
-                  {items.length === 0 ? (
-                    <p className="text-[11px] text-[#94A3B8]">None identified in your answers.</p>
-                  ) : (
-                    <ul className="space-y-2 text-xs text-[#94A3B8]">
-                      {items.map(item => (
-                        <li key={item} className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
-                          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: colour }} />
-                          <span className="text-[11px] text-[#F0F4FF]">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {gapStreams.map(([title, items, colour]) => (
+            <div key={title} className="bg-[#141E30] p-3.5 rounded-lg border space-y-2.5" style={{ borderColor: `${colour}4D` }}>
+              <strong className="text-xs font-bold text-[#F0F4FF] block border-b border-[#2A384C] pb-2">{title}</strong>
+              {items.length === 0 ? (
+                <p className="text-[11px] text-[#94A3B8]">None identified in your answers.</p>
+              ) : (
+                <ul className="space-y-2 text-xs text-[#94A3B8]">
+                  {items.map(item => (
+                    <li key={item.label} className="flex items-start gap-2 bg-[#0F1724] p-2.5 rounded border border-[#2A384C]">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: colour }} />
+                      <span className="text-[11px] text-[#F0F4FF]">{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          );
-        })()}
+          ))}
+        </div>
 
-        {/* Redirect to Learning Concierge Banner */}
         {onRedirectToConcierge && (
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                const gaps = collectGaps(evaluations);
-                const allGaps = [...gaps.technical, ...gaps.communication];
-                if (onCloseModal) onCloseModal();
-                onRedirectToConcierge(
-                  allGaps,
-                  assessment?.roleTitle || targetRole
-                );
-              }}
-              className="w-full py-3 px-4 bg-[#4F8EF7] hover:bg-[#3B82F6] text-[#0F1724] font-mono font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#4F8EF7]/20 group"
-            >
-              <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-              <span>Redirect Technical & Communication Skill Gaps to Learning Concierge</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            id="send-gaps-to-concierge"
+            onClick={() => onRedirectToConcierge(result.gaps.map(g => g.label), finished.roleTitle)}
+            className="w-full py-3 px-4 bg-[#4F8EF7] hover:bg-[#3B82F6] text-[#0F1724] font-mono font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#4F8EF7]/20 group"
+          >
+            <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+            <span>Take these gaps to the Learning Concierge</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
         )}
       </div>
 
@@ -2443,14 +2412,13 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
         <button
           onClick={() => {
             setStep("input");
-            setEvaluations({});
-            setMcqAnswers({});
-            setMcqSubmitted({});
+            setAssessment(null);
+            resetAnswers();
           }}
           className="w-full sm:w-auto py-2.5 px-4 bg-[#141E30] hover:bg-[#1E293B] border border-[#2A384C] text-[#F0F4FF] font-mono font-bold text-xs rounded-md transition-colors cursor-pointer flex items-center justify-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Interview Another Job Description</span>
+          <span>Take another assessment</span>
         </button>
 
         {onNavigateToDashboard && (
@@ -2458,7 +2426,7 @@ export const SkillGapInterviewAgent: React.FC<SkillGapInterviewAgentProps> = ({
             onClick={onNavigateToDashboard}
             className="w-full sm:w-auto py-2.5 px-5 bg-[#10B981] hover:bg-[#059669] text-[#0F1724] font-mono font-bold text-xs rounded-md transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[#10B981]/20"
           >
-            <span>Save Result to Adaptive Learning Plan</span>
+            <span>Open my learning plan</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         )}

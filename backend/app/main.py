@@ -1,7 +1,7 @@
 """CyBridge backend: application assembly.
 
 One process serves both the JSON API under /api and the built React app from
-dist/, on a single origin. This module only wires the pieces together:
+frontend/dist/, on a single origin. This module only wires the pieces together:
 
     request -> CORSMiddleware -> SessionMiddleware -> router (routers/*)
             -> guard (deps.py) -> service (services/*) -> repository (repositories/*)

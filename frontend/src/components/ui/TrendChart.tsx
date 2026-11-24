@@ -55,8 +55,11 @@ export const TrendChart: React.FC<{ points: TrendPoint[]; label: string }> = ({ 
   const tip = shown !== null ? points[shown] : null;
   const tipLeft = shown !== null ? Math.min(Math.max(xy[shown][0], 70), width - 70) : 0;
 
-  // Label every reading when there are few; otherwise only the first and last.
-  const xLabels = points.length <= 6 ? points.map((_, i) => i) : [0, last];
+  // Label every reading when there are few, otherwise only the first and last - and never
+  // two so close that their labels run into each other. The last one always has its label.
+  const xLabels = (points.length <= 6 ? points.map((_, i) => i) : [0, last]).reduceRight<number[]>(
+    (kept, i) => (kept.length === 0 || xy[kept[0]][0] - xy[i][0] >= 48 ? [i, ...kept] : kept), []
+  );
 
   return (
     <div>

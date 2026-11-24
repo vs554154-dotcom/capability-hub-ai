@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { User, Skill, TargetRole, LearningCourse, Evidence, WeeklyLearningStep } from "../types";
+import { ActiveProject, User, Skill, TargetRole, LearningCourse, Evidence, WeeklyLearningStep } from "../types";
+import { KnowledgeCheck } from "./KnowledgeCheck";
 import { SkillRadarChart } from "./SkillRadarChart";
 import { PageHeader } from "./ui/Page";
 import { Inbox } from "./Inbox";
@@ -33,9 +34,8 @@ interface EmployeeDashboardProps {
     documentUrl?: string;
   }) => Promise<string | null>;
   onRefresh: () => void;
-  isShortlisted?: boolean;
-  shortlistDemand?: any;
-  onSimulateShortlist?: () => void;
+  activeProject?: ActiveProject | null;
+  onOpenSkillGap?: () => void;
 }
 
 export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
@@ -47,10 +47,10 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   capabilityData,
   onTargetRoleChange,
   onSubmitEvidence,
-  isShortlisted = false,
-  shortlistDemand,
-  onSimulateShortlist,
+  activeProject,
+  onOpenSkillGap,
 }) => {
+  const shortlistDemand = activeProject?.demand;
   const [selectedSkillForEvidence, setSelectedSkillForEvidence] = useState<string>("");
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDesc, setEvidenceDesc] = useState("");
@@ -67,13 +67,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   // Flexible Modality & Deadline State
   const [activeModalityFilter, setActiveModalityFilter] = useState<"all" | "micro" | "in_depth" | "best_practice">("all");
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
-  const [customDeadlineDate, setCustomDeadlineDate] = useState("2026-08-15");
+  const [customDeadlineDate, setCustomDeadlineDate] = useState("");
   const [customDeadlineType, setCustomDeadlineType] = useState<"client_interview" | "project_deadline" | "learner_set" | "manager_assigned">("client_interview");
   
   // Knowledge Check Quiz Modal State
   const [activeQuizStep, setActiveQuizStep] = useState<WeeklyLearningStep | null>(null);
-  const [selectedQuizAnswerIndex, setSelectedQuizAnswerIndex] = useState<number | null>(null);
-  const [quizScoreResult, setQuizScoreResult] = useState<number | null>(null);
+  const [stepError, setStepError] = useState("");
 
   useEffect(() => {
     async function fetchLearningPlan() {
@@ -99,31 +98,21 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     fetchLearningPlan();
   }, [currentUser]);
 
-  const handleUpdateStepStatus = async (
-    stepId: string, 
-    newStatus: "completed" | "in_progress" | "pending",
-    quizScore?: number,
-    timeSpentMins?: number
-  ) => {
-    const progressPercent = newStatus === "completed" ? 100 : newStatus === "in_progress" ? 50 : 0;
+  // Scores come from the knowledge check, marked on the server. (Completing a step used
+  // to send a score of 85 and 20 minutes of study, whatever had happened.)
+  const handleUpdateStepStatus = async (stepId: string, status: "completed" | "in_progress" | "pending") => {
+    setStepError("");
     try {
       const res = await fetch("/api/learning-plan/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          stepId, 
-          status: newStatus, 
-          progressPercent,
-          quizScore: quizScore !== undefined ? quizScore : (newStatus === "completed" ? 85 : 0),
-          timeSpentMins: timeSpentMins || 20
-        })
+        body: JSON.stringify({ stepId, status })
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setLearningPlan(updated);
-      }
-    } catch (err) {
-      console.error(err);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setLearningPlan(data);
+      else setStepError(data.error || `The server answered ${res.status}.`);
+    } catch {
+      setStepError("The server could not be reached.");
     }
   };
 
@@ -200,7 +189,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     ? relevantBreakdown.map((item: any) => ({
         name: item.skillName,
         current: item.current,
-        target: item.target || 4
+        target: item.target
       }))
     : (targetRoleObj?.requiredSkills || []).map((req) => {
         const sk = skills.find(s => s.id === req.skillId);
@@ -236,13 +225,13 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       <Inbox />
 
       {/* SHORTLIST STATUS BANNER */}
-      {isShortlisted ? (
+      {activeProject ? (
         <div className="bg-[#141E30] status-wash status-wash-success border border-[#10B981]/40 rounded-xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono font-bold bg-[#10B981]/20 text-[#10B981] px-2.5 py-0.5 rounded border border-[#10B981]/40 uppercase tracking-widest flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
-                Active Project Shortlist • SkillGap Agent Unlocked
+                Active Project Shortlist
               </span>
               <span className="text-[10px] font-mono text-[#94A3B8]">Candidate ID: {currentUser.id}</span>
             </div>
@@ -260,14 +249,24 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               <span>•</span>
               <span>Location: <strong className="text-white">{shortlistDemand?.location || "—"}</strong></span>
             </div>
+            <p className="text-xs text-[#94A3B8]">
+              {activeProject.missingSkills.length > 0
+                ? <>Still missing for this project: <strong className="text-white">{activeProject.missingSkills.join(", ")}</strong>.</>
+                : "You meet every skill this project requires."}
+              {activeProject.interviewPassed && " The interview date has passed; ask your manager for the new one."}
+            </p>
           </div>
-          
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-mono bg-[#10B981] text-[#0F1724] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md">
-              <CheckCircle2 className="h-4 w-4" />
-              Ready for SkillGap Intake
-            </span>
-          </div>
+
+          {onOpenSkillGap && (
+            <button
+              id="open-skillgap"
+              onClick={onOpenSkillGap}
+              className="text-xs font-mono bg-[#10B981] hover:bg-[#059669] text-[#0F1724] font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
+            >
+              <Target className="h-4 w-4" />
+              Take the Level-1 assessment
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-[#141E30] status-wash status-wash-warn border border-amber-500/40 rounded-xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -280,19 +279,10 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
             <h2 className="text-lg font-bold text-white">Profile Under Evaluation by Talent Acquisition & Managers</h2>
             <p className="text-xs text-[#94A3B8] max-w-3xl leading-relaxed">
-              Your profile is currently active in the talent pool and being evaluated against incoming client project requirements. You will unlock the <strong className="text-white">SkillGap-to-Growth Agent</strong> and upskilling roadmap as soon as you are shortlisted for an active project demand.
+              You have not been handed off to a client project yet. When you are, it appears here with the skills it needs from you. Until then you can use the <strong className="text-white">SkillGap agent</strong> for your own growth.
             </p>
           </div>
           
-          {onSimulateShortlist && (
-            <button
-              onClick={onSimulateShortlist}
-              className="bg-amber-500 hover:bg-amber-400 text-[#0F1724] font-mono font-bold text-xs py-2.5 px-4 rounded-lg transition-all shadow-md flex items-center gap-2 cursor-pointer shrink-0"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>Shortlist for Project Demand</span>
-            </button>
-          )}
         </div>
       )}
 
@@ -323,7 +313,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   className="text-[#10B981] transition-all duration-500 ease-out"
                   strokeWidth="8"
                   strokeDasharray={365}
-                  strokeDashoffset={365 - (365 * (capabilityData?.overallScore || 0)) / 100}
+                  strokeDashoffset={365 - (365 * (capabilityData?.overallScore ?? 0)) / 100}
                   strokeLinecap="round"
                   stroke="currentColor"
                   fill="transparent"
@@ -335,16 +325,18 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               </svg>
               <div className="absolute text-center">
                 <span className="text-4xl font-bold text-[#F0F4FF] tracking-tight">
-                  {capabilityData?.overallScore || 0}%
+                  {capabilityData?.overallScore != null ? `${capabilityData.overallScore}%` : "-"}
                 </span>
-                <p className="text-[9px] text-[#10B981] font-mono uppercase font-bold tracking-widest mt-1">Target Ready</p>
+                <p className="text-[9px] text-[#10B981] font-mono uppercase font-bold tracking-widest mt-1">
+                  {capabilityData && capabilityData.overallScore == null ? "No targets set" : "Target Ready"}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="bg-[#0F1724] rounded-md p-3.5 border border-[#2A384C] text-xs text-[#94A3B8] leading-relaxed">
             <span className="font-mono text-[10px] uppercase tracking-wider text-[#4F8EF7] font-semibold block mb-1">Score Breakdown</span>
-            <p className="text-[11px] text-[#F0F4FF] leading-normal font-sans">
+            <p className="text-[11px] text-[#F0F4FF] leading-normal font-sans whitespace-pre-line">
               {capabilityData?.explainability || "Score is computed from skill target levels and human-validated evidence logs."}
             </p>
           </div>
@@ -391,19 +383,19 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 stagger-children">
             <div className="bg-[#0F1724] border border-[#2A384C] rounded-md p-3 text-center hover-lift">
               <span className="text-xl font-bold text-[#F0F4FF] block">
-                {capabilityData?.stats?.totalRequirements || 6}
+                {capabilityData?.stats?.totalRequirements ?? "-"}
               </span>
               <span className="text-[9px] text-[#94A3B8] uppercase tracking-widest font-mono">Skill Requirements</span>
             </div>
             <div className="bg-[#0F1724] border border-[#2A384C] rounded-md p-3 text-center">
               <span className="text-xl font-bold text-[#F59E0B] block">
-                {capabilityData?.skillsBreakdown?.filter((b: any) => !b.isTargetMet && b.target > 0).length || 6}
+                {capabilityData?.skillsBreakdown?.filter((b: any) => !b.isTargetMet && b.target > 0).length ?? "-"}
               </span>
               <span className="text-[9px] text-[#F59E0B] uppercase tracking-widest font-mono font-bold">Gaps Identified</span>
             </div>
             <div className="bg-[#0F1724] border border-[#2A384C] rounded-md p-3 text-center">
               <span className="text-xl font-bold text-[#10B981] block">
-                {capabilityData?.stats?.evidenceCount || 1}
+                {capabilityData?.stats?.evidenceCount ?? "-"}
               </span>
               <span className="text-[9px] text-[#10B981] uppercase tracking-widest font-mono font-bold">Verified Evidence</span>
             </div>
@@ -454,7 +446,9 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {capabilityData?.skillsBreakdown?.map((item: any) => {
+            {/* Only skills the person has a target for: one without a target showed
+                as "Level 0 / 4" and "100% Met" at once. */}
+            {capabilityData?.skillsBreakdown?.filter((item: any) => item.target > 0).map((item: any) => {
               const isGap = !item.isTargetMet && item.target > 0;
               const isSelected = activeSkillFilter === item.skillId;
               return (
@@ -488,7 +482,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   {/* Level Slider Meter */}
                   <div className="space-y-1.5 mt-3">
                     <div className="flex items-center justify-between text-[10px] font-mono">
-                      <span className="text-[#94A3B8]">Level: {item.current} / {item.target || 4}</span>
+                      <span className="text-[#94A3B8]">Level: {item.current} / {item.target}</span>
                       <span className={`font-bold ${item.isTargetMet ? "text-[#10B981]" : "text-[#F59E0B]"}`}>
                         {item.scorePercentage}% Met
                       </span>
@@ -536,10 +530,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             <div className="px-3 py-1.5 bg-[#4F8EF7]/10 border border-[#4F8EF7]/30 rounded-md flex items-center gap-2 text-xs font-mono">
               <Target className="h-4 w-4 text-[#4F8EF7]" />
               <span className="text-[#94A3B8]">Target Deadline:</span>
-              <span className="font-bold text-[#F0F4FF]">{customDeadlineDate}</span>
-              <span className="text-[10px] text-[#10B981] bg-[#10B981]/10 px-1.5 py-0.5 rounded uppercase font-bold">
-                {customDeadlineType.replace("_", " ")}
-              </span>
+              <span className="font-bold text-[#F0F4FF]">{learningPlan[0]?.targetDeadline ?? "not set"}</span>
+              {learningPlan[0]?.targetDeadline && (
+                <span className="text-[10px] text-[#10B981] bg-[#10B981]/10 px-1.5 py-0.5 rounded uppercase font-bold">
+                  {customDeadlineType.replace("_", " ")}
+                </span>
+              )}
             </div>
 
             <button
@@ -610,6 +606,13 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             Completed: <strong className="text-[#10B981]">{learningPlan.filter(s => s.status === "completed").length}</strong> / {learningPlan.length} Steps
           </div>
         </div>
+
+        {stepError && <p role="alert" className="mb-4 text-xs text-rose-400">{stepError}</p>}
+        {!isPlanLoading && learningPlan.length === 0 && (
+          <p className="text-xs text-[#94A3B8]">
+            No learning track has been assigned yet. Your manager or L&D assigns one from your gaps.
+          </p>
+        )}
 
         {/* Flexible Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -705,13 +708,18 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Completed (Reopen)
                         </button>
+                      ) : step.learningType === "best_practice" ? (
+                        <button
+                          onClick={() => handleUpdateStepStatus(step.id, "completed")}
+                          title="Submit the work as evidence below; your manager's approval is what raises the skill."
+                          className="w-full py-1.5 px-3 bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30 rounded-md text-xs font-mono font-bold hover:bg-[#10B981]/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <CheckSquare className="h-3.5 w-3.5" />
+                          Mark practice done
+                        </button>
                       ) : (
                         <button
-                          onClick={() => {
-                            setActiveQuizStep(step);
-                            setSelectedQuizAnswerIndex(null);
-                            setQuizScoreResult(null);
-                          }}
+                          onClick={() => { setStepError(""); setActiveQuizStep(step); }}
                           className="w-full py-1.5 px-3 bg-[#10B981] hover:bg-[#059669] text-[#0F1724] rounded-md text-xs font-mono font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                         >
                           <CheckSquare className="h-3.5 w-3.5" />
@@ -772,7 +780,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               </div>
 
               <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                Updating your deadline recalculates module pace and signals client interview readiness to your manager and L&D leads.
+                This sets the target date on every step of your plan. Your manager and L&D see it in their tracker.
               </p>
             </div>
 
@@ -795,87 +803,14 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
         </div>
       )}
 
-      {/* Knowledge Check Quiz Modal */}
+      {/* Knowledge check, with questions and marking from the server */}
       {activeQuizStep && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 max-w-lg w-full shadow-2xl space-y-5 animate-scale-up">
-            <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-              <div>
-                <span className="text-[10px] font-mono text-[#10B981] uppercase font-bold tracking-wider">
-                  Interactive Knowledge Check
-                </span>
-                <h3 className="text-sm font-bold text-[#F0F4FF]">{activeQuizStep.title}</h3>
-              </div>
-              <button onClick={() => setActiveQuizStep(null)} className="text-[#94A3B8] hover:text-[#F0F4FF]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-3 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs text-[#94A3B8] space-y-1">
-              <p><strong className="text-[#F0F4FF]">Skill Focus:</strong> {activeQuizStep.skillFocus}</p>
-              <p><strong className="text-[#F0F4FF]">Milestone:</strong> {activeQuizStep.milestone}</p>
-            </div>
-
-            {/* Quiz Question */}
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-[#F0F4FF] leading-relaxed">
-                Q: According to best practice standards for <strong className="text-[#4F8EF7]">{activeQuizStep.skillFocus}</strong>, which architectural principle best fulfills the requirement: "{activeQuizStep.assessment}"?
-              </p>
-
-              <div className="space-y-2">
-                {[
-                  `Apply clean modular separation and parameterized execution handlers.`,
-                  `Hardcode test configurations inside execution loops without boundary assertions.`,
-                  `Bypass validation logging and skip pull request code reviews.`,
-                  `Rely on non-deterministic waits and manual database manipulation.`
-                ].map((optionText, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedQuizAnswerIndex(idx)}
-                    className={`w-full text-left p-3 rounded-md text-xs font-sans transition-all cursor-pointer border flex items-center justify-between ${
-                      selectedQuizAnswerIndex === idx
-                        ? "bg-[#4F8EF7]/15 border-[#4F8EF7] text-[#F0F4FF] font-semibold"
-                        : "bg-[#0F1724] border-[#2A384C] text-[#94A3B8] hover:text-[#F0F4FF] hover:border-[#4F8EF7]/50"
-                    }`}
-                  >
-                    <span>{String.fromCharCode(65 + idx)}. {optionText}</span>
-                    {selectedQuizAnswerIndex === idx && <Check className="h-4 w-4 text-[#4F8EF7]" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center justify-between pt-3 border-t border-[#2A384C]">
-              <span className="text-[10px] font-mono text-[#94A3B8]">Target Score: {activeQuizStep.targetScore}</span>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveQuizStep(null)}
-                  className="px-3 py-1.5 bg-[#1E293B] text-[#94A3B8] text-xs font-mono font-bold rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={selectedQuizAnswerIndex === null}
-                  onClick={() => {
-                    const score = selectedQuizAnswerIndex === 0 ? 92 : 65;
-                    handleUpdateStepStatus(activeQuizStep.id, "completed", score, 25);
-                    setActiveQuizStep(null);
-                  }}
-                  className={`px-4 py-1.5 text-xs font-mono font-bold rounded-md flex items-center gap-1.5 transition-colors ${
-                    selectedQuizAnswerIndex !== null
-                      ? "bg-[#10B981] hover:bg-[#059669] text-[#0F1724] cursor-pointer"
-                      : "bg-[#2A384C] text-[#94A3B8] cursor-not-allowed"
-                  }`}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Submit Quiz & Validate Step
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <KnowledgeCheck
+          step={activeQuizStep}
+          onClose={() => setActiveQuizStep(null)}
+          onPlan={setLearningPlan}
+          onMarkDone={() => { handleUpdateStepStatus(activeQuizStep.id, "completed"); setActiveQuizStep(null); }}
+        />
       )}
 
       {/* 4. Recommended Courses & Credentials Section */}

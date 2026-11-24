@@ -6,7 +6,7 @@ set -e
 echo "=== Setting up CyBridge ==="
 
 echo "Installing frontend dependencies..."
-npm install
+npm --prefix frontend install
 
 echo "Installing the backend into backend/.venv..."
 # Created only when missing, so a rerun never rewrites a venv that a running server
@@ -21,8 +21,8 @@ if [ ! -f .env ]; then
 fi
 
 echo "Type-checking and building the frontend..."
-npm run lint
-npm run build
+npm --prefix frontend run lint
+npm --prefix frontend run build
 
 echo "Running the backend tests..."
 "$PY" -m pytest backend/tests -q
@@ -30,4 +30,4 @@ echo "Running the backend tests..."
 echo
 echo "Done. Start the backend (API + built app on http://localhost:8000):"
 echo "  $PY -m uvicorn backend.app.main:app --reload --reload-dir backend/app"
-echo "For hot-reloading frontend work, also run: npm run dev  (http://localhost:5173)"
+echo "For hot-reloading frontend work, also run: npm --prefix frontend run dev  (http://localhost:5173)"

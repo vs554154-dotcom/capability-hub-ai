@@ -2,8 +2,8 @@
 REM ---------------------------------------------------------------------------
 REM Windows dev launcher for the CyBridge FastAPI backend (the live backend).
 REM
-REM Serves the API and, once `npm run build` has produced dist/, the React app
-REM too - both from http://localhost:8000 on a single origin.
+REM Serves the API and, once `npm run build` has produced frontend/dist/, the React
+REM app too - both from http://localhost:8000 on a single origin.
 REM
 REM Resolves the interpreter itself rather than relying on PATH: the venv is the
 REM preferred one because that is where the dependencies are installed, and a
@@ -42,6 +42,6 @@ if not defined PORT set "PORT=8000"
 echo [dev-python.cmd] python: %PY_EXE%
 echo [dev-python.cmd] http://localhost:%PORT%
 
-REM --reload-dir keeps the watcher off dist/ and node_modules/, which would
-REM otherwise restart the server on every frontend build.
+REM --reload-dir keeps the watcher off frontend/, which would otherwise restart the
+REM server on every frontend build.
 "%PY_EXE%" -m uvicorn backend.app.main:app --host 0.0.0.0 --port %PORT% --reload --reload-dir backend\app %*

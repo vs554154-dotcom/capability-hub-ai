@@ -26,6 +26,9 @@ class FakeGemini:
         self.mode = "ok"
         self.reply_text = "Hello from the model."
         self.delay_seconds = 0.0
+        self.busy: dict[str, int] = {}      # model -> the error status it answers with
+        self.retry_delay: str | None = None  # what a busy model says about trying again
+        self.slow: dict[str, float] = {}    # model -> seconds before it answers
         self.requests: list[dict] = []
         fake = self
 
@@ -36,9 +39,16 @@ class FakeGemini:
                     "path": self.path,
                     "body": json.loads(self.rfile.read(length) or b"{}"),
                 })
-                if fake.delay_seconds:
-                    time.sleep(fake.delay_seconds)
-                if fake.mode == "error":
+                model = self.path.split("models/")[1].split(":")[0]
+                delay = fake.slow.get(model, fake.delay_seconds)
+                if delay:
+                    time.sleep(delay)
+                if model in fake.busy:
+                    status = fake.busy[model]
+                    payload = {"error": {"code": status, "message": "busy", "status": "UNAVAILABLE"}}
+                    if fake.retry_delay:
+                        payload["error"]["details"] = [{"retryDelay": fake.retry_delay}]
+                elif fake.mode == "error":
                     payload, status = {"error": {"code": 500, "message": "boom"}}, 500
                 else:
                     payload, status = {
@@ -97,12 +107,22 @@ def test_generate_returns_the_models_text(gemini):
     # The system instruction and prompt reach the API, not just our code.
     assert "You are a coach." in json.dumps(request["body"])
     assert "What next?" in json.dumps(request["body"])
+    assert "never as he or she" in json.dumps(request["body"]["systemInstruction"])
 
 
 def test_generate_json_recovers_fenced_output(gemini):
     gemini.reply_text = '```json\n{"roleTitle": "Data Engineer", "mcqs": []}\n```'
     gemini.connect()
     assert ai.generate_json("assessment please") == {"roleTitle": "Data Engineer", "mcqs": []}
+
+
+def test_json_is_asked_for_as_json_and_prose_is_not(gemini):
+    gemini.reply_text = "{}"
+    gemini.connect()
+    ai.generate_json("assessment please")
+    ai.generate("What next?")
+    asked_for = [r["body"].get("generationConfig", {}).get("responseMimeType") for r in gemini.requests]
+    assert asked_for == ["application/json", None]
 
 
 def test_a_call_that_does_not_answer_is_cut_off_at_the_timeout(gemini):
@@ -123,6 +143,89 @@ def test_server_errors_are_not_retried(gemini):
     gemini.connect()
     assert ai.generate("What next?") is None
     assert len(gemini.requests) == 1
+
+
+# --------------------------------------------------------------------------- #
+# A busy model hands over to a backup, inside the same time limit
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def backups(gemini, monkeypatch):
+    monkeypatch.setattr(ai, "BACKUP_MODELS", ["backup-1", "backup-2"])
+    monkeypatch.setattr(ai, "_resting_until", {})
+    gemini.connect()
+    return gemini
+
+
+def asked(gemini):
+    return [r["path"].split("models/")[1].split(":")[0] for r in gemini.requests]
+
+
+@pytest.mark.parametrize("status", [404, 429, 503, 504])
+def test_a_busy_model_hands_over_to_the_next_one(backups, status):
+    backups.busy = {ai.MODEL: status}
+    assert ai.generate("What next?") == "Hello from the model."
+    assert asked(backups) == [ai.MODEL, "backup-1"]
+
+
+def test_the_first_model_is_used_when_it_answers(backups):
+    ai.generate("What next?")
+    assert asked(backups) == [ai.MODEL]
+
+
+def test_every_model_is_asked_once_before_falling_back(backups):
+    backups.busy = {ai.MODEL: 503, "backup-1": 503, "backup-2": 503}
+    assert ai.generate("What next?") is None
+    assert asked(backups) == [ai.MODEL, "backup-1", "backup-2"]
+
+
+@pytest.mark.parametrize("status", [400, 403, 500])
+def test_an_error_every_model_would_give_is_not_passed_on(backups, status):
+    backups.busy = {ai.MODEL: status}
+    assert ai.generate("What next?") is None
+    assert asked(backups) == [ai.MODEL]
+
+
+def test_a_model_that_was_busy_is_passed_over_for_a_while(backups, monkeypatch):
+    backups.busy = {ai.MODEL: 503}
+    ai.generate("one")
+    backups.busy = {}
+    ai.generate("two")
+    assert asked(backups) == [ai.MODEL, "backup-1", "backup-1"]
+    monkeypatch.setattr(ai, "_resting_until", {m: 0.0 for m in ai._resting_until})   # later
+    ai.generate("three")
+    assert asked(backups)[-1] == ai.MODEL
+
+
+@pytest.mark.parametrize("said, rests", [(None, 120), ("5s", 120), ("600s", 600), ("50883s", 3600), ("soon", 120)])
+def test_a_used_up_model_rests_as_long_as_google_says(backups, said, rests):
+    backups.busy, backups.retry_delay = {ai.MODEL: 429}, said
+    ai.generate("What next?")
+    assert ai._resting_until[ai.MODEL] - time.monotonic() == pytest.approx(rests, abs=5)
+
+
+def test_a_model_with_no_quota_left_is_tried_last(backups):
+    now = time.monotonic()
+    ai._resting_until.update({ai.MODEL: now + 3600, "backup-1": now + 900, "backup-2": now + 30})
+    ai.generate("What next?")
+    assert asked(backups) == ["backup-2"]
+
+
+def test_a_slow_model_is_cut_off_in_time_for_the_next(backups, monkeypatch):
+    monkeypatch.setattr(ai, "GEMINI_TIMEOUT_SECONDS", 4.0)
+    backups.slow = {ai.MODEL: 8.0}
+    started = time.monotonic()
+    assert ai.generate("What next?") == "Hello from the model."
+    assert time.monotonic() - started < 4.0
+    assert asked(backups) == [ai.MODEL, "backup-1"]
+
+
+def test_the_total_time_is_bounded_however_many_models_there_are(backups, monkeypatch):
+    monkeypatch.setattr(ai, "GEMINI_TIMEOUT_SECONDS", 4.0)
+    backups.slow = {ai.MODEL: 8.0, "backup-1": 8.0, "backup-2": 8.0}
+    started = time.monotonic()
+    assert ai.generate("What next?") is None
+    assert time.monotonic() - started < 5.0
 
 
 @pytest.mark.parametrize("raw", ["0", "-5", "soon"])

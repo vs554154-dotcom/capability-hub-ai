@@ -17,8 +17,8 @@ from ..deps import (
     require_self_or_elevated_body,
     visible_user_ids,
 )
-from ..repositories import evidence, reminders
-from ..services import analytics, capability, learning, talent
+from ..repositories import evidence, learning as learning_plans, reminders, users
+from ..services import analytics, capability, journey, learning, talent
 
 router = APIRouter(prefix="/api", tags=["capability"])
 
@@ -119,7 +119,24 @@ def get_shortlist(id: str, _: dict = Depends(require_self_manager_or_elevated("i
         "isShortlisted": bool(shortlist),
         "demand": shortlist["demand"] if shortlist else None,
         "shortlistedAt": shortlist["shortlistedAt"] if shortlist else None,
+        # What the SkillGap agent starts from.
+        "missingSkills": shortlist["missingSkills"] if shortlist else [],
+        "jobDescription": shortlist["jobDescription"] if shortlist else None,
+        "interviewPassed": shortlist["interviewPassed"] if shortlist else False,
     }
+
+
+@router.get("/users/{id}/skillgap-assessment")
+def get_skillgap_assessment(
+    id: str, _: dict = Depends(require_self_manager_or_elevated("id"))
+) -> dict[str, Any]:
+    """The person's latest finished Level-1 assessment, and the gaps every agent
+    works from."""
+    person = users.get_user_by_id(id)
+    if not person:
+        raise HTTPException(status_code=404, detail="User not found")
+    current = journey.journey(person)
+    return {"assessment": current["assessment"], "gaps": current["gaps"]}
 
 
 @router.get("/learning-tracker/resources")
@@ -136,10 +153,26 @@ def update_step(
 ) -> list[dict[str, Any]]:
     if not body.get("stepId") or not body.get("status"):
         raise HTTPException(status_code=400, detail="stepId and status are required")
-    return learning.update_step(
-        body["stepId"], body["status"], body.get("progressPercent") or 0,
-        body.get("quizScore"), body.get("timeSpentMins"),
-    )
+    return learning.update_step(body["stepId"], body["status"], body.get("timeSpentMins"))
+
+
+@router.get("/learning-plan/step/{stepId}/quiz")
+def get_quiz(stepId: str, session_user: dict = Depends(require_auth)) -> dict[str, Any]:
+    ensure_may_access(session_user, learning_plans.get_step_owner_id(stepId))
+    return learning.quiz_for(stepId)
+
+
+@router.post("/learning-plan/step/{stepId}/quiz")
+def submit_quiz(
+    stepId: str,
+    body: dict[str, Any] = Depends(json_body),
+    session_user: dict = Depends(require_auth),
+) -> dict[str, Any]:
+    # Only the learner may take their own knowledge check.
+    owner = learning_plans.get_step_owner_id(stepId)
+    if owner and owner != session_user["id"]:
+        raise HTTPException(status_code=403, detail="Only the learner can take this knowledge check.")
+    return learning.submit_quiz(stepId, body.get("answers"), body.get("timeSpentMins"))
 
 
 @router.post("/learning-plan/deadline")
@@ -150,6 +183,17 @@ def update_deadline(
         raise HTTPException(status_code=400, detail="userId and targetDeadline are required")
     plan = learning.update_deadline(body["userId"], body["targetDeadline"], body.get("deadlineType"))
     return {"success": True, "plan": plan}
+
+
+@router.post("/learning-plan/suggest")
+def suggest_track(
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_manager_or_above)
+) -> dict[str, Any]:
+    """A track built from the employee's own gaps, for the assigner to check."""
+    if not body.get("userId"):
+        raise HTTPException(status_code=400, detail="userId is required")
+    ensure_may_access(session_user, body["userId"])
+    return learning.suggest_track(body["userId"], body.get("demandId") or None, body.get("format"))
 
 
 @router.post("/learning-plan/assign")
@@ -171,7 +215,7 @@ def assign_track(
         body.get("deadlineType") or "client_interview",
         steps,
         body.get("demandId") or None,
-        "project_hiring" if body.get("purpose") == "project_hiring" else "career_growth",
+        session_user,
     )
     return {"success": True, "plan": plan}
 

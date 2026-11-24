@@ -1,4 +1,4 @@
-"""The AI copilots: the four personas, the GROW coach and the interview agent.
+"""The AI copilots: the four personas and the GROW coach.
 
 Every function here attempts Gemini first and falls back to deterministic text when
 there is no key or the call fails, so the product stays usable without a model. A
@@ -11,8 +11,12 @@ from typing import Any
 from .. import ai
 from ..database import transaction
 from ..errors import NotFound
-from ..repositories import assessments, catalog, evidence, learning, user_skills, users
+from ..repositories import assessments, catalog, demands, evidence, learning, user_skills, users
 from .analytics import org_context
+from .capability import team_rollup
+from .journey import course_lines, gap_line, journey, journey_lines
+from .matching import mentioned_skills, names_word
+from .talent import project_readiness
 
 PERSONAS = {
     "skill_gap": """
@@ -99,10 +103,32 @@ def _plural(n: int, word: str) -> str:
     return f"{n} {word}{'' if n == 1 else 's'}"
 
 
-def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool = False) -> str:
+def _focused(j: dict[str, Any], prompt: str, skill_id: str | None) -> list[dict[str, Any]]:
+    """The person's gaps, with the skills asked about first - also ones that are not a
+    gap, so a question about any catalogue skill is answered with that skill in view.
+    A skill that is only part of the project's name was not asked about."""
+    gaps, skills = j["gaps"], catalog.get_skills()
+    if j["project"]:
+        prompt = prompt.replace(j["project"]["projectName"], " ")
+    asked_ids = [s["id"] for s in skills if s["id"] == skill_id]
+    asked_ids += [s["id"] for s in mentioned_skills(prompt, skills) if s["id"] not in asked_ids]
+    by_id = {g["skillId"]: g for g in gaps if g["skillId"]}
+    names = {s["id"]: s["name"] for s in skills}
+    asked = [
+        by_id.get(i) or {"skillId": i, "skillName": names[i], "current": None, "target": None,
+                         "sources": ["asked about"]}
+        for i in asked_ids
+    ]
+    return asked + [g for g in gaps if g["skillId"] not in asked_ids]
+
+
+def orchestrate(
+    subject_id: str, prompt: str, agent: str | None, org_view: bool = False, skill_id: str | None = None
+) -> str:
     """Answer `prompt` as the chosen persona, grounded in the subject's skills,
-    evidence and the course catalogue - or, for the analytics persona when the
-    caller may see organisation-wide figures (`org_view`), in those figures."""
+    evidence, project, assessment, learning plan and the courses for their gaps - or,
+    for the analytics persona when the caller may see organisation-wide figures
+    (`org_view`), in those figures."""
     if agent == "analytics" and org_view:
         context = org_context()
         text = ai.generate(
@@ -131,15 +157,24 @@ def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool 
         )
         skills_text = skill_lines(user_id)
         evidence_text = evidence_lines(user_id)
-        courses = catalog.get_courses()
+        current = journey(user) if user else None
+        gaps = _focused(current, prompt, skill_id) if current else []
+        courses = course_lines(gaps)
+        focus = next((s["name"] for s in catalog.get_skills() if s["id"] == skill_id), None)
 
+    where = "\n".join(journey_lines(current)) if current else "No record."
+    gap_text = "\n".join(f"- {gap_line(g)}" for g in gaps) or "- None on record."
+    course_text = "\n".join(f"- {line}" for line in courses) or "- No gaps to find courses for."
     context = (
         f"Employee: {user['name'] if user else 'Team Member'} "
         f"({user['title'] if user else 'Engineer'})\n"
         f"Target Role: {role['title'] if role else 'Not selected'}\n"
+        + (f"Skill asked about: {focus}\n" if focus else "")
+        + f"{where}\n"
+        f"Gaps, most urgent first:\n{gap_text}\n"
         f"Skill Levels:\n{skills_text}\n"
         f"Workplace Evidence:\n{evidence_text}\n"
-        "Course Catalog: " + ", ".join(c["title"] for c in courses[:12])
+        f"Catalogue courses for those gaps:\n{course_text}"
     )
     text = ai.generate(
         prompt,
@@ -157,26 +192,34 @@ def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool 
     if agent == "skill_gap":
         return (
             f"### SkillGap-to-Growth Analysis (Intelligent Agent)\n"
+            f"{COMPUTED}\n\n"
             f"Based on your profile as **{name}** and target role **{role_title}**:\n\n"
-            f"{skills_text or '- No skill records yet.'}\n\n"
-            "**Recommended next step:** close the largest level deficit first, then "
-            "submit workplace evidence so the gap can be verified rather than assumed."
+            f"{where}\n\n"
+            f"**Your gaps, most urgent first:**\n{gap_text}\n\n"
+            "**Recommended next step:** "
+            + (f"close {gaps[0]['skillName']} first, then " if gaps else "")
+            + "submit workplace evidence so the skill can be verified rather than assumed. "
+            "The Learning Concierge can find courses and practice for each gap."
         )
     if agent == "concierge":
+        practice = "\n".join(
+            f"- **{g['skillName']}:** use it in one piece of real work, then submit it as evidence for review."
+            for g in gaps[:3]
+        )
         return (
             f"### Learning Concierge\n"
-            f"Hello {name.split(' ')[0]}. I can clear technical doubts, recommend "
-            "catalog courses, and set hands-on practice assignments.\n\n"
-            "**Suggested courses from the verified catalog:**\n"
-            + "\n".join(f"- {c['title']} ({c['provider']})" for c in courses[:3])
+            f"{COMPUTED}\n\n"
+            f"Hello {name.split(' ')[0]}. I cannot explain concepts until the AI model is back, "
+            "but here is what your records say.\n\n"
+            f"**Your gaps, most urgent first:**\n{gap_text}\n\n"
+            f"**Courses in the catalogue for them:**\n{course_text}\n\n"
+            f"**Practice assignments:**\n{practice or '- No gaps on record, so none is needed.'}"
         )
     if agent == "coach":
         return (
             "### Manager GROW Coach\n"
-            "- **Goal:** confirm the target capability level for each report.\n"
-            "- **Reality:** review pending evidence submissions awaiting validation.\n"
-            "- **Options:** assign a focused learning track or pair with a mentor.\n"
-            "- **Will:** ask what the report will complete before the next check-in."
+            f"{COMPUTED}\n\n{grow_lines(name, current)}"
+            if current else "### Manager GROW Coach\nNo record of this person."
         )
     if agent == "analytics":
         return (
@@ -192,6 +235,97 @@ def orchestrate(subject_id: str, prompt: str, agent: str | None, org_view: bool 
     )
 
 
+def grow_lines(name: str, j: dict[str, Any]) -> str:
+    """Goal, Reality, Options and Will for one person, from their records."""
+    first = name.split(" ")[0]
+    gap = j["gaps"][0] if j["gaps"] else None
+    project = j["project"]
+    goal = (
+        f"{project['projectName']} for {project['customerName']}" if project
+        else "their target role"
+    )
+    step = j["plan"]["next"]
+    return (
+        f"- **Goal:** {goal}. Ask {first}: what would being ready for this look like?\n"
+        f"- **Reality:** {'; '.join(journey_lines(j)[1:])}. "
+        + (f"Largest gap: {gap_line(gap)}. " if gap else "No open gap on record. ")
+        + f"Ask {first}: what have you tried so far?\n"
+        "- **Options:** "
+        + (
+            f"practise {gap['skillName']} in real work, or pair with someone who has it. "
+            if gap else "take on client-facing work that stretches them. "
+        )
+        + f"Ask {first}: which would help most?\n"
+        "- **Will:** "
+        + (f"next step in the plan is \"{step['title']}\". " if step else "no open learning step. ")
+        + f"Ask {first}: what will you finish before we next meet?"
+    )
+
+
+def coach_team(manager: dict[str, Any], prompt: str) -> str:
+    """Answer a manager's coaching question from their reports' records. A report
+    named in the question is described in full. L&D and leadership, who have no
+    reports, coach across everyone they may see."""
+    with transaction():
+        people = [u for u in users.get_direct_reports(manager["id"]) if u["role"] == "employee"]
+        if not people and manager["role"] != "manager":
+            people = [u for u in users.get_users() if u["role"] == "employee"]
+        journeys = {p["id"]: journey(p) for p in people}
+        pending = {
+            p["id"]: [e["title"] for e in evidence.get_for_user(p["id"]) if e["status"] == "pending"]
+            for p in people
+        }
+        scores = {m["userId"]: m for m in team_rollup(manager["id"])}
+        named = [
+            p for p in people
+            if names_word(p["id"], prompt) or names_word(p["name"].split(" ")[0], prompt)
+        ]
+        detail = {p["id"]: (skill_lines(p["id"]), evidence_lines(p["id"])) for p in named}
+
+    def line(p: dict[str, Any]) -> str:
+        j, m = journeys[p["id"]], scores.get(p["id"])
+        parts = [f"{p['name']} ({p['title']})"]
+        if m:
+            parts.append(f"Skill {m['skillScore']}, Will {m['willScore']}")
+        parts += [l for l in journey_lines(j) if l != "Active project: none"]
+        parts.append(_plural(len(j["gaps"]), "open gap"))
+        if pending[p["id"]]:
+            parts.append(f"evidence waiting for review: {', '.join(pending[p['id']])}")
+        return "; ".join(parts)
+
+    if not people:
+        return "### Manager GROW Coach\nYou have no direct reports, so there is nobody to coach yet."
+    team_text = "\n".join(f"- {line(p)}" for p in people)
+    detail_text = "\n".join(
+        f"\n{p['name']} in detail\nSkill levels:\n{detail[p['id']][0]}\nEvidence:\n{detail[p['id']][1]}\n"
+        "Gaps, most urgent first:\n"
+        + ("\n".join(f"- {gap_line(g)}" for g in journeys[p["id"]]["gaps"]) or "- None on record.")
+        for p in named
+    )
+    text = ai.generate(
+        prompt,
+        system_instruction=(
+            f"{PERSONAS['coach']}\n\nUse only the records below; say so when something is not recorded.\n\n"
+            f"=== {manager['name']}'s REPORTS ===\n{team_text}\n{detail_text}"
+        ),
+        temperature=0.7,
+    )
+    if text:
+        return text
+
+    # Without a model: the person asked about, else whoever has most to close.
+    focus = named or sorted(people, key=lambda p: -len(journeys[p["id"]]["gaps"]))[:1]
+    waiting = [f"- {p['name']}: {', '.join(pending[p['id']])}" for p in people if pending[p["id"]]]
+    return (
+        f"### Manager GROW Coach\n{COMPUTED}\n\n"
+        + ("" if named else f"**Your reports:**\n{team_text}\n\n")
+        + (f"**Evidence waiting for your review:**\n" + "\n".join(waiting) + "\n\n" if waiting and not named else "")
+        + "\n\n".join(
+            f"**GROW questions for {p['name']}:**\n{grow_lines(p['name'], journeys[p['id']])}" for p in focus
+        )
+    )
+
+
 def manager_insight(employee_id: str) -> str:
     """A three-point coaching summary of one employee for their manager."""
     with transaction():
@@ -201,9 +335,11 @@ def manager_insight(employee_id: str) -> str:
         skills_text = skill_lines(emp["id"])
         evidence_text = evidence_lines(emp["id"])
         facts = record_facts(emp["id"])
+        current = journey(emp)
 
     prompt = (
         f"Employee: {emp['name']} ({emp['title']})\n"
+        + "\n".join(journey_lines(current)) + "\n"
         f"Skill Levels:\n{skills_text}\n"
         f"Evidence:\n{evidence_text}\n\n"
         "Provide a 3-bullet point executive coaching summary:\n"
@@ -235,13 +371,17 @@ def manager_insight(employee_id: str) -> str:
         f"• Strength: {strength}\n"
         f"• Bottleneck: {bottleneck}\n"
         f"• Coaching question (GROW): {question}"
+        + (f"\n• Project: {'; '.join(journey_lines(current))}" if current["project"] else "")
     )
 
 
 def post_assessment(employee_id: str, demand_id: str | None, manager_id: str) -> dict[str, Any]:
     """Write a post-training GROW readiness assessment and persist it pending
     sign-off. Persisting it is the point: the client resume later requires a real,
-    signed-off assessment rather than a narrative generated and thrown away."""
+    signed-off assessment rather than a narrative generated and thrown away.
+
+    It belongs to the demand the person was handed off to unless another is named.
+    Without a demand it could never unlock a resume, whatever the manager decided."""
     with transaction():
         emp = users.get_user_by_id(employee_id)
         if not emp:
@@ -252,21 +392,40 @@ def post_assessment(employee_id: str, demand_id: str | None, manager_id: str) ->
         skills_text = skill_lines(emp["id"])
         evidence_text = evidence_lines(emp["id"])
         facts = record_facts(emp["id"])
+        current = journey(emp)
+        demand = demands.get_project_demand_by_id(demand_id) if demand_id else current["project"]
+        if demand_id and not demand:
+            raise NotFound("Project Demand not found.")
+        readiness = project_readiness(emp, demand) if demand else None
 
     prompt = (
         "Conduct a Post-Training GROW Readiness Assessment for an employee who has "
         "completed training & practice assignments from the Learning Concierge.\n\n"
         f"Employee Name: {emp['name']} ({emp['title']})\n"
-        f"Target Role: {role['title'] if role else emp.get('targetRoleId')}\n"
-        f"Baseline Skill Levels:\n{skills_text}\n"
+        f"Target Role: {role['title'] if role else 'Not selected'}\n"
+        + (
+            f"Project: {demand['projectName']} for {demand['customerName']}\n"
+            f"Requirements met at handoff: {readiness['atHandoff']}%, now: {readiness['now']}%\n"
+            f"Closed since handoff: {', '.join(readiness['closed']) or 'none'}\n"
+            f"Still open: {', '.join(readiness['open']) or 'none'}\n"
+            if demand else ""
+        )
+        + "\n".join(journey_lines(current)) + "\n"
+        f"Skill Levels:\n{skills_text}\n"
         f"Evidence:\n{evidence_text}\n\n"
         "Assess readiness against the GROW framework and state clearly whether the "
         "employee is client-interview ready."
     )
     gaps = facts["gaps"]
+    # For a project, a skill it requires comes before any other gap.
+    open_skills = readiness["open"] if readiness else [g["skill"] for g in gaps]
+    to_practise = open_skills[0] if open_skills else None
     narrative = ai.generate(prompt, temperature=0.7) or (
         f"Post-Training GROW Readiness Assessment for {emp['name']} {COMPUTED}\n\n"
-        f"• Goal: {role['title'] if role else 'the target role'}.\n"
+        f"• Goal: "
+        + (f"{demand['projectName']} for {demand['customerName']}" if demand
+           else role["title"] if role else "the target role")
+        + ".\n"
         f"• Reality: {facts['steps_done']} of {_plural(facts['steps_total'], 'learning step')} completed; "
         + (
             f"{_plural(len(gaps), 'skill')} still below target "
@@ -276,13 +435,31 @@ def post_assessment(employee_id: str, demand_id: str | None, manager_id: str) ->
         )
         + f"{_plural(facts['approved'], 'approved piece')} of evidence.\n"
         + (
-            f"• Options: extend practice on {gaps[0]['skill']} before the client interview, or proceed and accept the gap.\n"
-            if gaps else "• Options: proceed to the client interview.\n"
+            f"• Readiness for the project: {readiness['now']}% of its required skills met"
+            + (f", against {readiness['atHandoff']}% at handoff" if readiness["atHandoff"] is not None else "")
+            + f". Closed: {', '.join(readiness['closed']) or 'none'}. "
+            f"Still open: {', '.join(readiness['open']) or 'none'}.\n"
+            if readiness else ""
+        )
+        + (
+            f"• Level-1 assessment: {current['assessment']['result']['overallScore']}%.\n"
+            if current["assessment"] and current["assessment"]["result"]["overallScore"] is not None else ""
+        )
+        + (
+            f"• Options: extend practice on {to_practise} before the client interview, or proceed and accept the gap.\n"
+            if to_practise else "• Options: proceed to the client interview.\n"
         )
         + "• Will: the manager's sign-off, as cleared or not ready, decides whether a client resume can be generated."
     )
-    assessment = assessments.create_post_assessment(emp["id"], demand_id, manager_id, narrative)
-    return {"assessment": assessment, "narrative": narrative}
+    assessment = assessments.create_post_assessment(
+        emp["id"], demand["id"] if demand else None, manager_id, narrative
+    )
+    return {
+        "assessment": assessment,
+        "narrative": narrative,
+        "project": {"id": demand["id"], "projectName": demand["projectName"]} if demand else None,
+        "readiness": {k: readiness[k] for k in ("atHandoff", "now", "closed", "open")} if readiness else None,
+    }
 
 
 def sign_off_assessment(assessment_id: str, signed_off_by: str, decision: str) -> dict[str, Any]:
@@ -291,86 +468,3 @@ def sign_off_assessment(assessment_id: str, signed_off_by: str, decision: str) -
             raise NotFound("Assessment not found")
         assessments.sign_off(assessment_id, signed_off_by, decision)
         return assessments.get_post_assessment(assessment_id)
-
-
-def jd_assessment(target_role: str, job_description: str) -> dict[str, Any]:
-    """Multiple-choice and spoken interview questions for a role, from its JD."""
-    prompt = (
-        f"Generate a structured interview assessment for the role '{target_role}'.\n\n"
-        f"Job Description:\n{job_description}\n\n"
-        "Return JSON only, shaped as:\n"
-        '{"roleTitle": string, "mcqs": [{"id": string, "question": string, '
-        '"options": [string], "correctAnswer": string, "skillArea": string}], '
-        '"videoQuestions": [{"id": string, "title": string, "questionText": string, '
-        '"keyRubrics": [string]}]}'
-    )
-    parsed = ai.generate_json(prompt, temperature=0.4)
-    if parsed:
-        return parsed
-    return {
-        "roleTitle": target_role,
-        "mcqs": [{
-            "id": "mcq_1",
-            "question": f"Which capability is most central to the {target_role} role?",
-            "options": [
-                "Core technical depth in the required stack",
-                "Unrelated tooling preference",
-                "Meeting attendance",
-                "Years served",
-            ],
-            "correctAnswer": "Core technical depth in the required stack",
-            "skillArea": target_role,
-        }],
-        "videoQuestions": [{
-            "id": "vq_1",
-            "title": "Role scenario",
-            "questionText": (
-                f"Describe how you would approach a typical delivery problem as a {target_role}."
-            ),
-            "keyRubrics": [
-                "Structured problem framing",
-                "Relevant technical depth",
-                "Clear communication",
-            ],
-        }],
-        "_fallback": True,
-    }
-
-
-def evaluate_answer(body: dict[str, Any]) -> dict[str, Any]:
-    """Score a transcribed spoken answer against the rubric. Without a model, a
-    length-based provisional score keeps the interview flow moving - and says so."""
-    answer = body["candidateAnswer"]
-    rubrics = body.get("keyRubrics") or []
-    prompt = (
-        "Evaluate this candidate's spoken interview answer against the rubric.\n\n"
-        f"Job Description: {body.get('jobDescription', '')}\n"
-        f"Question: {body.get('questionTitle', '')} - {body.get('questionText', '')}\n"
-        f"Key Rubrics: {', '.join(rubrics)}\n"
-        f"Candidate Answer: {answer}\n\n"
-        "Return JSON only, shaped as:\n"
-        '{"overallScore": number, "technicalScore": number, '
-        '"problemSolvingScore": number, "communicationScore": number, '
-        '"strengths": [string], "missingConcepts": [string], "feedback": string, '
-        '"recommendedLearning": [string]}'
-    )
-    parsed = ai.generate_json(prompt, temperature=0.3)
-    if parsed:
-        return parsed
-
-    base = max(40, min(88, 40 + len(answer.split())))
-    return {
-        "overallScore": base,
-        "technicalScore": base,
-        "problemSolvingScore": max(40, base - 4),
-        "communicationScore": min(90, base + 2),
-        "strengths": ["Answer recorded and structured"],
-        "missingConcepts": rubrics[:2],
-        "feedback": (
-            "Model evaluation unavailable, so this is a provisional score based "
-            "on response completeness. Re-run with a Gemini key for a rubric-"
-            "graded assessment."
-        ),
-        "recommendedLearning": rubrics[:2],
-        "_fallback": True,
-    }

@@ -1,7 +1,7 @@
 # Deploying CyBridge
 
 The app is a single **Python/FastAPI** process (`backend/app`) that serves both the API
-and the built Vite frontend from `dist/`. One build, one start command, one port.
+and the built Vite frontend from `frontend/dist/`. One build, one start command, one port.
 
 ## Environment variables
 
@@ -11,7 +11,9 @@ and the built Vite frontend from `dist/`. One build, one start command, one port
 | `SESSION_SECRET` | **yes in prod** | insecure dev default | Signs the session cookie. Set a long random string, or anyone who knows the default can forge sessions. The server logs a warning if it's missing on an HTTPS deploy. |
 | `DEMO_MODE` | no | `false` (off) | When `true`, a bare `userId` is accepted as login (no password). **Leave off/unset in any shared environment** — it is a full authentication bypass. |
 | `GEMINI_API_KEY` | no | — | Enables the real Gemini AI copilots. Without it, AI endpoints return deterministic fallbacks. Never commit it; set it in the host's secrets. |
-| `GEMINI_TIMEOUT_SECONDS` | no | `120` | Upper bound on a single Gemini call, which is never retried. Raise it if long reports are being cut off (each timeout is logged). Zero, negative or non-numeric values stop startup. |
+| `GEMINI_TIMEOUT_SECONDS` | no | `120` | Upper bound on one answer, over every model tried; no model is asked twice. Raise it if long reports are being cut off (each timeout is logged). Zero, negative or non-numeric values stop startup. |
+| `GEMINI_MODEL` | no | `gemini-3.6-flash` | The model the agents use. |
+| `GEMINI_BACKUP_MODELS` | no | `gemini-3.5-flash,gemini-flash-lite-latest,gemini-3.1-flash-lite` | Tried in order when the model is busy, out of quota, gone or too slow. Set it to an empty string for none. |
 | `DATABASE_PATH` | no | `capability-hub.db` (cwd) | Path to the SQLite file. Point it at a **mounted, persistent, writable volume** on hosts whose app dir is ephemeral or read-only (see the SQLite note below). |
 | `AUTH_RATE_LIMIT_MAX` | no | `30` | Login attempts allowed per IP per 15 minutes. |
 | `TRUST_PROXY` | no | `true` | Read the client IP from `X-Forwarded-For`. Set `false` if not behind a proxy. |
@@ -24,12 +26,13 @@ and the built Vite frontend from `dist/`. One build, one start command, one port
 The frontend is built once with Node; the runtime is Python only.
 
 ```bash
-npm ci && npm run build                      # -> dist/ (SPA assets)
+npm --prefix frontend ci
+npm --prefix frontend run build              # -> frontend/dist/ (SPA assets)
 pip install -r backend/requirements.txt
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
-The server listens on `$PORT` (default 8000) at `0.0.0.0` and serves the SPA from `dist/`
+The server listens on `$PORT` (default 8000) at `0.0.0.0` and serves the SPA from `frontend/dist/`
 at the same origin. Health check: `GET /api/health`.
 
 The database is created, migrated to the current schema and seeded automatically at
@@ -60,7 +63,7 @@ Node is present at runtime. The volume keeps the SQLite file across restarts.
   `Dockerfile`, health-check path `/api/health`. `PORT` is injected. Set `SESSION_SECRET`
   and `GEMINI_API_KEY` in the dashboard, and mount a volume at `/app/data` so the database
   survives redeploys. Not framed, so `COOKIE_SAMESITE=lax` is recommended.
-- **Plain VM** — the three commands under *Build and run*, behind nginx or Caddy.
+- **Plain VM** — the commands under *Build and run*, behind nginx or Caddy.
 
 ## SQLite persistence caveat
 
@@ -72,6 +75,6 @@ volume and point `DATABASE_PATH` at it, or migrate to a networked database.
 
 ## Not needed at runtime
 
-Node is used only to build the frontend; `node_modules/` is not in the runtime image,
+Node is used only to build the frontend; `frontend/node_modules/` is not in the runtime image,
 and the container that ships runs Python alone. Google AI Studio, which can only run
 Node, is not a deployment target (see the Architecture Decision in `AGENTS.md`).

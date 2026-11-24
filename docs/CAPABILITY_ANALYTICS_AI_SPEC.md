@@ -224,7 +224,7 @@ All platform documentation, UI labels, tooltips, and AI copilot system prompts m
 ## 9. EXECUTIVE WORKFORCE DASHBOARD ARCHITECTURAL SPECIFICATION
 
 ### 9.1 Dashboard Component Architecture
-The **Executive Workforce Dashboard** (`src/components/LeadershipDashboard.tsx` & `src/components/LDDashboard.tsx`) provides C-suite executives, Practice Heads, and L&D Directors with real-time strategic visibility.
+The **Executive Workforce Dashboard** (`frontend/src/components/LeadershipDashboard.tsx` & `frontend/src/components/LDDashboard.tsx`) provides C-suite executives, Practice Heads, and L&D Directors with real-time strategic visibility.
 
 ```
 +-----------------------------------------------------------------------------------+

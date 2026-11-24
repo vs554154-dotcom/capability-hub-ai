@@ -1,27 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { ResourceLearningProgress, TargetRole, User } from "../types";
+import { ResourceLearningProgress } from "../types";
 import { GraduationCap, Clock, Target, Calendar, CheckCircle2, Zap, BookOpen, Wrench, Plus, RefreshCw, Send, Sparkles, X, ChevronRight, Award } from "lucide-react";
 
 interface ResourceLearningTrackerProps {
-  roles: TargetRole[];
-  teamMembers?: User[];
+  /** Called after a track is assigned, so the page around it can refresh. */
+  onAssigned?: () => void;
 }
 
-export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = ({ roles }) => {
+type Format = "balanced" | "micro" | "in_depth" | "best_practice";
+
+// A track the server built from the employee's own gaps.
+interface SuggestedTrack {
+  demand: { id: string; projectName: string } | null;
+  interviewPassed: boolean;
+  suggestedDeadline: string;
+  gaps: { skillName: string; current: number | null; target: number | null; sources: string[] }[];
+  gapsNotCovered: number;
+  steps: { title: string; courseName: string; provider: string; learningType: string; phaseLabel: string }[];
+  replacesSteps: number;
+}
+
+export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = ({ onAssigned }) => {
   const [resources, setResources] = useState<ResourceLearningProgress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [assignSuccessMsg, setAssignSuccessMsg] = useState("");
   const [assignErrorMsg, setAssignErrorMsg] = useState("");
 
   // Assign Modal State
-  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUserForAssign, setSelectedUserForAssign] = useState<ResourceLearningProgress | null>(null);
-  const [customTrackTitle, setCustomTrackTitle] = useState("Target Role Acceleration Track");
-  const [customDeadline, setCustomDeadline] = useState("2026-08-20");
+  // Whether the track is for the project the employee was handed off to. Only such a
+  // track can unlock a client resume, and no track used to be tied to one.
+  const [forProject, setForProject] = useState(false);
+  const [stepFormat, setStepFormat] = useState<Format>("balanced");
+  const [customDeadline, setCustomDeadline] = useState("");
   const [customDeadlineType, setCustomDeadlineType] = useState<"client_interview" | "project_deadline" | "learner_set" | "manager_assigned">("client_interview");
-  
-  // Track Steps Builder
-  const [stepFormat, setStepFormat] = useState<"micro" | "in_depth" | "best_practice" | "balanced">("balanced");
+  const [track, setTrack] = useState<SuggestedTrack | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const fetchTrackerData = async () => {
     try {
@@ -44,141 +58,69 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
 
   const handleOpenAssignModal = (resItem: ResourceLearningProgress) => {
     setSelectedUserForAssign(resItem);
-    setCustomTrackTitle(`${resItem.userName} - ${resItem.userTitle} Client Interview Fast-Track`);
-    setCustomDeadline(resItem.targetDeadline || "2026-08-20");
-    setShowAssignModal(true);
+    setForProject(!!resItem.activeProject);
+    setStepFormat("balanced");
+    setCustomDeadlineType(resItem.activeProject ? "client_interview" : "manager_assigned");
+    setAssignErrorMsg("");
   };
 
-  const handleAssignFlexibleTrack = async () => {
+  const closeModal = () => {
+    setSelectedUserForAssign(null);
+    setTrack(null);
+    setAssignErrorMsg("");
+  };
+
+  // The steps come from this person's gaps. (Everyone used to be assigned the same
+  // fixed Java and Selenium steps, whatever they were missing.)
+  useEffect(() => {
     if (!selectedUserForAssign) return;
+    let cancelled = false;
+    setTrack(null);
+    fetch("/api/learning-plan/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: selectedUserForAssign.userId,
+        demandId: forProject ? selectedUserForAssign.activeProject?.id : undefined,
+        format: stepFormat,
+      }),
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `The server answered ${res.status}`);
+        if (cancelled) return;
+        setTrack(data);
+        setCustomDeadline(data.suggestedDeadline);
+        setAssignErrorMsg("");
+      })
+      .catch(err => !cancelled && setAssignErrorMsg(`The track could not be built: ${err.message}.`));
+    return () => { cancelled = true; };
+  }, [selectedUserForAssign, forProject, stepFormat]);
 
-    let stepsToAssign = [];
-    if (stepFormat === "micro") {
-      stepsToAssign = [
-        {
-          title: "Micro-Flashcards: Java OOP & Syntax Refresher",
-          skillFocus: "Java Core & OOP Principles",
-          courseName: "Java QA Quick-Notes",
-          provider: "CapabilityHub Flashcards",
-          milestone: "Complete 10 rapid-fire OOP conceptual checks",
-          assessment: "OOP Quiz Check",
-          targetScore: "80%",
-          learningType: "micro" as const,
-          estimatedDuration: "10 mins",
-          phaseLabel: "Day 1 Sprint"
-        },
-        {
-          title: "Micro-Check: Selenium Locator Strategies",
-          skillFocus: "Selenium Automation Framework",
-          courseName: "XPath & CSS Selectors Cheat-Sheet",
-          provider: "CapabilityHub Micro-Lab",
-          milestone: "Write 5 dynamic locators without brittle absolute paths",
-          assessment: "Locator Validation Check",
-          targetScore: "85%",
-          learningType: "micro" as const,
-          estimatedDuration: "15 mins",
-          phaseLabel: "Day 2 Sprint"
-        },
-        {
-          title: "Micro-Check: Postman Collection Runner",
-          skillFocus: "Postman & REST API Testing",
-          courseName: "REST API Quick Test Suite",
-          provider: "CapabilityHub Micro-Lab",
-          milestone: "Run automated API assertion tests in Postman",
-          assessment: "Collection Runner Pass",
-          targetScore: "85%",
-          learningType: "micro" as const,
-          estimatedDuration: "15 mins",
-          phaseLabel: "Day 3 Sprint"
-        }
-      ];
-    } else if (stepFormat === "in_depth") {
-      stepsToAssign = [
-        {
-          title: "In-Depth: Enterprise Test Automation Architecture",
-          skillFocus: "Test Framework Design",
-          courseName: "Enterprise Test Framework Masterclass",
-          provider: "Udemy",
-          milestone: "Design Page Object Model with ThreadLocal Parallel Execution",
-          assessment: "Framework Code Review",
-          targetScore: "90%",
-          learningType: "in_depth" as const,
-          estimatedDuration: "3 hours",
-          phaseLabel: "Phase 1: Architecture"
-        },
-        {
-          title: "In-Depth: CI/CD Pipeline Automation & Quality Gates",
-          skillFocus: "Jenkins & GitHub Actions Pipelines",
-          courseName: "Jenkins, From Zero To Hero: Become a DevOps Jenkins Master",
-          provider: "Udemy",
-          milestone: "Configure headless regression triggers on GitHub PR merge",
-          assessment: "Pipeline Execution Log Analysis",
-          targetScore: "90%",
-          learningType: "in_depth" as const,
-          estimatedDuration: "10.5 hours",
-          phaseLabel: "Phase 2: CI/CD Automation"
-        }
-      ];
-    } else {
-      // Balanced mix
-      stepsToAssign = [
-        {
-          title: "Micro-Check: Core OOP & Java Fundamentals",
-          skillFocus: "Java Core & OOP Principles",
-          courseName: "Java Programming Masterclass covering Java 11 & Java 17",
-          provider: "Udemy",
-          milestone: "Complete class inheritance & exception handling quiz",
-          assessment: "Java Core Assessment",
-          targetScore: "80%",
-          learningType: "micro" as const,
-          estimatedDuration: "135 hours",
-          phaseLabel: "Day 1: Prep"
-        },
-        {
-          title: "Hands-on Lab: Selenium Page Object Model Setup",
-          skillFocus: "Selenium Automation Framework",
-          courseName: "Selenium WebDriver with Java - Basics to Advanced+Frameworks",
-          provider: "Udemy",
-          milestone: "Build POM framework for multi-page login and dashboard flow",
-          assessment: "POM Code Assertion",
-          targetScore: "85%",
-          learningType: "best_practice" as const,
-          estimatedDuration: "54 hours",
-          phaseLabel: "Day 2: Hands-on Lab"
-        },
-        {
-          title: "In-Depth: REST API Test Automation Suite",
-          skillFocus: "Postman & REST API Testing",
-          courseName: "Postman: The Complete Guide - REST API Testing",
-          provider: "Udemy",
-          milestone: "Automate REST endpoints with JSON schema assertions",
-          assessment: "API Automation Suite Run",
-          targetScore: "85%",
-          learningType: "in_depth" as const,
-          estimatedDuration: "15 hours",
-          phaseLabel: "Day 3: Deep Dive"
-        }
-      ];
-    }
-
+  const handleAssignFlexibleTrack = async () => {
+    if (!selectedUserForAssign || !track) return;
+    setIsAssigning(true);
     try {
       const res = await fetch("/api/learning-plan/assign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: selectedUserForAssign.userId,
-          trackTitle: customTrackTitle,
+          demandId: track.demand?.id,
           targetDeadline: customDeadline,
           deadlineType: customDeadlineType,
-          steps: stepsToAssign
+          steps: track.steps
         })
       });
 
       if (res.ok) {
-        setAssignErrorMsg("");
-        setAssignSuccessMsg(`Assigned the track to ${selectedUserForAssign.userName}, due ${customDeadline}. It now shows in their learning plan.`);
-        setShowAssignModal(false);
+        setAssignSuccessMsg(
+          `Assigned ${track.steps.length} steps to ${selectedUserForAssign.userName}`
+          + `${track.demand ? ` for ${track.demand.projectName}` : ""}, due ${customDeadline}. They have been told in their inbox.`
+        );
+        closeModal();
         fetchTrackerData();
+        onAssigned?.();
         setTimeout(() => setAssignSuccessMsg(""), 6000);
       } else {
         // A refused assignment used to leave the dialog open with no explanation.
@@ -188,6 +130,8 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
     } catch (err) {
       console.error(err);
       setAssignErrorMsg("Not assigned: the server could not be reached.");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -259,6 +203,12 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
                   </div>
                   {statusBadge}
                 </div>
+                {item.activeProject && (
+                  <p className="text-[11px] mb-3 text-[#94A3B8]">
+                    Handed off to <strong className="text-[#F0F4FF]">{item.activeProject.projectName}</strong>
+                    {item.planIsForProject ? " - this plan is for it." : " - no track for it yet."}
+                  </p>
+                )}
 
                 {/* Target Deadline Badge */}
                 <div className="p-2.5 bg-[#141E30] rounded-md border border-[#2A384C] space-y-1 text-xs">
@@ -266,11 +216,11 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
                     <span className="text-[#94A3B8] font-mono flex items-center gap-1">
                       <Target className="h-3.5 w-3.5 text-[#4F8EF7]" /> Target Deadline:
                     </span>
-                    <span className="font-mono font-bold text-[#F0F4FF]">{item.targetDeadline}</span>
+                    <span className="font-mono font-bold text-[#F0F4FF]">{item.targetDeadline ?? "not set"}</span>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono">
                     <span className="text-[#94A3B8]">Category:</span>
-                    <span className="text-[#10B981] font-bold uppercase">{item.deadlineType.replace("_", " ")}</span>
+                    <span className="text-[#10B981] font-bold uppercase">{item.deadlineType?.replace("_", " ") ?? "no plan"}</span>
                   </div>
                 </div>
 
@@ -292,7 +242,7 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
                 <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-[#2A384C]/60 text-[10px] font-mono">
                   <div className="p-2 bg-[#141E30] rounded border border-[#2A384C]">
                     <span className="text-[#94A3B8] block">Quiz Validation Avg:</span>
-                    <span className="font-bold text-[#10B981] text-xs block">{item.averageQuizScore}% Score</span>
+                    <span className="font-bold text-[#10B981] text-xs block">{item.averageQuizScore === null ? "None yet" : `${item.averageQuizScore}% Score`}</span>
                   </div>
                   <div className="p-2 bg-[#141E30] rounded border border-[#2A384C]">
                     <span className="text-[#94A3B8] block">Total Time Logged:</span>
@@ -331,15 +281,15 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
       </div>
 
       {/* Assign Tailored Track Modal */}
-      {showAssignModal && selectedUserForAssign && (
+      {selectedUserForAssign && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 max-w-lg w-full shadow-2xl space-y-5 animate-scale-up">
+          <div className="bg-[#141E30] border border-[#2A384C] rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-5 animate-scale-up">
             <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-[#4F8EF7]" />
                 <h3 className="text-sm font-bold text-[#F0F4FF]">Assign Flexible Learning Track</h3>
               </div>
-              <button onClick={() => setShowAssignModal(false)} className="text-[#94A3B8] hover:text-[#F0F4FF]">
+              <button onClick={closeModal} aria-label="Close" className="text-[#94A3B8] hover:text-[#F0F4FF] cursor-pointer">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -358,15 +308,25 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
 
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-mono font-bold text-[#94A3B8] uppercase block mb-1">
-                  Learning Track Name
+                <label htmlFor="track-purpose" className="text-[10px] font-mono font-bold text-[#94A3B8] uppercase block mb-1">
+                  What this track is for
                 </label>
-                <input
-                  type="text"
-                  value={customTrackTitle}
-                  onChange={(e) => setCustomTrackTitle(e.target.value)}
+                <select
+                  id="track-purpose"
+                  value={forProject ? "project" : "growth"}
+                  onChange={(e) => setForProject(e.target.value === "project")}
                   className="w-full bg-[#0F1724] text-[#F0F4FF] text-xs font-semibold p-2.5 rounded-md border border-[#2A384C] focus:outline-none focus:ring-1 focus:ring-[#4F8EF7]"
-                />
+                >
+                  {selectedUserForAssign.activeProject && (
+                    <option value="project">Project: {selectedUserForAssign.activeProject.projectName}</option>
+                  )}
+                  <option value="growth">Career growth (all open gaps)</option>
+                </select>
+                {!selectedUserForAssign.activeProject && (
+                  <p className="text-[11px] text-[#94A3B8] mt-1">
+                    Not handed off to a project yet, so this track cannot unlock a client resume.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -452,6 +412,32 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
               </div>
             </div>
 
+            <div className="p-3 bg-[#0F1724] rounded-md border border-[#2A384C] text-xs space-y-2">
+              <strong className="text-[#F0F4FF] block">Built from {selectedUserForAssign.userName}'s gaps</strong>
+              {!track ? (
+                !assignErrorMsg && <div className="skeleton h-16" />
+              ) : track.steps.length === 0 ? (
+                <p className="text-[#94A3B8]">No open gap is on record, so there is nothing to build a track from.</p>
+              ) : (
+                <>
+                  <ol id="track-steps" className="space-y-1 text-[#94A3B8] list-decimal pl-4">
+                    {track.steps.map((step, i) => (
+                      <li key={i}><span className="text-[#F0F4FF]">{step.title}</span> - {step.courseName} ({step.provider})</li>
+                    ))}
+                  </ol>
+                  {track.gapsNotCovered > 0 && (
+                    <p className="text-[#94A3B8]">{track.gapsNotCovered} more gap{track.gapsNotCovered === 1 ? "" : "s"} left for later, to fit the deadline.</p>
+                  )}
+                  {track.interviewPassed && (
+                    <p className="text-amber-400">The project's interview date has passed, so the suggested deadline is two weeks from today.</p>
+                  )}
+                </>
+              )}
+              {track && track.replacesSteps > 0 && (
+                <p className="text-amber-400">This replaces the current plan and its progress ({track.replacesSteps} step{track.replacesSteps === 1 ? "" : "s"}).</p>
+              )}
+            </div>
+
             {assignErrorMsg && (
               <div role="alert" className="p-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 font-mono text-xs rounded-md">
                 {assignErrorMsg}
@@ -460,17 +446,19 @@ export const ResourceLearningTracker: React.FC<ResourceLearningTrackerProps> = (
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A384C]">
               <button
-                onClick={() => { setShowAssignModal(false); setAssignErrorMsg(""); }}
+                onClick={closeModal}
                 className="px-4 py-2 bg-[#1E293B] text-[#94A3B8] text-xs font-mono font-bold rounded-md"
               >
                 Cancel
               </button>
               <button
+                id="assign-track"
                 onClick={handleAssignFlexibleTrack}
-                className="px-4 py-2 bg-[#10B981] hover:bg-[#059669] text-[#0F1724] text-xs font-mono font-bold rounded-md flex items-center gap-1.5"
+                disabled={isAssigning || !track || track.steps.length === 0 || !customDeadline}
+                className="px-4 py-2 bg-[#10B981] hover:bg-[#059669] text-[#0F1724] text-xs font-mono font-bold rounded-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
-                Assign Flexible Track
+                {isAssigning ? "Assigning..." : "Assign Flexible Track"}
               </button>
             </div>
           </div>

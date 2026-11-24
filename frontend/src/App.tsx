@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, UserRole, Skill, TargetRole, LearningCourse, Evidence, Message, TeamMemberCapability } from "./types";
+import { ActiveProject, User, UserRole, Skill, TargetRole, LearningCourse, Evidence, Message, TeamMemberCapability } from "./types";
 import { RoleHeader } from "./components/RoleHeader";
 import { EmployeeDashboard } from "./components/EmployeeDashboard";
 import { ManagerDashboard } from "./components/ManagerDashboard";
@@ -66,7 +66,16 @@ export default function App() {
   // Whether the signed-in employee has been shortlisted onto a project demand.
   // Kept in its own effect keyed on the user id rather than folded into the bootstrap
   // fetches, because it also has to clear on sign-out and re-run on account switch.
-  const [shortlist, setShortlist] = useState<{ isShortlisted: boolean; demand: any } | null>(null);
+  const [shortlist, setShortlist] = useState<({ isShortlisted: boolean } & Partial<ActiveProject>) | null>(null);
+  const activeProject: ActiveProject | null =
+    shortlist?.isShortlisted && shortlist.demand
+      ? {
+          demand: shortlist.demand,
+          missingSkills: shortlist.missingSkills ?? [],
+          jobDescription: shortlist.jobDescription ?? "",
+          interviewPassed: !!shortlist.interviewPassed,
+        }
+      : null;
 
   useEffect(() => {
     const userId = currentUser?.id;
@@ -85,7 +94,12 @@ export default function App() {
       }
     })();
     return () => { cancelled = true; };
-  }, [currentUser?.id]);
+    // Looked up again on each screen, so a handoff made meanwhile shows without signing in again.
+  }, [currentUser?.id, activeTab]);
+
+  // Each page opens at its top, also the first one after signing in. (In braces: newer
+  // browsers return a promise from scrollTo, which an effect must not return.)
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [activeTab, currentUser?.id]);
 
   // Dynamic initial greeting generator based on active user
   const getInitialMessagesForUser = (user: User, rolesList: TargetRole[]): Message[] => {
@@ -354,8 +368,11 @@ export default function App() {
   };
 
   // Review & Approve/Reject Evidence (Marcus Sterling action)
-  const handleReviewEvidence = async (evidenceId: string, status: "approved" | "revision_requested", comment: string) => {
-    if (!currentUser) return;
+  const handleReviewEvidence = async (
+    evidenceId: string, status: "approved" | "revision_requested", comment: string
+  ): Promise<string | null> => {
+    // Resolves to null on success, or the reason it failed - the board shows which.
+    if (!currentUser) return "You are not signed in.";
     try {
       const res = await fetch("/api/validation", {
         method: "POST",
@@ -374,10 +391,20 @@ export default function App() {
         
         const allEvRes = await fetch("/api/evidence");
         if (allEvRes.ok) setEvidences(await allEvRes.json());
+        return null;
       }
+      const data = await res.json().catch(() => ({}));
+      return data.error || `The server answered ${res.status}.`;
     } catch (err) {
       console.error(err);
+      return "The server could not be reached.";
     }
+  };
+
+  const refreshTeam = async () => {
+    if (!currentUser) return;
+    const teamRes = await fetch(`/api/manager/${currentUser.id}/team`);
+    if (teamRes.ok) setTeamMembers(await teamRes.json());
   };
 
   // Generate coaching brief (Manager sidebar action)
@@ -464,13 +491,14 @@ export default function App() {
         };
         setMessages(prev => [...prev, aiMsg]);
       } else {
-        throw new Error("Unable to contact Cognitive Orchestrator API.");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `The server answered ${res.status}.`);
       }
     } catch (err: any) {
       const errorMsg: Message = {
         id: "ai_err_" + Date.now(),
         sender: "ai",
-        text: "Error orchestrating model generation: " + err.message,
+        text: "The agent could not answer: " + err.message,
         timestamp: new Date().toISOString(),
         agentUsed
       };
@@ -656,7 +684,7 @@ export default function App() {
         {/* Demand-to-Deployment is a talent-sourcing cockpit: managers, L&D and
             leadership only, mirroring the requireRole guards on those endpoints. */}
         {effectiveTab === "project_demand" && canManage && (
-          <ProjectDemandAgent currentUser={activeUser} />
+          <ProjectDemandAgent />
         )}
 
         {effectiveTab === "dashboard" && isAuthenticated && (
@@ -670,8 +698,8 @@ export default function App() {
             onTargetRoleChange={handleTargetRoleChange}
             onSubmitEvidence={handleSubmitEvidence}
             onRefresh={refreshCurrentUser}
-            isShortlisted={!!shortlist?.isShortlisted}
-            shortlistDemand={shortlist?.demand ?? undefined}
+            activeProject={activeProject}
+            onOpenSkillGap={() => setActiveTab("ai_hub")}
           />
         )}
 
@@ -679,20 +707,19 @@ export default function App() {
           <ManagerDashboard
             currentUser={activeUser}
             skills={skills}
-            roles={roles}
             evidences={evidences}
             teamMembers={teamMembers}
             onReviewEvidence={handleReviewEvidence}
             coachingGuidance={coachingGuidance}
             isCoachingLoading={isCoachingLoading}
             onGenerateCoaching={handleGenerateCoaching}
+            onRefreshTeam={refreshTeam}
           />
         )}
 
         {effectiveTab === "ld_dash" && canManage && (
           <LDDashboard
             courses={courses}
-            roles={roles}
             analyticsReport={analyticsReport}
             isAnalyticsLoading={isAnalyticsLoading}
             onGenerateAnalytics={handleGenerateAnalytics}
@@ -717,7 +744,10 @@ export default function App() {
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isAiLoading}
-            onNavigateToDashboard={() => setActiveTab("dashboard")}
+            activeProject={activeProject}
+            onNavigateToDashboard={
+              activeUser.role === UserRole.EMPLOYEE ? () => setActiveTab("dashboard") : undefined
+            }
           />
         )}
         </div>

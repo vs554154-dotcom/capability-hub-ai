@@ -11,11 +11,12 @@ from ..database import transaction
 from ..errors import NotFound
 from ..numeric import js_round
 from ..repositories import (
-    assessments, catalog, demands, evidence, learning, metrics, reminders, user_skills, users,
+    assessments, catalog, demands, evidence, learning, metrics, reminders, skillgap, user_skills, users,
 )
 from ..repositories._common import now_date
 from .capability import capability_report, compute_motivation_scores, skill_score
-from .talent import VERIFIED_LEVEL, find_skill
+from .matching import VERIFIED_LEVEL, find_skill
+from .talent import resume_eligibility
 
 # Skill and Will at or above this place a person in "Deploy Now" - the same line the
 # Skill-vs-Will matrix draws.
@@ -91,6 +92,7 @@ def _measure_people() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
             people.append({
                 "id": emp["id"],
                 "levels": levels,
+                "studying": {s["skillFocus"].lower() for s in learning.get_learning_plan(emp["id"])},
                 "approved": approved,
                 "skill": skill_score(levels, approved),
                 "will": motivation["willScore"],
@@ -111,8 +113,10 @@ def _factors(
     people: list[dict[str, Any]],
     all_evidence: list[dict[str, Any]],
     post_counts: dict[str, int],
+    level1: list[int],
 ) -> list[dict[str, Any]]:
-    """The eight weighted components of the index, as defined in AGENTS.md."""
+    """The eight weighted components of the index, as defined in AGENTS.md. `level1`
+    holds the latest graded SkillGap score of each employee who has one."""
     n = len(people)
     approved = sum(1 for e in all_evidence if e["status"] == "approved")
     deploy_now = sum(1 for p in people if p["skill"] >= DEPLOY_THRESHOLD and p["will"] >= DEPLOY_THRESHOLD)
@@ -126,9 +130,9 @@ def _factors(
             "plus 5 points per approved piece of evidence.",
         ),
         _factor(
-            "videoMcqAssessments", "Level-1 video/MCQ assessments", 20, None,
-            "Not measured: interview assessments are scored in the browser and their "
-            "results are not stored.",
+            "videoMcqAssessments", "Level-1 video/MCQ assessments", 20, _mean(level1),
+            f"Average of the latest graded SkillGap assessment of {len(level1)} of {n} employees."
+            if level1 else "Not measured: no employee has a graded SkillGap assessment yet.",
         ),
         _factor(
             "workplaceEvidence", "Workplace evidence validation", 15,
@@ -142,9 +146,9 @@ def _factors(
         ),
         _factor(
             "capabilityReadinessIndex", "Capability readiness (CRI)", 10,
-            _mean([p["crs"] for p in people]),
+            _mean([p["crs"] for p in people if p["crs"] is not None]),
             "Average Capability Readiness Score: current levels against each person's "
-            "target-role requirements.",
+            "target levels, over the skills that have one.",
         ),
         _factor(
             "deploymentAvailability", "Deployment availability", 5,
@@ -165,6 +169,13 @@ def _factors(
     ]
 
 
+def _level1_scores(people: list[dict[str, Any]]) -> list[int]:
+    """Each employee's latest SkillGap score, where the server could grade one."""
+    latest = skillgap.latest_completed_all()
+    scores = [latest[p["id"]]["result"]["overallScore"] for p in people if p["id"] in latest]
+    return [s for s in scores if s is not None]
+
+
 def _composite(factors: list[dict[str, Any]]) -> tuple[int | None, int]:
     """The weighted index over the measured components only, and how much of the
     full weight those components carry. Unmeasured components are excluded rather
@@ -179,7 +190,9 @@ def _composite(factors: list[dict[str, Any]]) -> tuple[int | None, int]:
 def readiness_index() -> dict[str, Any]:
     """The Enterprise Readiness Index and its components, computed now."""
     people, all_evidence = _measure_people()
-    factors = _factors(people, all_evidence, assessments.post_assessment_status_counts())
+    factors = _factors(
+        people, all_evidence, assessments.post_assessment_status_counts(), _level1_scores(people)
+    )
     eri, coverage = _composite(factors)
     return {
         "success": True,
@@ -230,6 +243,29 @@ def _skill_gaps(people: list[dict[str, Any]], names: dict[str, str]) -> list[dic
     )
 
 
+def deployment_pipeline() -> dict[str, int]:
+    """How many people are at each stage between handoff and a client resume, counted
+    per person and demand from what each agent stored."""
+    with transaction():
+        pairs = assessments.handed_off_pairs()
+        taken = assigned = trained = cleared = eligible = 0
+        for user_id, demand_id in pairs:
+            steps = [
+                s for s in learning.get_learning_plan(user_id)
+                if s.get("demandId") == demand_id and s.get("purpose") == "project_hiring"
+            ]
+            post = assessments.get_latest_post_assessment(user_id, demand_id)
+            taken += skillgap.latest_completed(user_id, demand_id) is not None
+            assigned += bool(steps)
+            trained += bool(steps) and all(s["status"] == "completed" for s in steps)
+            cleared += bool(post) and post["status"] == "cleared"
+            eligible += resume_eligibility(user_id, demand_id)["eligible"]
+    return {
+        "handedOff": len(pairs), "assessed": taken, "trackAssigned": assigned,
+        "trained": trained, "cleared": cleared, "resumeReady": eligible,
+    }
+
+
 def _strategy(ready: int, developing: int, demand: int) -> str:
     shortfall = demand - ready
     if shortfall <= 0:
@@ -255,8 +291,9 @@ def leadership_overview() -> dict[str, Any]:
     risk = _skill_gaps(people, names)[:5]
 
     # Supply against open demand, per skill. Ready means held at the level the
-    # matching engine treats as verified; developing means targeted at that level
-    # but not there yet.
+    # matching engine treats as verified; developing means not there yet, with that
+    # level as a target or the skill on the person's learning plan - a project track
+    # can train a skill the person's role does not name.
     rows: dict[str, dict[str, Any]] = {}
     for d in open_demands:
         for name in d["requiredSkills"]:
@@ -272,11 +309,13 @@ def leadership_overview() -> dict[str, Any]:
             row["resourcesNeeded"] += d["resourcesRequired"]
     supply = []
     for row in rows.values():
-        held = [s for p in people for s in p["levels"] if s["skillId"] == row["skillId"]]
-        ready = sum(1 for s in held if s["currentLevel"] >= VERIFIED_LEVEL)
-        developing = sum(
-            1 for s in held if s["currentLevel"] < VERIFIED_LEVEL <= s["targetLevel"]
-        )
+        ready = developing = 0
+        for p in people:
+            held = next((s for s in p["levels"] if s["skillId"] == row["skillId"]), None)
+            if held and held["currentLevel"] >= VERIFIED_LEVEL:
+                ready += 1
+            elif (held and held["targetLevel"] >= VERIFIED_LEVEL) or row["skillName"].lower() in p["studying"]:
+                developing += 1
         supply.append({
             "skillName": row["skillName"],
             "openDemands": row["openDemands"],
@@ -290,7 +329,7 @@ def leadership_overview() -> dict[str, Any]:
 
     # What closing every open gap would do: Skill proficiency recomputed with each
     # below-target skill at its target, every other component held where it is.
-    factors = _factors(people, all_evidence, post_counts)
+    factors = _factors(people, all_evidence, post_counts, _level1_scores(people))
     eri, coverage = _composite(factors)
     closed_skill = _mean([
         skill_score(
@@ -340,6 +379,7 @@ def leadership_overview() -> dict[str, Any]:
         "success": True,
         "riskRadar": risk,
         "supplyDemand": supply[:8],
+        "pipeline": deployment_pipeline(),
         "projection": {
             "openGaps": open_gaps,
             "employeesWithGaps": people_with_gaps,
@@ -466,19 +506,25 @@ def org_context() -> str:
             if index["enterpriseReadinessIndex"] is not None
             else "Enterprise Readiness Index: not measurable yet."
         ),
-        "Components:",
+        "\nComponents:\n",
         *(
             f"- {f['label']} ({f['weight']}%): "
             + (f"{f['score']}%" if f["measured"] else "not measured")
             + f" - {f['basis']}"
             for f in index["factors"]
         ),
-        "Largest skill gaps:",
+        "\nDeployment pipeline (people and demands): "
+        + ", ".join(f"{label} {overview['pipeline'][key]}" for key, label in (
+            ("handedOff", "handed off"), ("assessed", "Level-1 assessed"),
+            ("trackAssigned", "track assigned"), ("trained", "training complete"),
+            ("cleared", "cleared by manager"), ("resumeReady", "resume ready"),
+        )) + ".",
+        "\nLargest skill gaps:\n",
         *(
             f"- {r['skillName']}: {r['belowTarget']} of {r['employeesTargeting']} below target"
             for r in overview["riskRadar"]
         ),
-        "Supply against open demand:",
+        "\nSupply against open demand:\n",
         *(
             f"- {r['skillName']}: {r['resourcesNeeded']} needed, {r['ready']} ready, "
             f"{r['developing']} developing ({r['strategy']})"

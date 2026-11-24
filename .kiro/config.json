@@ -8,8 +8,8 @@
     "port": 8000,
     "host": "0.0.0.0"
   },
-  "buildCommand": "npm run build",
-  "lintCommand": "npm run lint",
+  "buildCommand": "npm --prefix frontend run build",
+  "lintCommand": "npm --prefix frontend run lint",
   "testCommand": "python -m pytest backend/tests",
   "requiredEnv": []
 }

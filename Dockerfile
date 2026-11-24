@@ -8,9 +8,9 @@
 # ---- Stage 1: build the frontend ----
 FROM node:20-bookworm-slim AS frontend
 WORKDIR /build
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
-COPY . .
+COPY frontend/ ./
 RUN npm run build            # -> /build/dist
 
 # ---- Stage 2: Python runtime ----
@@ -29,7 +29,7 @@ COPY backend/seed ./backend/seed
 COPY backend/scripts ./backend/scripts
 # Served only through the Leadership-gated /api/download-app-zip, never statically.
 COPY private ./private
-COPY --from=frontend /build/dist ./dist
+COPY --from=frontend /build/dist ./frontend/dist
 
 # Written on first boot if absent; point DATABASE_PATH at a mounted volume to persist.
 ENV DATABASE_PATH=/app/data/capability-hub.db

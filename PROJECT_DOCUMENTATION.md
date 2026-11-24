@@ -108,7 +108,7 @@ upgrades older ones in place.
 ```bash
 ./setup.sh                      # dependencies, virtualenv, first build, tests
 scripts\dev-python.cmd          # Windows: API + built app on http://localhost:8000
-npm run dev                     # optional: hot-reloading frontend on http://localhost:5173
+npm --prefix frontend run dev   # optional: hot-reloading frontend on http://localhost:5173
 ```
 
 **Production**: see `DEPLOY.md` (Docker image or any Python host).

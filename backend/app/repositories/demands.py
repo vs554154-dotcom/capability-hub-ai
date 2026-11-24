@@ -47,7 +47,7 @@ def get_project_demand_by_id(demand_id: str) -> dict[str, Any] | None:
 
 
 def create_project_demand(data: dict[str, Any]) -> dict[str, Any]:
-    demand_id = data.get("id") or random_id("OPP-")
+    demand_id = random_id("OPP-")
     execute(
         """
         INSERT INTO project_demands (
@@ -70,8 +70,7 @@ def create_project_demand(data: dict[str, Any]) -> dict[str, Any]:
             data.get("clientInterviewDate", ""), data.get("expectedJoiningDate", ""),
             data.get("projectPriority", "MEDIUM"), data.get("location", ""),
             data.get("domain", ""), data.get("employmentType", "Full-Time"),
-            data.get("additionalNotes"), data.get("status", "OPEN"),
-            data.get("createdAt") or now_iso(),
+            data.get("additionalNotes"), "OPEN", now_iso(),
         ),
     )
     return get_project_demand_by_id(demand_id)

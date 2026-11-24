@@ -1,4 +1,4 @@
-"""AI copilot routes: the orchestrator, the GROW coach and the interview agent.
+"""AI copilot routes: the orchestrator, the GROW coach and the SkillGap agent.
 
 Each answers with generated text when Gemini is reachable and a deterministic
 fallback when it is not, so these endpoints always return 200 on valid input.
@@ -18,10 +18,9 @@ from ..deps import (
     json_body,
     require_auth,
     require_manager_or_above,
-    require_self_or_elevated_body,
 )
-from ..repositories import assessments, users
-from ..services import copilot
+from ..repositories import assessments
+from ..services import copilot, skillgap
 
 router = APIRouter(prefix="/api", tags=["agents"])
 
@@ -38,14 +37,19 @@ def orchestrator(
     body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
 ) -> dict[str, Any]:
     prompt = body.get("prompt")
-    if not prompt:
+    if not isinstance(prompt, str) or not prompt.strip():
         raise HTTPException(status_code=400, detail="A prompt is required for AI interactions.")
     # The subject whose skills and evidence ground the answer. Defaults to the caller;
     # naming someone else needs the same right as reading their record.
     subject_id = body.get("userId") or session_user["id"]
     ensure_may_access(session_user, subject_id)
     org_view = session_user["role"] in ORG_VIEW_ROLES
-    return {"response": copilot.orchestrate(subject_id, prompt, body.get("agent"), org_view)}
+    if body.get("agent") == "coach" and org_view and subject_id == session_user["id"]:
+        # A manager coaching asks about their reports, not about themselves.
+        return {"response": copilot.coach_team(session_user, prompt)}
+    return {"response": copilot.orchestrate(
+        subject_id, prompt, body.get("agent"), org_view, body.get("skillId")
+    )}
 
 
 @router.post("/manager/insight")
@@ -87,39 +91,45 @@ def signoff_post_assessment(
 
 @router.post("/agent/generate-jd-assessment")
 def generate_jd_assessment(
-    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_auth)
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
 ) -> dict[str, Any]:
-    target_role = body.get("targetRole")
-    job_description = body.get("jobDescription")
-    if not target_role or not job_description:
-        raise HTTPException(status_code=400, detail="targetRole and jobDescription are required.")
-    return {"success": True, "assessment": copilot.jd_assessment(target_role, job_description)}
+    # Always for the signed-in person: the result is their record.
+    return {"success": True, "assessment": skillgap.start(session_user, body)}
+
+
+@router.post("/agent/assessment-answer")
+def answer_question(
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
+) -> dict[str, Any]:
+    return {"success": True, **skillgap.answer_mcq(
+        session_user, body.get("assessmentId"), body.get("questionId"), body.get("optionIndex")
+    )}
 
 
 @router.post("/agent/evaluate-interview-answer")
 def evaluate_interview_answer(
-    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_auth)
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
 ) -> dict[str, Any]:
-    if not body.get("candidateAnswer"):
+    """Evaluate one answer. With an assessmentId it answers a stored question and
+    counts towards that assessment; without one it is practice and nothing is kept."""
+    answer = body.get("candidateAnswer")
+    if not isinstance(answer, str) or not answer.strip():
         raise HTTPException(status_code=400, detail="candidateAnswer is required.")
-    return {"success": True, "evaluation": copilot.evaluate_answer(body)}
+    if body.get("assessmentId"):
+        evaluation = skillgap.evaluate_for(
+            session_user, body["assessmentId"], body.get("questionId"), answer
+        )
+    else:
+        evaluation = skillgap.evaluate_answer(body)
+    return {"success": True, "evaluation": evaluation}
 
 
 @router.post("/agent/complete-skillgap-assessment")
 def complete_skillgap_assessment(
-    body: dict[str, Any] = Depends(json_body), _: dict = Depends(require_self_or_elevated_body)
+    body: dict[str, Any] = Depends(json_body), session_user: dict = Depends(require_auth)
 ) -> dict[str, Any]:
-    user_id = body.get("userId")
-    if not user_id:
-        raise HTTPException(status_code=400, detail="userId is required.")
-    user = users.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {
-        "success": True,
-        "userId": user_id,
-        "overallScore": body.get("overallScore"),
-        # Nothing is stored: the score was computed in the browser, so it is not
-        # trusted as a record. The message used to say "recorded".
-        "message": f"SkillGap assessment completed for {user['name']}.",
-    }
+    """Score and store the result. Every score comes from the stored answers; a score
+    in the request is ignored."""
+    return {"success": True, "assessment": skillgap.finish(
+        session_user, body.get("assessmentId"), body.get("willAnswers")
+    )}

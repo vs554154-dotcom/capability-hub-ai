@@ -7,6 +7,10 @@ from ..database import execute, query_all, query_one
 from ._common import now_date
 
 
+# The level a new skill record starts at.
+STARTING_LEVEL = 1
+
+
 def get_user_skills(user_id: str) -> list[dict[str, Any]]:
     return [dict(r) for r in query_all(
         "SELECT * FROM user_skills WHERE userId = ?", (user_id,)
@@ -14,12 +18,12 @@ def get_user_skills(user_id: str) -> list[dict[str, Any]]:
 
 
 def get_current_level(user_id: str, skill_id: str) -> int:
-    """Current level, defaulting to 1 when the pairing has no row yet."""
+    """Current level, or the starting level when the pairing has no row yet."""
     row = query_one(
         "SELECT currentLevel FROM user_skills WHERE userId = ? AND skillId = ?",
         (user_id, skill_id),
     )
-    return row["currentLevel"] if row else 1
+    return row["currentLevel"] if row else STARTING_LEVEL
 
 
 def exists(user_id: str, skill_id: str) -> bool:
@@ -72,7 +76,7 @@ def add_not_started(user_id: str, skill_id: str, target_level: int) -> None:
         """
         INSERT INTO user_skills
             (userId, skillId, currentLevel, targetLevel, status, lastUpdated)
-        VALUES (?, ?, 1, ?, 'not_started', ?)
+        VALUES (?, ?, ?, ?, 'not_started', ?)
         """,
-        (user_id, skill_id, target_level, now_date()),
+        (user_id, skill_id, STARTING_LEVEL, target_level, now_date()),
     )

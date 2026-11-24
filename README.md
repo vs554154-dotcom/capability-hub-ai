@@ -43,14 +43,18 @@ For full technical specifications, architecture details, API specs, and database
 ├── PROJECT_DOCUMENTATION.md
 ├── backend/
 │   ├── app/               # FastAPI: routers -> services -> repositories, migrations
-│   ├── seed/seed.json     # Data loaded into an empty database on first boot
+│   ├── seed/              # Data for an empty database, and the question bank
 │   ├── tests/             # pytest suite (no server needed)
 │   └── scripts/           # Probes run against a live server (authorization gate)
-├── src/
-│   ├── App.tsx            # Session, role-based navigation, shared data
-│   ├── components/        # One workspace per role, plus the AI agents
-│   │   └── ui/            # Shared page header, section cards, meters, charts
-│   └── index.css          # Design tokens for the six themes, page primitives
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx        # Session, role-based navigation, shared data
+│   │   ├── components/    # One workspace per role, plus the AI agents
+│   │   │   └── ui/        # Shared page header, section cards, meters, charts
+│   │   └── index.css      # Design tokens for the six themes, page primitives
+│   ├── public/            # Static files copied into the build
+│   ├── index.html  package.json  vite.config.ts  tsconfig.json
+│   └── dist/              # The build, served by the backend (not in git)
 ├── Dockerfile             # Builds the frontend with Node, runs Python only
 └── .env.example           # Every setting, with defaults
 ```
@@ -76,13 +80,14 @@ The backend is Python (FastAPI); Node is used only to build the frontend.
 
 3. **Frontend work with hot reload** (optional, proxies `/api` to the backend):
    ```bash
+   cd frontend
    npm run dev
    ```
    Open `http://localhost:5173`.
 
 4. **Verify**:
    ```bash
-   npm run lint
+   npm --prefix frontend run lint
    backend/.venv/Scripts/python -m pytest backend/tests
    python backend/scripts/verify_authz_scenarios.py http://localhost:8000
    ```

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { User, Message } from "../types";
+import { ActiveProject, User, Message } from "../types";
 import { Send, Cpu, Sparkles, BookOpen, GraduationCap, Compass, ArrowRight, RefreshCw, Video, MessageSquare, ExternalLink, Paperclip, UploadCloud, Upload, FileCheck, X, Check } from "lucide-react";
 import { SkillGapInterviewAgent } from "./SkillGapInterviewAgent";
 import { parseUploadedFile, ParsedFileInfo } from "../utils/fileParser";
 import { PageHeader } from "./ui/Page";
+import { Markdown } from "./ui/Markdown";
 
 // What this page is for, per role: each role reaches a different copilot here.
 const HUB_COPY: Record<string, { eyebrow: string; title: string; lede: React.ReactNode; steps: React.ReactNode[] }> = {
@@ -50,8 +51,20 @@ const HUB_COPY: Record<string, { eyebrow: string; title: string; lede: React.Rea
   },
 };
 
+// The copilots each role works with. (Every role used to be offered all four, so an
+// employee could open the manager's coach.)
+type AgentKey = "skill_gap" | "concierge" | "coach" | "analytics";
+const AGENTS_BY_ROLE: Record<string, AgentKey[]> = {
+  employee: ["skill_gap", "concierge"],
+  manager: ["coach", "analytics", "concierge"],
+  ld: ["analytics", "coach", "concierge"],
+  leadership: ["analytics", "coach", "concierge"],
+};
+
 interface AgentHubProps {
   currentUser: User;
+  /** The project the employee was handed off to, if any. */
+  activeProject?: ActiveProject | null;
   messages: Message[];
   onSendMessage: (text: string, agent: "skill_gap" | "concierge" | "coach" | "analytics") => void;
   isLoading: boolean;
@@ -63,6 +76,7 @@ export const AgentHub: React.FC<AgentHubProps> = ({
   messages,
   onSendMessage,
   isLoading,
+  activeProject,
   onNavigateToDashboard,
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<"skill_gap" | "concierge" | "coach" | "analytics">("skill_gap");
@@ -88,7 +102,7 @@ export const AgentHub: React.FC<AgentHubProps> = ({
       setSelectedAgent("skill_gap");
       setHubMode("jd_interview");
     }
-  }, [currentUser]);
+  }, [currentUser.id, currentUser.role]);
 
   const handleChatFileChange = async (file: File) => {
     if (!file) return;
@@ -296,13 +310,15 @@ export const AgentHub: React.FC<AgentHubProps> = ({
       {selectedAgent === "skill_gap" && hubMode === "jd_interview" ? (
         <SkillGapInterviewAgent
           currentUser={currentUser}
+          project={activeProject}
           onNavigateToDashboard={onNavigateToDashboard}
           onRedirectToConcierge={(gaps, role) => {
             setSelectedAgent("concierge");
             setHubMode("chat");
-            const gapList = gaps.length > 0 ? gaps.join(", ") : "core architectural concepts & implementation practices";
             onSendMessage(
-              `Hi Learning Concierge, my SkillGap assessment for '${role || "target role"}' identified gaps in: ${gapList}. Please recommend verified catalog courses and hands-on practice assignments / workplace exercises to help me bridge these gaps.`,
+              gaps.length > 0
+                ? `My SkillGap assessment for '${role || "my target role"}' found gaps in: ${gaps.join(", ")}. Recommend catalogue courses and hands-on practice assignments to close them.`
+                : `My SkillGap assessment for '${role || "my target role"}' found no gaps in my answers. Recommend what to work on next from the gaps on my record.`,
               "concierge"
             );
           }}
@@ -317,7 +333,7 @@ export const AgentHub: React.FC<AgentHubProps> = ({
               <h3 className="text-[10px] font-mono font-bold text-[#4F8EF7] uppercase tracking-[0.2em]">Select Cognitive Copilot</h3>
               
               <div className="space-y-3">
-                {(Object.keys(agentDescriptions) as Array<keyof typeof agentDescriptions>).map((key) => {
+                {AGENTS_BY_ROLE[currentUser.role].map((key) => {
                   const item = agentDescriptions[key];
                   const ItemIcon = item.icon;
                   const isSelected = selectedAgent === key;
@@ -399,9 +415,9 @@ export const AgentHub: React.FC<AgentHubProps> = ({
                       <div className={`max-w-[85%] rounded-lg p-4 text-xs leading-relaxed font-sans shadow-sm border ${
                         isUser 
                           ? "bg-[#4F8EF7]/10 border-[#4F8EF7]/40 text-[#F0F4FF] rounded-tr-none" 
-                          : "bg-[#0F1724] border-[#2A384C] text-[#F0F4FF] rounded-tl-none whitespace-pre-wrap"
+                          : "bg-[#0F1724] border-[#2A384C] text-[#F0F4FF] rounded-tl-none"
                       }`}>
-                        {renderFormattedMessage(msg.text)}
+                        {isUser ? renderFormattedMessage(msg.text) : <Markdown className="chat-markdown">{msg.text}</Markdown>}
                         <div className={`text-[9px] mt-1.5 font-medium font-mono text-right ${isUser ? "text-[#94A3B8]" : "text-[#64748B]"}`}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>

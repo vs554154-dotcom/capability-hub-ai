@@ -6,17 +6,16 @@ captured at handoff - never against anything asserted in a request.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 from ..database import execute, query_all, query_one
-from ._common import compact, now_iso
+from ._common import compact, now_iso, random_id
 
 
 def create_post_assessment(
     employee_id: str, demand_id: str | None, manager_id: str, narrative: str
 ) -> dict[str, Any]:
-    assessment_id = f"pa_{employee_id}_{int(datetime.now(timezone.utc).timestamp() * 1000)}"
+    assessment_id = random_id(f"pa_{employee_id}_")
     created_at = now_iso()
     execute(
         """
@@ -81,16 +80,17 @@ def sign_off(assessment_id: str, signed_off_by: str, decision: str) -> None:
 
 
 def capture_baselines(user_id: str, current_levels: list[tuple[str, int]], demand_id: str) -> None:
-    """Record current levels as the "before" state for this demand. INSERT OR IGNORE,
-    so a repeat handoff can never reset the original baseline - which would silently
-    collapse measured growth to zero."""
+    """Record current levels as the "before" state for this demand. A repeat handoff
+    never resets a level - which would silently collapse measured growth to zero - but
+    its date moves on, so the demand handed off last is the active one."""
     captured_at = now_iso()
     for skill_id, level in current_levels:
         execute(
             """
-            INSERT OR IGNORE INTO skill_baselines
+            INSERT INTO skill_baselines
                 (userId, skillId, demandId, baselineLevel, capturedAt)
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(userId, skillId, demandId) DO UPDATE SET capturedAt = excluded.capturedAt
             """,
             (user_id, skill_id, demand_id, level, captured_at),
         )
@@ -102,6 +102,12 @@ def get_baselines(user_id: str, demand_id: str) -> list[dict[str, Any]]:
         "WHERE userId = ? AND demandId = ?",
         (user_id, demand_id),
     )]
+
+
+def handed_off_pairs() -> list[tuple[str, str]]:
+    """Every (user, demand) that has been handed off."""
+    rows = query_all("SELECT DISTINCT userId, demandId FROM skill_baselines")
+    return [(r["userId"], r["demandId"]) for r in rows]
 
 
 def get_latest_handoff(user_id: str) -> dict[str, Any] | None:

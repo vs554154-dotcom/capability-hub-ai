@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { AgentReminder, LearningCourse, TargetRole } from "../types";
+import { AgentReminder, LearningCourse } from "../types";
 import {
   AlertTriangle, BellRing, BookOpen, CheckCircle2, Cpu, FileText, GraduationCap, Grid3x3, Info,
   LifeBuoy, RefreshCw, Sparkles,
 } from "lucide-react";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
 import { PageHeader, SectionCard, StatTile, Tag } from "./ui/Page";
+import { Markdown } from "./ui/Markdown";
 
 interface LDDashboardProps {
   courses: LearningCourse[];
-  roles?: TargetRole[];
   analyticsReport: string;
   isAnalyticsLoading: boolean;
   onGenerateAnalytics: () => void;
@@ -50,7 +50,6 @@ const cellStyle = (value: number | null): React.CSSProperties =>
 
 export const LDDashboard: React.FC<LDDashboardProps> = ({
   courses,
-  roles = [],
   analyticsReport,
   isAnalyticsLoading,
   onGenerateAnalytics,
@@ -312,9 +311,9 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
         }
       >
         {analyticsReport ? (
-          <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto whitespace-pre-wrap"
+          <div className="rounded-xl p-4 text-[13px] leading-relaxed max-h-[320px] overflow-y-auto"
                style={{ background: "var(--surface-2)", border: "1px solid var(--line)", color: "var(--text-dim)" }}>
-            {analyticsReport}
+            <Markdown>{analyticsReport}</Markdown>
           </div>
         ) : (
           <div className="rounded-xl p-8 text-center" style={{ background: "var(--surface-2)", border: "1px dashed var(--line)" }}>
@@ -326,7 +325,7 @@ export const LDDashboard: React.FC<LDDashboardProps> = ({
         )}
       </SectionCard>
 
-      <ResourceLearningTracker roles={roles} />
+      <ResourceLearningTracker />
     </div>
   );
 };

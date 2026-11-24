@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { ProjectDemand, CandidateMatch, User, UserRole, ResumeEligibility } from "../types";
+import { ProjectDemand, CandidateMatch, ResumeEligibility } from "../types";
 import { 
   FileText, Sparkles, Target, Briefcase, Users, Calendar, 
   CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Download, 
-  Send, RefreshCw, Layers, MapPin, Award, Check, X, Video, Circle, ThumbsUp, ThumbsDown
+  Send, RefreshCw, Layers, MapPin, Award, Check, X, Circle, ThumbsUp, ThumbsDown
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import { SkillGapInterviewAgent } from "./SkillGapInterviewAgent";
 import { PageHeader } from "./ui/Page";
+import { Markdown } from "./ui/Markdown";
 
-interface ProjectDemandAgentProps {
-  currentUser?: User;
-}
+// A demand date, or a dash when none was given.
+const demandDate = (value?: string) => {
+  const parsed = value ? new Date(value) : null;
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed.toLocaleDateString() : "-";
+};
+const datePassed = (value?: string) => {
+  const parsed = value ? new Date(value) : null;
+  return !!parsed && !Number.isNaN(parsed.getTime()) && parsed.getTime() < new Date().setHours(0, 0, 0, 0);
+};
+const asList = (text: string) => Array.from(new Set(text.split(",").map(s => s.trim()).filter(Boolean)));
 
 // Small presentational row for the Client Resume Readiness checklist - one line per gate
 // condition, with an optional detail line explaining what's still needed.
@@ -29,27 +35,7 @@ const ChecklistRow: React.FC<{ done: boolean; label: string; detail?: string }> 
   </div>
 );
 
-export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentUser }) => {
-  // Fallback default user if currentUser is not provided
-  const activeUser: User = currentUser || {
-    id: "usr_emp_1",
-    name: "Aarav Sharma",
-    role: UserRole.EMPLOYEE,
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    title: "Senior Full-Stack AI Engineer",
-    department: "Engineering & Innovation",
-    email: "aarav.sharma@enterprise.com",
-    managerId: "usr_mgr_1",
-    targetRoleId: "role_ai_arch"
-  };
-
-  // Direct 1st-Level Assessment Modal Launch State
-  const [activeAssessmentCand, setActiveAssessmentCand] = useState<{
-    roleTitle: string;
-    jdText: string;
-    candidateName: string;
-  } | null>(null);
-
+export const ProjectDemandAgent: React.FC = () => {
   // Requisitions State
   const [demands, setDemands] = useState<ProjectDemand[]>([]);
   const [selectedDemand, setSelectedDemand] = useState<ProjectDemand | null>(null);
@@ -59,30 +45,34 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
   const [rawJdText, setRawJdText] = useState("");
   const [isParsingJd, setIsParsingJd] = useState(false);
   const [parsedCompetencies, setParsedCompetencies] = useState<any>(null);
+  const [parseError, setParseError] = useState("");
 
-  // New Requisition Form Data
+  // New Requisition Form Data. Every field starts empty and is on screen: the form used
+  // to publish a hidden domain, location, team size and dates nobody had entered.
   const [projectName, setProjectName] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [businessUnit, setBusinessUnit] = useState("Banking & Financial Services");
+  const [businessUnit, setBusinessUnit] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
-  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [requiredSkillsText, setRequiredSkillsText] = useState("");
   const [preferredSkills, setPreferredSkills] = useState<string[]>([]);
   const [techStack, setTechStack] = useState<string[]>([]);
-  const [expMin, setExpMin] = useState(3);
-  const [expMax, setExpMax] = useState(7);
-  const [resourcesRequired, setResourcesRequired] = useState(2);
-  const [clientInterviewDate, setClientInterviewDate] = useState("2026-08-15");
-  const [expectedJoiningDate, setExpectedJoiningDate] = useState("2026-09-01");
-  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("HIGH");
-  const [location, setLocation] = useState("Hybrid / New York");
-  const [domain, setDomain] = useState("Financial Services & Fintech");
-  const [employmentType, setEmploymentType] = useState<"Full-Time" | "Contract" | "Internal Mobility">("Full-Time");
+  const [expMin, setExpMin] = useState("");
+  const [expMax, setExpMax] = useState("");
+  const [resourcesRequired, setResourcesRequired] = useState("1");
+  const [clientInterviewDate, setClientInterviewDate] = useState("");
+  const [expectedJoiningDate, setExpectedJoiningDate] = useState("");
+  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("MEDIUM");
+  const [location, setLocation] = useState("");
+  const [domain, setDomain] = useState("");
+  const [employmentType, setEmploymentType] = useState("Full-Time");
   const [isCreatingDemand, setIsCreatingDemand] = useState(false);
   const [createSuccessMsg, setCreateSuccessMsg] = useState("");
+  const [createError, setCreateError] = useState("");
 
   // AI Matching Engine State
   const [candidateMatches, setCandidateMatches] = useState<CandidateMatch[]>([]);
   const [isMatching, setIsMatching] = useState(false);
+  const [matchError, setMatchError] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateMatch | null>(null);
 
   // Client Resume Generator State
@@ -96,10 +86,12 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
   // growth has actually been measured.
   const [eligibility, setEligibility] = useState<ResumeEligibility | null>(null);
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
+  const [resumeError, setResumeError] = useState("");
 
   // Agent Handoff State
   const [handoffStatus, setHandoffStatus] = useState<any>(null);
   const [isHandingOff, setIsHandingOff] = useState(false);
+  const [handoffError, setHandoffError] = useState("");
 
   // 1. Load Project Demands on mount
   useEffect(() => {
@@ -135,22 +127,33 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobDescriptionText: rawJdText })
       });
-      if (res.ok) {
-        const data = await res.json();
-        const comps = data.competencies;
-        setParsedCompetencies(comps);
-        if (comps) {
-          if (comps.projectName) setProjectName(comps.projectName);
-          if (comps.requiredSkills) setRequiredSkills(comps.requiredSkills);
-          if (comps.preferredSkills) setPreferredSkills(comps.preferredSkills);
-          if (comps.technologyStack) setTechStack(comps.technologyStack);
-          if (comps.experienceRangeMin) setExpMin(comps.experienceRangeMin);
-          if (comps.experienceRangeMax) setExpMax(comps.experienceRangeMax);
-          if (comps.domain) setDomain(comps.domain);
-        }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
+      // Fill in only what was found; what the manager has typed is kept otherwise.
+      const found = data.parsed;
+      setParsedCompetencies(found);
+      setParseError("");
+      const fill = (value: string | undefined, set: (v: string) => void) => { if (value) set(value); };
+      fill(found.projectName, setProjectName);
+      fill(found.customerName, setCustomerName);
+      fill(found.businessUnit, setBusinessUnit);
+      fill(found.projectDescription, setProjectDescription);
+      fill(found.requiredSkills.join(", "), setRequiredSkillsText);
+      setPreferredSkills(found.preferredSkills);
+      setTechStack(found.technologyStack);
+      if (found.experienceRangeMax) {
+        setExpMin(String(found.experienceRangeMin));
+        setExpMax(String(found.experienceRangeMax));
       }
-    } catch (err) {
-      console.error("JD Parsing failed:", err);
+      setResourcesRequired(String(found.resourcesRequired));
+      fill(found.clientInterviewDate?.slice(0, 10), setClientInterviewDate);
+      fill(found.expectedJoiningDate?.slice(0, 10), setExpectedJoiningDate);
+      setPriority(found.projectPriority);
+      fill(found.location, setLocation);
+      fill(found.domain, setDomain);
+      fill(found.employmentType, setEmploymentType);
+    } catch (err: any) {
+      setParseError(err?.message || "The job description could not be read.");
     } finally {
       setIsParsingJd(false);
     }
@@ -162,18 +165,19 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
     try {
       setIsCreatingDemand(true);
       setCreateSuccessMsg("");
+      setCreateError("");
       const payload = {
-        projectName: projectName || "New Enterprise Project Demand",
-        customerName: customerName || "Global Client",
+        projectName,
+        customerName,
         businessUnit,
-        projectDescription: projectDescription || rawJdText.slice(0, 300) || "Enterprise client engagement requirement.",
+        projectDescription: projectDescription || rawJdText.slice(0, 600),
         rawJobDescription: rawJdText,
-        requiredSkills: requiredSkills.length > 0 ? requiredSkills : ["System Architecture", "TypeScript"],
-        preferredSkills: preferredSkills.length > 0 ? preferredSkills : ["Vector DB"],
-        experienceRangeMin: Number(expMin),
-        experienceRangeMax: Number(expMax),
-        technologyStack: techStack.length > 0 ? techStack : ["React", "TypeScript", "Node.js"],
-        resourcesRequired: Number(resourcesRequired),
+        requiredSkills: asList(requiredSkillsText),
+        preferredSkills,
+        experienceRangeMin: Number(expMin) || 0,
+        experienceRangeMax: Number(expMax) || 0,
+        technologyStack: techStack,
+        resourcesRequired: Number(resourcesRequired) || 1,
         clientInterviewDate,
         expectedJoiningDate,
         projectPriority: priority,
@@ -188,17 +192,22 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
         body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setCreateSuccessMsg("Project Demand Requisition Created & Published!");
-        fetchDemands();
-        setSelectedDemand(data.demand);
-        // Clear form
-        setRawJdText("");
-        setParsedCompetencies(null);
-      }
-    } catch (err) {
-      console.error("Create demand error:", err);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
+      setCreateSuccessMsg(`Published "${data.demand.projectName}". It is selected, and candidates are being matched.`);
+      fetchDemands();
+      setSelectedDemand(data.demand);
+      setRawJdText("");
+      setParsedCompetencies(null);
+      [setProjectName, setCustomerName, setBusinessUnit, setProjectDescription, setRequiredSkillsText,
+        setExpMin, setExpMax, setClientInterviewDate, setExpectedJoiningDate, setLocation, setDomain]
+        .forEach(clear => clear(""));
+      setPreferredSkills([]);
+      setTechStack([]);
+      setResourcesRequired("1");
+      setPriority("MEDIUM");
+    } catch (err: any) {
+      setCreateError(err?.message || "The requisition could not be published.");
     } finally {
       setIsCreatingDemand(false);
     }
@@ -215,15 +224,15 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ demandId: target.id })
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCandidateMatches(data.matches || []);
-        if (data.matches && data.matches.length > 0) {
-          setSelectedCandidate(data.matches[0]);
-        }
-      }
-    } catch (err) {
-      console.error("Match error:", err);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
+      setMatchError("");
+      setCandidateMatches(data.matches || []);
+      setSelectedCandidate(data.matches?.[0] ?? null);
+    } catch (err: any) {
+      // Never leave another demand's ranking on screen under this one.
+      setCandidateMatches([]);
+      setMatchError(err?.message || "Candidates could not be matched.");
     } finally {
       setIsMatching(false);
     }
@@ -242,6 +251,8 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
     setActiveResumeCandidate(cand);
     setShowResumeModal(true);
     setClientResumeMarkdown("");
+    setEligibility(null);
+    setResumeError("");
     await checkEligibility(cand);
   };
 
@@ -250,12 +261,11 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
     try {
       setIsCheckingEligibility(true);
       const res = await fetch(`/api/project-demand/${selectedDemand.id}/resume-eligibility/${cand.employeeId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setEligibility(data);
-      }
-    } catch (err) {
-      console.error("Eligibility check error:", err);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `The server answered ${res.status}.`);
+      setEligibility(data);
+    } catch (err: any) {
+      setResumeError(err?.message || "Readiness could not be checked.");
     } finally {
       setIsCheckingEligibility(false);
     }
@@ -267,6 +277,7 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
     if (!selectedDemand || !activeResumeCandidate || !eligibility?.eligible) return;
     try {
       setIsGeneratingResume(true);
+      setResumeError("");
       const res = await fetch("/api/project-demand/generate-client-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -277,60 +288,48 @@ export const ProjectDemandAgent: React.FC<ProjectDemandAgentProps> = ({ currentU
       });
       if (res.ok) {
         const data = await res.json();
-        setClientResumeMarkdown(data.markdownResume);
+        // Sent as `resume`; this read `markdownResume`, so the resume never appeared.
+        setClientResumeMarkdown(data.resume);
       } else {
         const err = await res.json().catch(() => ({}));
+        setResumeError(err.error || `The server answered ${res.status}.`);
         // Backend re-checks the same gate - if the UI's cached eligibility went stale
         // (e.g. another manager acted in the meantime), refresh it instead of just failing.
         if (err.eligibility) setEligibility(err.eligibility);
       }
-    } catch (err) {
-      console.error("Generate resume error:", err);
+    } catch {
+      setResumeError("The server could not be reached.");
     } finally {
       setIsGeneratingResume(false);
     }
   };
 
-  // 6. Trigger Handoff to SkillGap-to-Growth Agent & Direct 1st-Level Assessment Launch
+  // 7. Hand off to the SkillGap-to-Growth agent. The Level-1 assessment is then the
+  // candidate's to take, in their own SkillGap agent, which opens with this project. (It
+  // used to open here, so the manager would have answered it, for nobody's record.)
   const handleHandoff = async (cand: CandidateMatch) => {
     if (!selectedDemand) return;
     try {
       setIsHandingOff(true);
       setHandoffStatus(null);
+      setHandoffError("");
       const res = await fetch("/api/project-demand/handoff-skillgap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeId: cand.employeeId,
-          demandId: selectedDemand.id,
-          missingSkills: cand.missingSkills,
-          clientInterviewDate: selectedDemand.clientInterviewDate
+          demandId: selectedDemand.id
         })
       });
       if (res.ok) {
         const data = await res.json();
-        setHandoffStatus(data);
-
-        // Directly trigger 1st-level video-based Q&A and MCQ assessment
-        const roleTitle = `${selectedDemand.projectName} (${selectedDemand.customerName}) - ${cand.fullName}`;
-        const jdText = `Project Requisition: ${selectedDemand.projectName}
-Client: ${selectedDemand.customerName} | Domain: ${selectedDemand.domain}
-Project Description: ${selectedDemand.projectDescription}
-Required Skills: ${selectedDemand.requiredSkills.join(", ")}
-Target Interview Date: ${selectedDemand.clientInterviewDate}
-
-Shortlisted Candidate: ${cand.fullName}
-Current Match Score: ${cand.overallMatchPct}%
-Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.join(", ")}`;
-
-        setActiveAssessmentCand({
-          roleTitle,
-          jdText,
-          candidateName: cand.fullName
-        });
+        setHandoffStatus({ ...data, candidateName: cand.fullName });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setHandoffError(`Not handed off: ${data.error || `the server answered ${res.status}`}.`);
       }
-    } catch (err) {
-      console.error("Handoff error:", err);
+    } catch {
+      setHandoffError("Not handed off: the server could not be reached.");
     } finally {
       setIsHandingOff(false);
     }
@@ -412,7 +411,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                         <Users className="h-3 w-3 text-[#4F8EF7]" /> {dem.resourcesRequired} Needed
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-emerald-400" /> Interview: {new Date(dem.clientInterviewDate).toLocaleDateString()}
+                        <Calendar className="h-3 w-3 text-emerald-400" /> Interview: {demandDate(dem.clientInterviewDate)}{datePassed(dem.clientInterviewDate) ? " (passed)" : ""}
                       </span>
                     </div>
 
@@ -468,6 +467,8 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
               </button>
             </div>
 
+            {parseError && <p role="alert" className="text-[11px] text-rose-400">{parseError}</p>}
+
             {/* Render Parsed Competency Preview */}
             {parsedCompetencies && (
               <div className="bg-[#141E30] border border-emerald-500/40 rounded-lg p-4 space-y-3">
@@ -475,8 +476,18 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                   <span className="text-xs font-bold text-emerald-400 font-mono uppercase flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4" /> Competencies Extracted
                   </span>
-                  <span className="text-[10px] font-mono text-[#94A3B8]">Domain: {parsedCompetencies.domain}</span>
+                  {parsedCompetencies.domain && (
+                    <span className="text-[10px] font-mono text-[#94A3B8]">Domain: {parsedCompetencies.domain}</span>
+                  )}
                 </div>
+                {parsedCompetencies._fallback && (
+                  <p role="status" className="text-[11px] text-amber-400">
+                    The AI model was unavailable. Skills in the catalogue, years and the interview date were read from the text; fill in the rest below.
+                  </p>
+                )}
+                {parsedCompetencies.requiredSkills.length === 0 && (
+                  <p className="text-[11px] text-[#94A3B8]">No skill was recognised in the text. Enter the required skills below.</p>
+                )}
 
                 <div>
                   <label className="text-[10px] font-mono uppercase text-[#94A3B8]">Extracted Required Skills:</label>
@@ -511,6 +522,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                     type="text"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
+                    required
                     placeholder="e.g. Wealth Mgmt Advisory AI"
                     className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
                   />
@@ -521,10 +533,51 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
+                    required
                     placeholder="e.g. Apex Global Financials"
                     className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="demand-skills" className="text-[10px] font-mono uppercase text-[#94A3B8]">Required Skills (separated by commas)</label>
+                <input
+                  id="demand-skills"
+                  type="text"
+                  required
+                  value={requiredSkillsText}
+                  onChange={(e) => setRequiredSkillsText(e.target.value)}
+                  placeholder="e.g. Java, Spring Boot, SQL"
+                  className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ["demand-unit", "Business Unit", businessUnit, setBusinessUnit, "text", true, "e.g. Banking"],
+                  ["demand-domain", "Domain", domain, setDomain, "text", false, "e.g. Banking"],
+                  ["demand-exp-min", "Experience from (years)", expMin, setExpMin, "number", false, ""],
+                  ["demand-exp-max", "Experience to (years)", expMax, setExpMax, "number", false, ""],
+                  ["demand-people", "People needed", resourcesRequired, setResourcesRequired, "number", true, ""],
+                  ["demand-location", "Location", location, setLocation, "text", false, "e.g. Hybrid"],
+                ] as [string, string, string, (v: string) => void, string, boolean, string][]).map(
+                  ([id, label, value, set, type, required, hint]) => (
+                    <div key={id}>
+                      <label htmlFor={id} className="text-[10px] font-mono uppercase text-[#94A3B8]">{label}</label>
+                      <input
+                        id={id}
+                        type={type}
+                        min={type === "number" ? 0 : undefined}
+                        required={required}
+                        value={value}
+                        onChange={(e) => set(e.target.value)}
+                        placeholder={hint}
+                        className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
+                      />
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -534,6 +587,16 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                     type="date"
                     value={clientInterviewDate}
                     onChange={(e) => setClientInterviewDate(e.target.value)}
+                    className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="demand-joining" className="text-[10px] font-mono uppercase text-[#94A3B8]">Expected Joining Date</label>
+                  <input
+                    id="demand-joining"
+                    type="date"
+                    value={expectedJoiningDate}
+                    onChange={(e) => setExpectedJoiningDate(e.target.value)}
                     className="w-full bg-[#0A0A0A] border border-[#2A384C] rounded p-2 text-xs text-white"
                   />
                 </div>
@@ -562,7 +625,10 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
               </button>
 
               {createSuccessMsg && (
-                <p className="text-xs font-mono text-emerald-400 text-center">{createSuccessMsg}</p>
+                <p role="status" className="text-xs font-mono text-emerald-400 text-center">{createSuccessMsg}</p>
+              )}
+              {createError && (
+                <p role="alert" className="text-xs font-mono text-rose-400 text-center">Not published: {createError}</p>
               )}
             </form>
           </div>
@@ -611,11 +677,11 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                 </div>
                 <div>
                   <span className="text-[#94A3B8] text-[9px] uppercase block">Interview Date:</span>
-                  <span className="text-emerald-400 font-semibold">{new Date(selectedDemand.clientInterviewDate).toLocaleDateString()}</span>
+                  <span className="text-emerald-400 font-semibold">{demandDate(selectedDemand.clientInterviewDate)}{datePassed(selectedDemand.clientInterviewDate) ? " (passed)" : ""}</span>
                 </div>
                 <div>
                   <span className="text-[#94A3B8] text-[9px] uppercase block">Joining Target:</span>
-                  <span className="text-white font-semibold">{new Date(selectedDemand.expectedJoiningDate).toLocaleDateString()}</span>
+                  <span className="text-white font-semibold">{demandDate(selectedDemand.expectedJoiningDate)}</span>
                 </div>
               </div>
 
@@ -651,12 +717,17 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                 <RefreshCw className="h-8 w-8 text-[#4F8EF7] animate-spin" />
                 <p className="text-xs font-mono text-[#94A3B8]">Scanning candidate mass & ranking best fit resumes...</p>
               </div>
+            ) : matchError ? (
+              <div role="alert" className="p-8 text-center bg-[#0A0A0A] border border-rose-500/40 rounded-lg">
+                <p className="text-xs font-mono text-rose-400">{matchError}</p>
+              </div>
             ) : candidateMatches.length === 0 ? (
               <div className="p-8 text-center bg-[#0A0A0A] border border-[#2A384C] rounded-lg">
                 <p className="text-xs font-mono text-[#94A3B8]">Select a requisition above and click 'Run AI Matching Engine'.</p>
               </div>
             ) : (
               <div className="space-y-4">
+                {handoffError && <p role="alert" className="text-xs font-mono text-rose-400">{handoffError}</p>}
                 {candidateMatches.map((cand, idx) => {
                   const isSelected = selectedCandidate?.employeeId === cand.employeeId;
                   const isHighMatch = cand.overallMatchPct >= 80;
@@ -736,7 +807,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                               ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
                               : "bg-amber-500/10 text-amber-400 border-amber-500/30"
                           }`}>
-                            {isTopFit ? "Top Best Fit Resume" : isHighMatch ? "Client Ready" : "SkillGap Handoff Needed"}
+                            {isHighMatch ? (cand.missingSkills.length ? "Strong match, with gaps" : "Meets every skill") : "SkillGap Handoff Needed"}
                           </div>
                         </div>
                       </div>
@@ -802,7 +873,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                           className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-[#0F1724] text-xs font-mono font-bold py-1.5 px-3 rounded transition-all cursor-pointer shadow-md"
                         >
                           <Send className="h-3.5 w-3.5" />
-                          {isHandingOff ? "Triggering Evaluation..." : "Trigger Evaluation & Find Skill Gaps"}
+                          {isHandingOff ? "Handing off..." : "Hand off to SkillGap agent"}
                         </button>
                       </div>
                     </div>
@@ -817,7 +888,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
       {/* MODAL: Client Resume Readiness Checklist & Generator */}
       {showResumeModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0F1724] border border-[#2A384C] rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl relative my-8">
+          <div className="bg-[#0F1724] border border-[#2A384C] rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-[#2A384C] pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#141E30] text-[#4F8EF7] rounded-lg border border-[#4F8EF7]/40">
@@ -856,17 +927,17 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                     <ChecklistRow
                       done={eligibility.trainingComplete}
                       label="Project-hiring training track completed"
-                      detail={!eligibility.trainingComplete ? "Assign and complete a learning track tied to this demand via the handoff below." : undefined}
+                      detail={!eligibility.trainingComplete ? "Assign a track for this project on the Team board or the L&D page; the employee completes it." : undefined}
                     />
                     <ChecklistRow
                       done={eligibility.assessmentCleared}
                       label="Post-training GROW assessment cleared by manager"
-                      detail={!eligibility.assessmentCleared ? "Manager must evaluate and clear post-training readiness in the Manager GROW Coach Dashboard." : undefined}
+                      detail={!eligibility.assessmentCleared ? "Their manager runs the Post-Training GROW Assessment on the Team board and clears it." : undefined}
                     />
                     <ChecklistRow
                       done={eligibility.skillGrowthIdentified}
                       label="Measurable skill growth since handoff"
-                      detail={!eligibility.skillGrowthIdentified ? "Skill level increases must be recorded after completing training." : undefined}
+                      detail={!eligibility.skillGrowthIdentified ? "A skill level must rise: the employee submits evidence and their manager approves it." : undefined}
                     />
                   </div>
                 )}
@@ -891,12 +962,14 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
                     <div>
                       <span className="font-bold block uppercase text-[10px] text-amber-400 mb-0.5">Resume Generation Locked</span>
-                      <p className="text-[11px] leading-relaxed text-[#94A3B8]">
-                        The Client Resume Generator unlocks once the candidate completes their assigned learning track and passes the Post-Training GROW Assessment evaluated by their manager in the Manager GROW Coach Dashboard.
-                      </p>
+                      <ul className="text-[11px] leading-relaxed text-[#94A3B8] list-disc pl-4">
+                        {eligibility.reasons.map(reason => <li key={reason}>{reason}</li>)}
+                      </ul>
                     </div>
                   </div>
                 )}
+
+                {resumeError && <p role="alert" className="text-xs font-mono text-rose-400">{resumeError}</p>}
 
                 {/* Final Resume Generation - only reachable once eligible */}
                 {isGeneratingResume ? (
@@ -906,9 +979,7 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
                   </div>
                 ) : clientResumeMarkdown ? (
                   <div className="bg-[#0A0A0A] border border-[#2A384C] rounded-xl p-6 text-xs text-[#E0E0E0] max-h-[50vh] overflow-y-auto font-sans leading-relaxed space-y-4">
-                    <div className="markdown-body text-xs leading-relaxed space-y-3">
-                      <ReactMarkdown>{clientResumeMarkdown}</ReactMarkdown>
-                    </div>
+                    <Markdown className="text-xs leading-relaxed">{clientResumeMarkdown}</Markdown>
                   </div>
                 ) : (
                   <button
@@ -968,57 +1039,12 @@ Missing Competencies to Verify via 1st-Level Assessment: ${cand.missingSkills.jo
           <div className="bg-[#0A0A0A] p-3 rounded border border-[#2A384C] text-[11px] font-mono text-[#94A3B8] space-y-1">
             <p><strong className="text-white">Target Role:</strong> {handoffStatus.targetRole}</p>
             <p><strong className="text-white">Missing Competencies:</strong> {handoffStatus.missingSkills?.join(", ") || "None"}</p>
-            <p><strong className="text-white">Client Interview Target:</strong> {handoffStatus.clientInterviewDate ? new Date(handoffStatus.clientInterviewDate).toLocaleDateString() : "Upcoming"}</p>
+            <p><strong className="text-white">Client Interview Target:</strong> {demandDate(handoffStatus.clientInterviewDate)}{handoffStatus.interviewPassed ? " (passed - agree a new date)" : ""}</p>
           </div>
 
           <p className="text-[10px] font-mono text-emerald-400 italic">
-            Next: assign a project learning track from the Team board or the L&D page, so growth can be measured against this baseline.
+            Next: {handoffStatus.candidateName} takes the Level-1 assessment in their SkillGap agent, which opens with this project. Then assign a project track from the Team board or the L&D page.
           </p>
-        </div>
-      )}
-
-      {/* MODAL: Direct 1st-Level Assessment (MCQs + Video Q&A) */}
-      {activeAssessmentCand && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-[#0F1724] border border-[#2A384C] rounded-2xl max-w-5xl w-full p-4 sm:p-6 space-y-4 shadow-2xl relative my-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#2A384C] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30 rounded-lg">
-                  <Video className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-mono font-bold bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 px-2 py-0.5 rounded uppercase">
-                      Direct 1st-Level Assessment Launched
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-bold text-white mt-0.5">
-                    Candidate Evaluation: {activeAssessmentCand.candidateName}
-                  </h3>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setActiveAssessmentCand(null)}
-                className="text-xs font-mono text-[#94A3B8] hover:text-white bg-[#141E30] px-3 py-1.5 rounded border border-[#2A384C] cursor-pointer flex items-center gap-1"
-              >
-                <X className="h-4 w-4" />
-                Close Assessment
-              </button>
-            </div>
-
-            <SkillGapInterviewAgent
-              currentUser={activeUser}
-              initialRoleTitle={activeAssessmentCand.roleTitle}
-              initialJobDescription={activeAssessmentCand.jdText}
-              autoStartAssessment={true}
-              candidateName={activeAssessmentCand.candidateName}
-              onCloseModal={() => setActiveAssessmentCand(null)}
-              onRedirectToConcierge={() => {
-                setActiveAssessmentCand(null);
-              }}
-            />
-          </div>
         </div>
       )}
 

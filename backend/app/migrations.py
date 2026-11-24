@@ -136,6 +136,29 @@ def _fix_seeded_title(conn: sqlite3.Connection) -> None:
     )
 
 
+def _skillgap_assessments(conn: sqlite3.Connection) -> None:
+    """Level-1 SkillGap assessments: the questions asked, the answers given and the
+    scores the server gave them. `content` holds the questions with their answer key."""
+    conn.execute(
+        """CREATE TABLE skillgap_assessments (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            demandId TEXT,
+            mode TEXT NOT NULL,
+            roleTitle TEXT NOT NULL,
+            content TEXT NOT NULL,
+            answers TEXT NOT NULL DEFAULT '{}',
+            evaluations TEXT NOT NULL DEFAULT '{}',
+            result TEXT,
+            status TEXT NOT NULL DEFAULT 'in_progress',
+            createdAt TEXT NOT NULL,
+            completedAt TEXT,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+        )"""
+    )
+    conn.execute("CREATE INDEX idx_skillgap_user ON skillgap_assessments(userId, status)")
+
+
 MIGRATIONS: list[Migration] = [
     Migration(
         1,
@@ -146,6 +169,7 @@ MIGRATIONS: list[Migration] = [
     Migration(3, "Rate-limit table: sign-in attempt counters shared across processes", _rate_limits),
     Migration(4, "ERI snapshots: one readiness reading per day, for its trend", _eri_snapshots),
     Migration(5, "Data: correct a duplicated word in one seeded job title", _fix_seeded_title),
+    Migration(6, "SkillGap assessments: server-scored results the later agents read", _skillgap_assessments),
 ]
 
 LATEST_VERSION = max(m.version for m in MIGRATIONS)

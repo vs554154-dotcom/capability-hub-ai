@@ -107,7 +107,7 @@ const NUMBERS: { name: string; means: string }[] = [
   { name: "Skill-vs-Will quadrant", means: "Skill and Will both 60+ is Deploy Now; high Will only, Accelerate Learning; high Skill only, Retain & Coach; neither, Intervention Required." },
   { name: "Capability Readiness Score", means: "How close current levels are to what the target role requires, plus up to 15 points for approved evidence." },
   { name: "Match score", means: "How well a person fits a demand: 45% technical, 20% domain, 15% experience, 20% readiness." },
-  { name: "Enterprise Readiness Index", means: "Eight weighted components. Those with no stored data (today: interview assessments, certifications) are shown as not measured and left out, never estimated." },
+  { name: "Enterprise Readiness Index", means: "Eight weighted components. Those with no stored data (certifications, and interview assessments until someone finishes one) are shown as not measured and left out, never estimated." },
 ];
 
 export const GuidePage: React.FC<GuidePageProps> = ({ currentUser, onNavigate }) => {

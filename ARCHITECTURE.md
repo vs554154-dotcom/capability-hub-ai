@@ -27,7 +27,7 @@ flowchart LR
         S --> RP["Repositories<br/>SQL + mapping"]
         RP --> D["database.py<br/>transactions"]
         S --> AI["ai.py"]
-        M --> W["Static web root<br/>dist/"]
+        M --> W["Static web root<br/>frontend/dist/"]
     end
     D --> DB[("SQLite<br/>capability-hub.db")]
     AI -- "HTTPS, server-side only" --> GEM["Gemini API"]
@@ -50,15 +50,18 @@ Three properties follow from that shape and are relied on throughout:
 
 | Path | What it is | Status |
 |---|---|---|
-| `src/` | React 19 + TypeScript single-page app | Live |
+| `frontend/src/` | React 19 + TypeScript single-page app | Live |
+| `frontend/public/`, `frontend/index.html` | Static files and the page shell, copied into the build | Live |
+| `frontend/assets/` | Source artwork for the brand images; not part of the build | Reference |
 | `backend/app/` | Python/FastAPI backend — **the** backend | Live |
 | `backend/seed/seed.json` | Seed data loaded into empty tables on first boot | Live |
+| `backend/seed/question_bank.json` | Three multiple-choice questions per catalogue skill, for assessments and knowledge checks | Live |
 | `backend/tests/` | In-process test suite (pytest) | Live |
 | `backend/scripts/` | Verification probes run against a live server | Live |
-| `dist/` | Built frontend — the **public web root** | Build output |
+| `frontend/dist/` | Built frontend — the **public web root** | Build output |
 | `private/` | Files served only through gated endpoints, never statically | Live |
 | `scripts/dev-python.cmd`, `setup.sh` | Windows dev launcher for the backend; one-time local setup | Tooling |
-| `vite.config.ts`, `package.json` | Frontend build, and the dev server that proxies `/api` to the backend | Tooling |
+| `frontend/vite.config.ts`, `frontend/package.json` | Frontend build, and the dev server that proxies `/api` to the backend | Tooling |
 | `Dockerfile`, `DEPLOY.md` | Container image and deployment guide | Deployment |
 | `AGENTS.md` | Rules for AI coding agents working in this repo | Docs |
 
@@ -81,17 +84,21 @@ backend/app/
 │   ├── core.py          directory, catalogue, team, workforce metrics, source archive
 │   ├── capability.py    capability score, evidence, learning plans, reminders
 │   ├── demand.py        project demands, matching, handoff, client resume
-│   └── agents.py        AI copilots, manager insight, post-training assessment
+│   └── agents.py        AI copilots, SkillGap assessments, post-training assessment
 ├── deps.py            request dependencies: JSON body + authorization guards
 ├── services/          business rules — no HTTP, no SQL
 │   ├── capability.py    Skill/Will/CRS scoring, team roll-up, evidence workflow
-│   ├── learning.py      plan steps, deadlines, track assignment, tracker roll-up
+│   ├── matching.py      which skill a name means, whether a person meets it, its courses
 │   ├── talent.py        matching engine, handoff, shortlist, resume eligibility
+│   ├── questions.py     the question bank
+│   ├── skillgap.py      Level-1 assessments: built, answered, scored and stored
+│   ├── journey.py       one person's project, assessment, gaps and plan, for every agent
+│   ├── learning.py      tracks built from gaps, knowledge checks, deadlines, tracker
 │   ├── copilot.py       the four AI personas and their deterministic fallbacks
-│   └── analytics.py     organisation-wide metrics
+│   └── analytics.py     organisation-wide metrics and the deployment pipeline
 ├── repositories/      data access — SQL and row mapping only, one per aggregate
 │   ├── users.py  catalog.py  user_skills.py  evidence.py  learning.py
-│   ├── demands.py  reminders.py  assessments.py  sessions.py
+│   ├── demands.py  reminders.py  assessments.py  skillgap.py  sessions.py
 │   └── _common.py       clock, id generation, JSON-shape helpers
 ├── database.py        connections, transactions, startup (migrate, then seed)
 ├── migrations.py      versioned schema migrations
@@ -276,6 +283,7 @@ test fingerprints the file and fails if it changes.
 | 3 | `rate_limits` table, so sign-in throttling is shared by every worker (section 7) |
 | 4 | `eri_snapshots` table, one Enterprise Readiness Index reading per day (section 8) |
 | 5 | Data: corrects one seeded job title ("Senior Senior Software Engineer"), only where it is still that exact value |
+| 6 | `skillgap_assessments` table: Level-1 assessments and the scores the server gave them (section 8) |
 
 ### Seed data
 
@@ -308,6 +316,7 @@ erDiagram
     users ||--o{ reminders : receives
     users ||--o{ skill_baselines : "baselined at handoff"
     users ||--o{ post_assessments : "assessed in"
+    users ||--o{ skillgap_assessments : "takes"
     users }o--|| target_roles : targets
     users }o--o| users : "managerId"
     users ||--o{ sessions : "signed in as"
@@ -330,11 +339,12 @@ erDiagram
 | `courses` | The course catalogue the copilots recommend from. |
 | `reminders` | Nudges, check-ins, campaign notices, project-handoff escalations and escalations to L&D, shown in the employee's inbox on My readiness. The types `escalation`, `campaign` and `ld_escalation` are written only by the server; `POST /api/reminders` refuses them, so they cannot be forged. |
 | `project_demands` | Open client requisitions: required skills, experience band, interview date. |
-| `skill_baselines` | Levels captured at the moment of handoff, the "before" that growth is measured against. |
+| `skill_baselines` | Levels captured at handoff, the "before" that growth is measured against. Covers every skill the demand requires, also ones the person has no record of yet (at the level a new record starts at). A repeat handoff moves `capturedAt`, never the level. |
 | `sessions` | Sign-in sessions: who, when it expires, and whether it was ended (section 7). Added by migration 2. |
 | `rate_limits` | Sign-in attempts per client address in the current 15-minute window. Added by migration 3. |
 | `eri_snapshots` | One Enterprise Readiness Index reading per day, with the share of its weight measured. Added by migration 4. |
-| `post_assessments` | Post-training GROW assessments and a manager's sign-off. |
+| `post_assessments` | Post-training GROW assessments and a manager's sign-off. Each belongs to the demand the person was handed off to. |
+| `skillgap_assessments` | Level-1 assessments: the questions with their answer key, the answers, the evaluations and the result. Added by migration 6. |
 
 ---
 
@@ -452,16 +462,17 @@ graph:
 | GET | `/api/project-demand/list` | `require_auth` |
 | GET | `/api/evidence`, `/api/reminders` | `require_auth` + scoped to `visible_user_ids` |
 | POST | `/api/ai/orchestrator` | `require_auth` + `ensure_may_access` on the subject |
-| POST | `/api/agent/generate-jd-assessment`, `/evaluate-interview-answer` | `require_auth` |
-| GET | `/api/users/{id}`, `/capability`, `/learning-plan`, `/shortlist` | `require_self_manager_or_elevated` |
+| POST | `/api/agent/generate-jd-assessment`, `/assessment-answer`, `/evaluate-interview-answer`, `/complete-skillgap-assessment` | `require_auth`; an assessment is answered only by the person it was made for |
+| GET | `/api/users/{id}`, `/capability`, `/learning-plan`, `/shortlist`, `/skillgap-assessment` | `require_self_manager_or_elevated` |
 | POST | `/api/users/{id}/target-role` | `require_self_manager_or_elevated` |
 | POST | `/api/evidence`, `/api/reminders`, `/api/learning-plan/deadline` | `require_self_or_elevated_body` |
-| POST | `/api/agent/complete-skillgap-assessment` | `require_self_or_elevated_body` |
 | POST | `/api/learning-plan/step` | `require_learning_step_owner` |
+| GET | `/api/learning-plan/step/{stepId}/quiz` | `require_auth` + `ensure_may_access` on the owner |
+| POST | `/api/learning-plan/step/{stepId}/quiz` | `require_auth`, the step's owner only |
 | GET | `/api/manager/{id}/team` | manager-or-above; a manager only their own id |
 | GET | `/api/learning-tracker/resources`, `/api/analytics/workforce`, `/api/analytics/eri`, `/api/analytics/leadership`, `/api/analytics/ld` | manager-or-above (tracker scoped) |
 | POST | `/api/analytics/campaign` | L&D or leadership: it reminds employees across the organisation |
-| POST | `/api/validation`, `/api/learning-plan/assign` | manager-or-above + `ensure_may_access` |
+| POST | `/api/validation`, `/api/learning-plan/suggest`, `/api/learning-plan/assign` | manager-or-above + `ensure_may_access` |
 | POST | `/api/manager/insight`, `/post-assessment`, `/post-assessment/{id}/signoff`, `/escalate` | manager-or-above + `ensure_may_access` |
 | POST | `/api/project-demand/create`, `/match`, `/parse-jd`, `/handoff-skillgap`, `/generate-client-resume` | manager-or-above (organisation-wide) |
 | GET | `/api/project-demand/{demandId}/resume-eligibility/{employeeId}` | manager-or-above (organisation-wide) |
@@ -479,27 +490,31 @@ place.
 | **Skill** (matrix Y axis) | average level ÷ 5 × 100, + 5 per approved evidence, capped at 100 | `capability.skill_score` |
 | **Will** (matrix X axis) | 40% learning follow-through + 30% evidence initiative + 20% goal progress + 10% goal commitment | `capability.compute_motivation_scores` |
 | **Engagement** | completed plan steps ÷ total steps | same |
-| **Capability Readiness Score** | per-skill current ÷ target (capped 100; no target = 100), averaged; × 0.85 + up to 15 for approved evidence | `capability.capability_report` |
+| **Capability Readiness Score** | per-skill current ÷ target (capped 100), averaged over the skills that have a target; × 0.85 + up to 15 for approved evidence; not measured when no skill has a target | `capability.capability_report` |
 | **Risk** | High at 4+ skills below target, Medium at 2–3 | `capability.team_rollup` |
+| **Requirement met** | held at level 3+, or listed as a primary skill, or named by the title or role; names match as whole words | `matching.requirement_status` |
+| **Level-1 result** | multiple choice 40% + spoken 60%, or 30 / 40 / 30 with a practical; over the parts taken, unanswered questions in a part count as 0, provisional grades are not counted | `skillgap.finish` |
+| **Knowledge check** | right answers ÷ questions asked; a pass completes the step | `learning.submit_quiz` |
+| **Project readiness** | share of a demand's required skills met, now against the handoff baseline | `talent.project_readiness` |
 | **Match** | 45% technical + 20% domain + 15% experience + 20% capability readiness, capped at 99; below 80 needs upskilling | `talent.match_candidates` |
 | **Resume eligibility** | project-hiring track complete **and** assessment signed off as cleared **and** at least one skill above its handoff baseline | `talent.resume_eligibility` |
 | **Enterprise Readiness Index** | weighted mean of the eight `AGENTS.md` components, over the **measured** ones only (see below) | `analytics.readiness_index` |
 | **Readiness by department** (L&D heatmap) | per skill and department: the employees working toward the skill, average of current ÷ target level (capped at 1) | `analytics.ld_overview` |
 | **Campaign** | one reminder to every employee below target on the chosen skill, stating their own current and target level | `analytics.launch_campaign` |
 | **Escalation to L&D** | a reminder written by the server from the signed-in manager and the employee's stored gap count; listed on the L&D page | `analytics.escalate_to_ld` |
-| **Supply against demand** | per skill named by an open demand: ready = employees at level 3+ (the level matching treats as verified), developing = below 3 with a target of 3+ | `analytics.leadership_overview` |
+| **Supply against demand** | per skill named by an open demand: ready = employees at level 3+ (the level matching treats as verified), developing = below 3, with a target of 3+ or the skill on their learning plan | `analytics.leadership_overview` |
 
-A demand names skills by text. `talent.find_skill` resolves a name to the catalogue
+A demand names skills by text. `matching.find_skill` resolves a name to the catalogue
 skill of exactly that name, ignoring case, and only falls back to containment when
-there is none. Containment first would resolve "SQL" to "PostgreSQL & Vector Database
-Optimization" and "Java" to "Java Core & OOP Principles".
+there is none. Containment first would resolve "Java" to "Java Core & OOP Principles".
+Containment is by whole words, so Java does not satisfy JavaScript.
 
 ### The Enterprise Readiness Index
 
 | Component | Weight | Computed from |
 |---|---|---|
 | Skill proficiency | 25% | average Skill score |
-| Level-1 video/MCQ assessments | 20% | **not measured**: interview scores are computed in the browser and not stored |
+| Level-1 video/MCQ assessments | 20% | average of each employee's latest graded SkillGap assessment; not measured until one is |
 | Workplace evidence validation | 15% | approved ÷ submitted evidence |
 | Certification health | 15% | **not measured**: no certification records are kept |
 | Capability readiness (CRI) | 10% | average Capability Readiness Score |
@@ -524,12 +539,34 @@ The **Demand-to-Deployment** flow ties the services together:
 flowchart LR
     D["Demand<br/>parse JD"] --> M["Match<br/>rank the bench"]
     M --> H["Handoff<br/>baseline + escalation"]
-    H --> L["Learn<br/>project-hiring track"]
+    H --> S["SkillGap<br/>Level-1 assessment"]
+    S --> C["Concierge + track<br/>built from the gaps"]
+    C --> L["Learn<br/>knowledge checks + evidence"]
     L --> A["Assess<br/>GROW + sign-off"]
     A --> E{"Eligible?"}
     E -- "yes" --> R["Client resume<br/>verified facts only"]
     E -- "no: reasons listed" --> L
 ```
+
+What each agent leaves for the next, and where the next one reads it:
+
+| From | Stored | Read by |
+|---|---|---|
+| Demand-to-Deployment | `skill_baselines`, an inbox message | `talent.active_shortlist`: the demand, its brief, the skills still missing |
+| SkillGap | `skillgap_assessments.result` with its gaps | `journey.gaps_for`: the Concierge, the track builder, the GROW coach; the readiness index |
+| Concierge and track | `learning_plans` tied to the demand | the employee's plan, the manager's board, resume eligibility |
+| Learning | quiz scores, `evidences` | the manager's review; approval raises a level once |
+| GROW coach | `post_assessments` for that demand | resume eligibility; the readiness index |
+| All of them | the rows above | `analytics.deployment_pipeline` and the analytics copilot |
+
+`services/journey.py` is the one place that puts a person's project, assessment, gaps
+and plan together, so no two agents disagree about what is missing.
+
+**Level-1 assessments are scored on the server.** The answer key never reaches the
+browser: each question's right option is returned only once it has been answered, the
+first answer counts, and a score in a request is ignored. Without a model the
+multiple-choice questions come from the question bank and score as usual, while spoken
+answers get a provisional grade that is shown but not counted.
 
 The client resume is gated on persisted proof — a completed track, a signed-off
 assessment, measured growth — and never on anything the request asserts. Its prompt
@@ -550,9 +587,15 @@ contains only verified facts and instructs the model not to invent any.
   (manager insight, post-training assessment) is written from that person's records -
   strongest skill, gaps, evidence, learning progress - and starts by saying it was
   computed without the model; it never states a judgement the records don't support.
-- **Bounded, never retried.** Every call is limited to `GEMINI_TIMEOUT_SECONDS`
-  (default 120) and makes exactly one attempt, so the worst case for a request is that
-  long and no longer. Retries are switched off explicitly: the SDK's retry policy
+- **Backup models.** When Google answers that a model is overloaded, out of quota, gone
+  or past its deadline (429, 404, 503, 504), or it is too slow, the next model in
+  `GEMINI_BACKUP_MODELS` is asked, and the busy one is passed over for as long as Google says, up to an hour, else two
+  minutes. Google's free tier allows only 20 requests a day for a model, so a full demo
+  needs a paid key. A
+  rejected key or a bad request fails the same way everywhere, so it is not passed on.
+- **Bounded, never retried.** An answer is limited to `GEMINI_TIMEOUT_SECONDS`
+  (default 120) over every model tried, and no model is asked twice, so the worst case
+  for a request is that long and no longer. Retries are switched off explicitly: the SDK's retry policy
   retries timeouts, and measured against a 1-second timeout it took 22 seconds. The
   default sits well above normal generation time, because long reports have taken
   over 90 seconds. A timeout is logged as one, so a value cutting off real answers is
@@ -561,7 +604,7 @@ contains only verified facts and instructs the model not to invent any.
   operating system's trust store (`truststore`), not the HTTP library's bundled
   list. On a machine whose antivirus or proxy inspects TLS, its root certificate is
   only in the OS store, and every call would otherwise fail certificate checks.
-- **Structured output.** `ai.generate_json()` strips Markdown fences and, if the
+- **Structured output.** `ai.generate_json()` asks the model for JSON, and also strips Markdown fences and, if the
   model wrapped the JSON in prose, recovers the outermost `{...}` or `[...]` before
   parsing.
 - **Grounded and authorised.** Copilot prompts include a person's skills and
@@ -571,9 +614,16 @@ contains only verified facts and instructs the model not to invent any.
   figures (the index, its components, skill-gap risk, supply against demand) only for
   managers, L&D and leadership, the roles allowed to read those figures; anyone else
   gets their own skill picture.
+- **The coach sees the team.** A manager's coach question is answered from all their
+  direct reports' records, and a report it names is described in full. (It used to be
+  grounded in the manager's own, empty, skill record.)
+- **Model output is checked before it is used.** Generated questions without a usable
+  right answer are dropped, scores are clamped, and a parsed job description keeps only
+  fields of the right type. Job descriptions, resumes and answers are passed as
+  material, with an instruction to ignore instructions inside them.
 - **Personas.** `skill_gap`, `concierge`, `coach` and `analytics` each have a
   system instruction in `copilot.PERSONAS`; an unknown persona falls back to a
-  generic orchestrator. Model: `gemini-3.6-flash`, through `google-genai` 2.8.
+  generic orchestrator. Model: `gemini-3.6-flash` by default, through `google-genai` 2.8.
 
 Because a fallback also returns `200`, a healthy status code does not prove the
 model was reached. Check for the fallback marker instead.
@@ -599,13 +649,13 @@ lets the same service be called from a test, a script or another service.
 
 ## 11. Static serving and the web root
 
-`dist/` is the **public web root**. Everything in it is served to any browser, so
+`frontend/dist/` is the **public web root**. Everything in it is served to any browser, so
 nothing private may live there.
 
 - `/assets/*` is served by Starlette's `StaticFiles`.
 - Every other non-API path goes to one catch-all route. It resolves the requested
   path, collapsing `..` and symlinks, and serves the file **only if the resolved
-  path is still inside `dist/`**. Anything else, whether an unknown route or a path
+  path is still inside `frontend/dist/`**. Anything else, whether an unknown route or a path
   that would escape the web root, gets `index.html` so client-side routing can
   take over.
 - The route accepts `HEAD` as well as `GET`, because some platforms probe the root
@@ -629,20 +679,21 @@ Every setting comes from the environment, read once by `config.py`:
 | `PORT` | `8000` | Listen port; injected by most hosts |
 | `SESSION_SECRET` | insecure dev value (warns) | Signs the session cookie — **set it in production** |
 | `GEMINI_API_KEY` | unset | Enables real AI; otherwise fallbacks |
-| `GEMINI_TIMEOUT_SECONDS` | `120` | Upper bound on one Gemini call; invalid values stop startup |
+| `GEMINI_TIMEOUT_SECONDS` | `120` | Upper bound on one answer, over every model tried; invalid values stop startup |
+| `GEMINI_MODEL`, `GEMINI_BACKUP_MODELS` | `gemini-3.6-flash`; `gemini-3.5-flash,gemini-flash-lite-latest,gemini-3.1-flash-lite` | The model, and those tried when it is busy |
 | `DEMO_MODE` | `false` | Password-free sign-in. **Keep off** anywhere shared |
 | `DATABASE_PATH` | `capability-hub.db` in repo root | Point at a persistent volume in production |
 | `COOKIE_SAMESITE` | `none` on HTTPS, else `lax` | Session cookie SameSite policy |
 | `AUTH_RATE_LIMIT_MAX` | `30` | Sign-in attempts per IP per 15 minutes |
 | `TRUST_PROXY` | `true` | Read the client IP from `X-Forwarded-For` |
-| `DIST_DIR`, `PRIVATE_DIR` | `dist/`, `private/` | Web root and gated files |
+| `DIST_DIR`, `PRIVATE_DIR` | `frontend/dist/`, `private/` | Web root and gated files |
 | `NODE_ENV`, `APP_URL` | — | HTTPS signal for cookie flags |
 
 Unsafe defaults in force (no secret, no key, `DEMO_MODE` on) are reported as
 warnings in the startup log. They are never reported through a public endpoint.
 
 **Running it.** In development, `scripts\dev-python.cmd` runs Uvicorn with reload
-on `:8000`, serving the API and `dist/` (run `npm run build:web` once). In
+on `:8000`, serving the API and `frontend/dist/` (run `npm run build` in `frontend/` once). In
 production, the `Dockerfile` builds the frontend with Node in one stage and runs
 FastAPI alone in the next, so no Node is present at runtime. `/api/health` is the
 liveness probe. See `DEPLOY.md` for platform-specific notes.
@@ -653,8 +704,8 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 98 tests: authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
-| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 59 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
+| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 159 tests: each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 65 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,
 isolated database and a controlled file tree, including a decoy secret file beside
@@ -666,18 +717,19 @@ against the code it fixes: it fails there and passes on the fix.
 
 ## 14. The frontend
 
-The React app is unchanged by the backend architecture and relies on it as follows:
+The React app lives in `frontend/`, with its own `package.json`, and is built there.
+It relies on the backend as follows:
 
 - It calls the API with relative paths (`fetch("/api/...")`), so it works on any
   origin that serves both, with no configuration.
 - It holds no authority. Hiding a tab a role cannot use is a convenience; the server
   enforces every restriction regardless of what the UI shows.
 - `App.tsx` holds the session user, the active tab and the shared data; screens live
-  in `src/components/`, one per role-specific workspace.
+  in `frontend/src/components/`, one per role-specific workspace.
 - After sign-in, each role lands on its own workspace. The signed-out landing page
   is not reachable from a signed-in session.
 - Every workspace opens with a `PageHeader` (what the page is for, and numbered steps)
-  and is built from the primitives in `src/components/ui/` on the theme tokens in
+  and is built from the primitives in `frontend/src/components/ui/` on the theme tokens in
   `index.css`, so all six themes apply. Navigation lives in `components/navigation.ts`;
   the "How it works" guide explains the whole loop and is reachable signed out.
 - Uploaded résumés and job descriptions are read in the browser
@@ -691,11 +743,9 @@ The React app is unchanged by the backend architecture and relies on it as follo
 
 These are real and are not yet fixed:
 
-1. **40% of the readiness index is not measured.** Level-1 interview assessments
-   and certification health have no stored data, so the index covers the other 60%
-   of its weight and says so. Interview scores are computed in the browser; storing
-   them as an input would let a client post any score, so they need server-side
-   scoring first.
+1. **Certification health is not measured.** No certification records are kept, so
+   15% of the readiness index has no data and the index says so. Level-1 assessments
+   count from the first one an employee finishes.
 2. **One host.** All shared state (data, sessions and sign-in rate limits) is in
    the SQLite file, so any number of workers or processes on one host share it;
    two processes on one database were checked live to share sessions and rate

@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { User, Skill, Evidence, TeamMemberCapability, TargetRole } from "../types";
+import { User, Skill, Evidence, TeamMemberCapability } from "../types";
 import { Check, X, Shield, Cpu, RefreshCw, MessageSquare, Sparkles, Send, Calendar, AlertTriangle, UserCheck, Bell, ChevronRight, HelpCircle, CheckCircle2, ArrowRight, Award, Users } from "lucide-react";
 import { SkillVsWillMatrix } from "./SkillVsWillMatrix";
 import { ResourceLearningTracker } from "./ResourceLearningTracker";
 import { PageHeader } from "./ui/Page";
+import { Markdown } from "./ui/Markdown";
 
 interface ManagerDashboardProps {
   currentUser: User;
   skills: Skill[];
-  roles?: TargetRole[];
   evidences: Evidence[];
   teamMembers: TeamMemberCapability[];
-  onReviewEvidence: (evidenceId: string, status: "approved" | "revision_requested", comment: string) => void;
+  onReviewEvidence: (evidenceId: string, status: "approved" | "revision_requested", comment: string) => Promise<string | null>;
+  onRefreshTeam: () => void;
   coachingGuidance: string;
   isCoachingLoading: boolean;
   onGenerateCoaching: () => void;
@@ -20,13 +21,13 @@ interface ManagerDashboardProps {
 export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   currentUser,
   skills,
-  roles = [],
   evidences,
   teamMembers,
   onReviewEvidence,
   coachingGuidance,
   isCoachingLoading,
   onGenerateCoaching,
+  onRefreshTeam,
 }) => {
   const [reviewComments, setReviewComments] = useState<{ [id: string]: string }>({});
   
@@ -41,7 +42,11 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   const [checkpointTopic, setCheckpointTopic] = useState("1-on-1 Capability & Progress Review");
 
   // Post-Training GROW Assessment Modal State
-  const [postAssessmentData, setPostAssessmentData] = useState<{ memberName: string; targetRole: string; report: string; assessmentId: string | null; status: string | null } | null>(null);
+  const [postAssessmentData, setPostAssessmentData] = useState<{
+    memberName: string; targetRole: string; report: string; assessmentId: string | null; status: string | null;
+    project: { projectName: string } | null;
+    readiness: { atHandoff: number | null; now: number | null; closed: string[]; open: string[] } | null;
+  } | null>(null);
   const [loadingPostAssessment, setLoadingPostAssessment] = useState<{ [userId: string]: boolean }>({});
   const [isSigningOffAssessment, setIsSigningOffAssessment] = useState(false);
 
@@ -62,8 +67,11 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
           // so the assessment managers signed off on was never shown to them.
           report: data.narrative,
           assessmentId: data.assessment?.id || null,
-          status: data.assessment?.status || null
+          status: data.assessment?.status || null,
+          project: data.project,
+          readiness: data.readiness
         });
+        onRefreshTeam();
       }
     } catch (err) {
       console.error(err);
@@ -87,6 +95,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
       if (res.ok) {
         const data = await res.json();
         setPostAssessmentData(prev => prev ? { ...prev, status: data.assessment?.status || decision } : prev);
+        onRefreshTeam();
         setActionFeedback(
           decision === "cleared"
             ? `Post-training assessment cleared for ${postAssessmentData.memberName}.`
@@ -110,9 +119,20 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
     : 0;
   const atRiskCount = teamMembers.filter(m => (m as any).riskStatus === "High" || m.gapCount >= 4).length;
 
-  const handleReview = (id: string, status: "approved" | "revision_requested") => {
-    const comment = reviewComments[id] || (status === "approved" ? "Verified workspace evidence and test output. Approved." : "Please provide additional test execution logs.");
-    onReviewEvidence(id, status, comment);
+  const [reviewing, setReviewing] = useState<string | null>(null);
+  const [reviewErrors, setReviewErrors] = useState<{ [id: string]: string }>({});
+  const handleReview = async (id: string, status: "approved" | "revision_requested") => {
+    // The comment is the manager's own: a ready-made one used to be sent in their name.
+    const comment = (reviewComments[id] || "").trim();
+    if (!comment) {
+      setReviewErrors(prev => ({ ...prev, [id]: "Write a comment first; the employee sees it with your decision." }));
+      return;
+    }
+    setReviewing(id);
+    const failure = await onReviewEvidence(id, status, comment);
+    setReviewing(null);
+    setReviewErrors(prev => ({ ...prev, [id]: failure ? `Not saved: ${failure}` : "" }));
+    if (failure) return;
     setReviewComments(prev => {
       const copy = { ...prev };
       delete copy[id];
@@ -339,8 +359,18 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                     {/* Current Role */}
                     <td className="py-4 px-4 text-[#94A3B8] font-mono">{member.title}</td>
 
-                    {/* Target Role */}
-                    <td className="py-4 px-4 font-mono font-bold text-[#4F8EF7]">{targetRole}</td>
+                    {/* Target Role, and where they stand in the project flow */}
+                    <td className="py-4 px-4 font-mono font-bold text-[#4F8EF7]">
+                      {targetRole}
+                      {member.activeProject && (
+                        <ul className="mt-2 space-y-0.5 text-[10px] font-normal text-[#94A3B8]">
+                          <li className="text-[#10B981] font-bold">Project: {member.activeProject.projectName}</li>
+                          <li>Level-1: {!member.level1Taken ? "not taken" : member.level1Score === null ? "taken, not graded" : `${member.level1Score}%`}</li>
+                          <li>Track: {member.projectStepsTotal ? `${member.projectStepsDone} of ${member.projectStepsTotal} steps` : "not assigned"}</li>
+                          <li>Post-training: {member.postAssessmentStatus ? member.postAssessmentStatus.replace("_", " ").replace("signoff", "sign-off") : "not run"}</li>
+                        </ul>
+                      )}
+                    </td>
 
                     {/* Capability (Skill) Score */}
                     <td className="py-4 px-4">
@@ -383,9 +413,9 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                     {/* Actions & AI Insight */}
                     <td className="py-4 px-4 space-y-2">
                       {insightText ? (
-                        <div className="p-2.5 bg-[#0F1724] border border-[#2A384C] text-[11px] text-[#F0F4FF] rounded-md font-sans whitespace-pre-wrap max-w-sm">
+                        <div className="p-2.5 bg-[#0F1724] border border-[#2A384C] text-[11px] text-[#F0F4FF] rounded-md font-sans max-w-sm min-w-[240px]">
                           <span className="font-mono text-[9px] text-[#4F8EF7] uppercase font-bold block mb-1">AI Briefing:</span>
-                          {insightText}
+                          <Markdown>{insightText}</Markdown>
                         </div>
                       ) : (
                         <button
@@ -458,7 +488,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
     </div>
 
       {/* Resource Learning Progress & Flexible Track Assigner */}
-      <ResourceLearningTracker roles={roles} />
+      <ResourceLearningTracker onAssigned={onRefreshTeam} />
 
       {/* Validation Queue & Manager Coach Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -510,10 +540,12 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                         className="w-full bg-[#141E30] text-[#F0F4FF] text-xs p-2.5 rounded-md border border-[#2A384C] focus:outline-none focus:ring-1 focus:ring-[#4F8EF7]"
                       />
 
+                      {reviewErrors[e.id] && <p role="alert" className="text-[11px] text-rose-400">{reviewErrors[e.id]}</p>}
                       <div className="flex flex-wrap gap-2 pt-1 justify-end">
                         <button
                           id={`reject-btn-${e.id}`}
                           onClick={() => handleReview(e.id, "revision_requested")}
+                          disabled={reviewing === e.id}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono uppercase tracking-widest text-[#F59E0B] hover:bg-[#F59E0B]/10 border border-[#F59E0B]/40 rounded-md transition-colors cursor-pointer font-bold"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -522,6 +554,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                         <button
                           id={`approve-btn-${e.id}`}
                           onClick={() => handleReview(e.id, "approved")}
+                          disabled={reviewing === e.id}
                           className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono uppercase tracking-widest text-[#0F1724] bg-[#10B981] hover:bg-[#059669] rounded-md transition-colors cursor-pointer font-bold"
                         >
                           <Check className="h-3.5 w-3.5" />
@@ -579,8 +612,8 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                   <MessageSquare className="h-3.5 w-3.5 text-[#4F8EF7]" />
                   <span className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#4F8EF7]">GROW Coaching Brief</span>
                 </div>
-                <div className="whitespace-pre-wrap leading-relaxed space-y-2 text-[#F0F4FF] text-[11px]">
-                  {coachingGuidance}
+                <div className="leading-relaxed text-[#F0F4FF] text-[11px]">
+                  <Markdown>{coachingGuidance}</Markdown>
                 </div>
               </div>
             ) : (
@@ -700,8 +733,22 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="whitespace-pre-wrap text-xs text-[#F0F4FF] font-sans leading-relaxed space-y-3 font-normal">
-                {postAssessmentData.report}
+              {postAssessmentData.project && postAssessmentData.readiness ? (
+                <p className="text-xs text-[#94A3B8]">
+                  For <strong className="text-[#F0F4FF]">{postAssessmentData.project.projectName}</strong>:{" "}
+                  {postAssessmentData.readiness.now}% of the required skills met
+                  {postAssessmentData.readiness.atHandoff !== null && ` (${postAssessmentData.readiness.atHandoff}% at handoff)`}.{" "}
+                  Closed: {postAssessmentData.readiness.closed.join(", ") || "none yet"}.{" "}
+                  Still open: {postAssessmentData.readiness.open.join(", ") || "none"}.
+                </p>
+              ) : (
+                <p className="text-xs text-amber-400">
+                  Not handed off to a project, so this check cannot unlock a client resume.
+                </p>
+              )}
+
+              <div className="text-xs text-[#F0F4FF] font-sans leading-relaxed font-normal">
+                <Markdown>{postAssessmentData.report}</Markdown>
               </div>
             </div>
 
