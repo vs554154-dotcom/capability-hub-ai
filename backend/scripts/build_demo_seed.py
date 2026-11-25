@@ -766,7 +766,7 @@ for i, r in enumerate(open_roles):
         "technologyStack": json.dumps(r["skills"], ensure_ascii=False), "resourcesRequired": int(people),
         "clientInterviewDate": f"@+{days}dT10:00:00Z", "expectedJoiningDate": f"@+{int(days) + 30}dT09:00:00Z",
         "projectPriority": priority, "location": place, "domain": domain, "employmentType": "Full-Time",
-        "additionalNotes": None, "status": "OPEN", "createdAt": f"@-{i + 1}dT09:00:00Z",
+        "additionalNotes": None, "status": "OPEN", "createdAt": f"@-{i + 41}dT09:00:00Z",
     }
     demands.append({c: values[c] for c in DEMAND_COLUMNS})
 

@@ -1653,6 +1653,8 @@ header.app-header::after {
 .header-btn {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   gap: 6px;
   height: 36px;
   padding: 0 11px;

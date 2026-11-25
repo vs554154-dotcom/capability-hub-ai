@@ -11,6 +11,7 @@ import { ProjectDemandAgent } from "./components/ProjectDemandAgent";
 import { ResourceLoginPage } from "./components/ResourceLoginPage";
 import { HomeLandingPage } from "./components/HomeLandingPage";
 import { ThemeSelectorModal } from "./components/ThemeSelectorModal";
+import { DemoTools, useDemoTools } from "./components/DemoTools";
 import { ThemeId, THEME_OPTIONS, applyThemeToDocument, getCurrentTheme } from "./lib/theme";
 import { BrandMark, BrandLockup } from "./components/BrandLogo";
 import { RefreshCw, AlertCircle } from "lucide-react";
@@ -54,6 +55,10 @@ export default function App() {
   // UI/UX Theme Customizer State
   const [currentTheme, setCurrentTheme] = useState<ThemeId>(getCurrentTheme());
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  // Demo tools: only where the server offers them (its setting, and this computer).
+  const demoTools = useDemoTools(currentUser);
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   // Apply default theme on initial load
   useEffect(() => {
@@ -637,8 +642,13 @@ export default function App() {
         onTabChange={setActiveTab}
         onLogout={handleLogout}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        onOpenDemo={demoTools ? () => setIsDemoOpen(true) : undefined}
         currentThemeName={activeThemeOption?.name}
       />
+
+      {demoTools && activeUser && (
+        <DemoTools isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} status={demoTools} currentUser={activeUser} />
+      )}
 
       {/* Theme Customizer Modal */}
       <ThemeSelectorModal

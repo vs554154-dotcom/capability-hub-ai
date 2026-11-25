@@ -74,7 +74,7 @@ def _seed_empty_tables(conn: sqlite3.Connection) -> list[str]:
         # has people gets it with scripts/load_demo_data.py, when someone asks for it.
         fresh = not conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         seed = seed_data.starting_rows(include_demo=fresh)
-        for table in SEED_TABLE_ORDER:
+        for table in [*SEED_TABLE_ORDER, *(t for t in seed if t not in SEED_TABLE_ORDER)]:
             rows = seed.get(table) or []
             if not rows or conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]:
                 continue

@@ -56,6 +56,7 @@ Three properties follow from that shape and are relied on throughout:
 | `backend/app/` | Python/FastAPI backend — **the** backend | Live |
 | `backend/seed/seed.json` | Seed data loaded into empty tables on first boot | Live |
 | `backend/seed/demo_seed.json` | A larger, made-up company for demos, built from `backend/seed/source/` by `backend/scripts/build_demo_seed.py` | Live |
+| `backend/seed/demo_journeys.json` | 41 demo people part-way from a client demand to a resume, built by `backend/scripts/build_demo_journeys.py` | Live |
 | `backend/seed/skill_aliases.json` | Other names a job description may use for a skill; built by the same script | Live |
 | `backend/seed/question_bank.json` | Three multiple-choice questions per catalogue skill, for assessments and knowledge checks | Live |
 | `sample-data/job-descriptions/` | One job description per demo role, to paste or upload; built by the same script | Reference |
@@ -66,6 +67,7 @@ Three properties follow from that shape and are relied on throughout:
 | `scripts/dev-python.cmd`, `setup.sh` | Windows dev launcher for the backend; one-time local setup | Tooling |
 | `frontend/vite.config.ts`, `frontend/package.json` | Frontend build, and the dev server that proxies `/api` to the backend | Tooling |
 | `Dockerfile`, `DEPLOY.md` | Container image and deployment guide | Deployment |
+| `docs/DEMO_SCRIPT.md` | The presenter's script, printed version of the one in the Demo panel | Docs |
 | `AGENTS.md` | Rules for AI coding agents working in this repo | Docs |
 
 There is one backend. A Node/Express server that once lived alongside it was
@@ -299,7 +301,18 @@ needing training (`tests/test_demo_data.py` checks each demand and job descripti
 are relative to the day it is loaded, so its interviews are ahead. A database that starts
 from nothing gets both, unless `SEED_DEMO_DATA=false`; one that already has people gets the
 demo rows only from `backend/scripts/load_demo_data.py`, which backs the database up, adds
-what is missing and never changes a row that is there. On startup, each table that is **still empty** is
+what is missing and never changes a row that is there.
+
+`seed/demo_journeys.json` takes 41 of those people part-way from a demand to a resume, so
+every stage of the pipeline has someone in it. Nothing in it is written by hand: the build
+script walks each person through the application's own services (handoff, Level-1
+assessment, track, knowledge checks, evidence, sign-off) on a throwaway database with a
+moving clock and no model, and keeps the rows those services stored. A new database gets
+them with the demo company, unless `SEED_DEMO_JOURNEYS=false`. An existing one gets them
+from `load_demo_data.py --journeys`, which replaces the plan and levels only of demo people
+nobody has worked with, and dates their projects from the same day.
+
+On startup, each table that is **still empty** is
 seeded, under the write lock so concurrent starts cannot both fill it; a table with
 rows is never touched. A fresh deployment therefore builds itself, and a running one
 keeps its data across restarts. Password hashes are
@@ -489,6 +502,19 @@ graph:
 | POST | `/api/project-demand/create`, `/match`, `/parse-jd`, `/handoff-skillgap`, `/generate-client-resume` | manager-or-above (organisation-wide) |
 | GET | `/api/project-demand/{demandId}/resume-eligibility/{employeeId}` | manager-or-above (organisation-wide) |
 | GET | `/api/download-app-zip` | Leadership only |
+| GET | `/api/demo` · POST `/api/demo/switch` | `demo_tools` (below) + `require_auth`; a switch goes only to the presenter's cast |
+| POST | `/api/demo/reset`, `/api/demo/starting-point` | `demo_tools` + manager-or-above, and `confirm: true` |
+
+**The demo tools** (`routers/demo.py`) are for a presenter's own computer. `demo_tools`
+answers 404 unless `DEMO_TOOLS=true`, the connection comes from a loopback address, no
+forwarding header is present, and the `Host` and `Origin` (when sent) are loopback too, so
+neither the network, a proxy, a rebound name nor another site's page can reach them. A
+switch needs a live session, replaces it with a new one and ends the old, and goes only to
+the people `demo_journeys.json` names; a user id alone still signs nobody in. A reset backs
+the database up, then puts back the saved starting point (`backups/demo-starting-point.db`)
+or, without one, the sample data as a new database would get it today. It keeps sessions,
+sign-in counters, the daily readiness readings and the passwords people have set, and
+changes nothing if any reference would break (`snapshot.py`).
 
 ---
 
@@ -709,6 +735,8 @@ Every setting comes from the environment, read once by `config.py`:
 | `GEMINI_MODEL`, `GEMINI_BACKUP_MODELS` | `gemini-3.6-flash`; `gemini-3.5-flash,gemini-flash-lite-latest,gemini-3.1-flash-lite` | The model, and those tried when it is busy |
 | `DEMO_MODE` | `false` | Password-free sign-in. **Keep off** anywhere shared |
 | `SEED_DEMO_DATA` | `true` | Whether a database that starts empty also gets the demo company |
+| `SEED_DEMO_JOURNEYS` | `true` | Whether the demo company comes with people part-way to a resume |
+| `DEMO_TOOLS` | `false` | The presenter's person switch and reset, reachable only from the same computer |
 | `DATABASE_PATH` | `capability-hub.db` in repo root | Point at a persistent volume in production |
 | `COOKIE_SAMESITE` | `none` on HTTPS, else `lax` | Session cookie SameSite policy |
 | `AUTH_RATE_LIMIT_MAX` | `30` | Sign-in attempts per IP per 15 minutes |
@@ -716,7 +744,7 @@ Every setting comes from the environment, read once by `config.py`:
 | `DIST_DIR`, `PRIVATE_DIR` | `frontend/dist/`, `private/` | Web root and gated files |
 | `NODE_ENV`, `APP_URL` | — | HTTPS signal for cookie flags |
 
-Unsafe defaults in force (no secret, no key, `DEMO_MODE` on) are reported as
+Unsafe defaults in force (no secret, no key, `DEMO_MODE` or `DEMO_TOOLS` on) are reported as
 warnings in the startup log. They are never reported through a public endpoint.
 
 **Running it.** In development, `scripts\dev-python.cmd` runs Uvicorn with reload
@@ -731,7 +759,7 @@ liveness probe. See `DEPLOY.md` for platform-specific notes.
 
 | Suite | Runs | Covers |
 |---|---|---|
-| `pytest backend/tests` | in-process, isolated DB, no network, ~30 s | 242 tests: the demo data, the fitment ladder of every opening and eighteen job descriptions it was not made for; each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
+| `pytest backend/tests` | in-process, isolated DB, no network, about 2 min | 268 tests: the demo data, the fitment ladder of every opening and eighteen job descriptions it was not made for; the sample journeys, and the demo tools from where they may and may not be used; each of the five agents alone, with and without a model, and the whole flow from demand to resume and analytics; authorization on every person-specific endpoint and list scoping; path traversal and web-root rules; the archive gate; non-blocking handlers; migrations (fresh, legacy upgrade, idempotence, rollback, foreign keys, newer-than-code, frozen baseline); sessions (ending on sign-out and password change, expiry, old-format cookies); rate limits (window, per address, concurrency, a second process); the readiness index, leadership and L&D analytics, campaigns and escalations; Gemini through the real SDK against a local stand-in (response parsing, the timeout, no retries) |
 | `backend/scripts/verify_authz_scenarios.py URL` | against a live server | 65 checks across six scenarios: employee features, manager and leadership features, employee → manager access, manager → another team, user-id manipulation, anonymous access |
 
 Run both before merging a backend change. The pytest harness builds a fresh,

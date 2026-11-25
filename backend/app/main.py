@@ -31,6 +31,7 @@ from .config import (
     COOKIE_SAMESITE,
     COOKIE_SECURE,
     DEMO_MODE,
+    DEMO_TOOLS,
     DEV_ORIGINS,
     DIST_DIR,
     GEMINI_API_KEY,
@@ -41,7 +42,7 @@ from .config import (
 )
 from .database import init_database
 from .errors import DomainError
-from .routers import agents, auth, capability, core, demand
+from .routers import agents, auth, capability, core, demand, demo
 
 logger = logging.getLogger("cybridge")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -67,6 +68,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
             "DEMO_MODE is enabled: password-free quick login and the in-app role "
             "switcher will work for ANY account. Do not enable this outside a "
             "trusted demo/pilot."
+        )
+    if DEMO_TOOLS:
+        logger.warning(
+            "DEMO_TOOLS is enabled: someone signed in on this computer can switch between the "
+            "sample people and reset the demo. Keep it off on a shared host."
         )
     logger.info("CyBridge Python API ready.")
     yield
@@ -124,6 +130,7 @@ app.include_router(core.router)
 app.include_router(capability.router)
 app.include_router(demand.router)
 app.include_router(agents.router)
+app.include_router(demo.router)
 
 
 # Liveness probe for hosting platforms. Public, so it reports nothing

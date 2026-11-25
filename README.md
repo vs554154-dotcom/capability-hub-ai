@@ -98,9 +98,17 @@ The backend is Python (FastAPI); Node is used only to build the frontend.
    ```bash
    python backend/scripts/load_demo_data.py --refresh-dates
    ```
+   Add `--journeys` to put 41 of those people part-way from a demand to a client resume, so
+   every stage of the pipeline has someone in it (a new database has them already).
    To add a technology or a role, edit `backend/seed/source/`, then run
-   `python backend/scripts/build_demo_seed.py` and load again. Ready-made job descriptions
+   `python backend/scripts/build_demo_seed.py`, then `python backend/scripts/build_demo_journeys.py`,
+   and load again. Ready-made job descriptions
    to paste or upload are in `sample-data/job-descriptions/`.
+
+6. **Giving a demo**: set `DEMO_TOOLS="true"` in `.env`. A **Demo** button then appears after
+   you sign in, on your own computer only: switch between a leader, a manager and employees,
+   follow the presenter's script ([docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md)), and put
+   everything back with **Reset demo**.
 
 Deployment: see [DEPLOY.md](./DEPLOY.md).
 

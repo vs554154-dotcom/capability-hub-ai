@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 
 export interface TrendPoint {
   day: string;      // YYYY-MM-DD
@@ -21,9 +21,11 @@ export const TrendChart: React.FC<{ points: TrendPoint[]; label: string }> = ({ 
   const [active, setActive] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
 
-  useEffect(() => {
+  // Before the first paint, so a phone never shows the starting width.
+  useLayoutEffect(() => {
     const el = wrap.current;
     if (!el) return;
+    setWidth(Math.max(280, el.clientWidth));
     const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, entry.contentRect.width)));
     observer.observe(el);
     return () => observer.disconnect();

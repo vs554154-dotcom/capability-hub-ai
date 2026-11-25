@@ -31,6 +31,10 @@ SEED_PATH = Path(__file__).resolve().parent.parent / "seed" / "seed.json"
 DEMO_SEED_PATH = SEED_PATH.with_name("demo_seed.json")
 SEED_DEMO_DATA = os.getenv("SEED_DEMO_DATA", "true").lower() != "false"
 
+# Demo people part-way from a demand to a resume, built by scripts/build_demo_journeys.py.
+DEMO_JOURNEYS_PATH = SEED_PATH.with_name("demo_journeys.json")
+SEED_DEMO_JOURNEYS = os.getenv("SEED_DEMO_JOURNEYS", "true").lower() != "false"
+
 # Multiple-choice questions per skill, for assessments and knowledge checks.
 QUESTION_BANK_PATH = SEED_PATH.with_name("question_bank.json")
 
@@ -45,6 +49,10 @@ SESSION_SECRET_IS_DEFAULT = not os.getenv("SESSION_SECRET")
 # When true the server accepts a bare userId as proof of identity. This is the flag
 # that, left on, let anyone open a manager's cockpit with one click. Off by default.
 DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+
+# Switching between sample people and resetting the demo, for a presenter's own computer.
+# Off by default, and refused from anywhere but this computer (routers/demo.py).
+DEMO_TOOLS = os.getenv("DEMO_TOOLS", "false").lower() == "true"
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
